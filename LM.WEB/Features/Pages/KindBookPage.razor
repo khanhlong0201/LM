@@ -1,0 +1,84 @@
+﻿@page "/kindbook"
+@inherits KindBookController;
+@*@attribute [Authorize(Roles = "administrator, manager")]*@
+
+<TelerikToolBar Class="border-bottom-0">
+    <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/add-new-icon.png" OnClick="@(()=> OnOpenDialogHandler())">Thêm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/remove_grid.png" OnClick="@DeleteDataHandler">Xóa dòng</ToolBarButton>
+</TelerikToolBar>
+<div class="h-table-content" style=" height: calc(100vh - 170px);">
+    <TelerikLoaderContainer OverlayThemeColor="light"
+                            Visible="@(!IsInitialDataLoadComplete)"
+                            Text="@null" Class="grid-initial-data-loader">
+        <Template>
+            <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                           Size="@(ThemeConstants.Loader.Size.Medium)">
+            </TelerikLoader>
+        </Template>
+    </TelerikLoaderContainer>
+
+    <TelerikGrid Data="@ListKindBooks"
+                 Height="100%"
+                 Width="100%"
+                 RowHeight="25"
+                 Pageable="true"
+                 PageSize="@DefaultConstants.PAGE_SIZE"
+                 Sortable="true"
+                 Resizable="true"
+                 FilterMode="@GridFilterMode.FilterMenu"
+                 SelectionMode="@GridSelectionMode.Multiple"
+                 ScrollMode="@GridScrollMode.Scrollable"
+                 OnRowDoubleClick="@OnRowDoubleClickHandler"
+                 @bind-SelectedItems="@SelectedKindBooks">
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input" />
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(KindBookModel.KindBookId) Aggregate="@GridAggregateType.Count" />
+        </GridAggregates>
+        <GridColumns>
+            <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+           <GridColumn Field=@nameof(KindBookModel.KindBookId) Width="130px" MaxResizableWidth="150" Title="Mã loại sách">
+                <Template>
+                    @{
+                        var model = (context as KindBookModel);
+                        <span class="h-link" @onclick="@(() => OnOpenDialogHandler(EnumType.Update, model))" title="Xem chi tiết">@model!.KindBookId</span>
+                    }
+                </Template>
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(KindBookModel.KindBookName) Width="270px" Title="Tên loại sách"></GridColumn>
+            <GridColumn Field=@nameof(KindBookModel.Description) Width="270px" Title="Miêu tả"></GridColumn>
+        </GridColumns>
+    </TelerikGrid>
+</div>
+
+<HDialog @bind-IsVisible="@IsShowDialog"
+         SaveAndClosed="@(()=> SaveDataHandler())"
+         Title="@(IsCreate ? "Thêm mới loại sách" : $"Cập nhật loại sách {KindBookUpdate!.KindBookName}")">
+    <EditForm EditContext="@_EditContext">
+        <DataAnnotationsValidator />
+        <div class="row row-gap-2 align-items-end mt-1">
+            <div class="col-md-6 col-sm-12">
+                <HLabel Value="Mã loại sách:" />
+                 <TelerikNumericTextBox Enabled="false" Min="500"  Step="500" Format="@DefaultConstants.FORMAT_CURRENCY" @bind-Value="@KindBookUpdate.KindBookId" Class="bh-link"  Id="txtId" />
+            </div>
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtKindBookName" Value="Tên loại sách:" IsRequired="true" />
+            <TelerikTextBox @bind-Value="@KindBookUpdate.KindBookName" Id="txtKindBookName" />
+            <HValidationTooltip ValidationFor="@(()=> KindBookUpdate.KindBookName)" Id="txtKindBookName" />
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtDescription" Value="Miêu tả:" IsRequired="true" />
+            <TelerikTextArea @bind-Value="@KindBookUpdate.Description" Id="txtDescription"  AutoSize="true"/>
+        </div>
+        
+    </EditForm>
+</HDialog>
+
+
+<HConfirm @ref="@_rDialogs" />

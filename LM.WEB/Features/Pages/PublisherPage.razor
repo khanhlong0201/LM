@@ -1,0 +1,84 @@
+﻿@page "/publisher"
+@inherits PublisherController;
+@*@attribute [Authorize(Roles = "administrator, manager")]*@
+
+<TelerikToolBar Class="border-bottom-0">
+    <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/add-new-icon.png" OnClick="@(()=> OnOpenDialogHandler())">Thêm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/remove_grid.png" OnClick="@DeleteDataHandler">Xóa dòng</ToolBarButton>
+</TelerikToolBar>
+<div class="h-table-content" style=" height: calc(100vh - 170px);">
+    <TelerikLoaderContainer OverlayThemeColor="light"
+                            Visible="@(!IsInitialDataLoadComplete)"
+                            Text="@null" Class="grid-initial-data-loader">
+        <Template>
+            <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                           Size="@(ThemeConstants.Loader.Size.Medium)">
+            </TelerikLoader>
+        </Template>
+    </TelerikLoaderContainer>
+
+    <TelerikGrid Data="@ListPublishers"
+                 Height="100%"
+                 Width="100%"
+                 RowHeight="25"
+                 Pageable="true"
+                 PageSize="@DefaultConstants.PAGE_SIZE"
+                 Sortable="true"
+                 Resizable="true"
+                 FilterMode="@GridFilterMode.FilterMenu"
+                 SelectionMode="@GridSelectionMode.Multiple"
+                 ScrollMode="@GridScrollMode.Scrollable"
+                 OnRowDoubleClick="@OnRowDoubleClickHandler"
+                 @bind-SelectedItems="@SelectedPublishers">
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input" />
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(PublisherModel.PublisherId) Aggregate="@GridAggregateType.Count" />
+        </GridAggregates>
+        <GridColumns>
+            <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+           <GridColumn Field=@nameof(PublisherModel.PublisherId) Width="130px" MaxResizableWidth="150" Title="Mã nhà xuất bản">
+                <Template>
+                    @{
+                        var model = (context as PublisherModel);
+                        <span class="h-link" @onclick="@(() => OnOpenDialogHandler(EnumType.Update, model))" title="Xem chi tiết">@model!.PublisherId</span>
+                    }
+                </Template>
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(PublisherModel.PublisherName) Width="270px" Title="Tên nhà xuất bản"></GridColumn>
+            <GridColumn Field=@nameof(PublisherModel.Description) Width="270px" Title="Miêu tả"></GridColumn>
+        </GridColumns>
+    </TelerikGrid>
+</div>
+
+<HDialog @bind-IsVisible="@IsShowDialog"
+         SaveAndClosed="@(()=> SaveDataHandler())"
+         Title="@(IsCreate ? "Thêm mới nhà xuât bản" : $"Cập nhật nhà xuất bản {PublisherUpdate!.PublisherName}")">
+    <EditForm EditContext="@_EditContext">
+        <DataAnnotationsValidator />
+        <div class="row row-gap-2 align-items-end mt-1">
+            <div class="col-md-6 col-sm-12">
+                <HLabel Value="Mã nhà xuất bản:" />
+                 <TelerikNumericTextBox Enabled="false" Min="500"  Step="500" Format="@DefaultConstants.FORMAT_CURRENCY" @bind-Value="@PublisherUpdate.PublisherId" Class="bh-link"  Id="txtId" />
+            </div>
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtPublisherName" Value="Tên nhà xuất bản:" IsRequired="true" />
+            <TelerikTextBox @bind-Value="@PublisherUpdate.PublisherName" Id="txtPublisherName" />
+            <HValidationTooltip ValidationFor="@(()=> PublisherUpdate.PublisherName)" Id="txtPublisherName" />
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtDescription" Value="Miêu tả:" IsRequired="true" />
+            <TelerikTextArea @bind-Value="@PublisherUpdate.Description" Id="txtDescription"  AutoSize="true"/>
+        </div>
+        
+    </EditForm>
+</HDialog>
+
+
+<HConfirm @ref="@_rDialogs" />

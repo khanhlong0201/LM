@@ -1,0 +1,109 @@
+﻿@using Microsoft.AspNetCore.Components.Web
+@namespace LM.Web.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Thư Viện Duy Khánh" />
+    <meta name="keywords" content="Quản lý mượn - trả sách thư viện" />
+    <meta name="author" content="Duy Khánh" />
+    <base href="~/" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <link href="css/site.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="../assets/logo_1.png" />
+    <!-- CSS files -->
+    <link href="css/layout.css" rel="stylesheet"/>
+     <!-- NProgress -->
+    <link href="css/nprogress.css" rel="stylesheet">
+    <!-- Telerik Kendo UI Scripts -->
+    <link rel="stylesheet" href="_content/Telerik.UI.for.Blazor/css/kendo-theme-default/all.css" />
+    <link href="css/kendo.style.css" rel="stylesheet"/>
+    <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
+    <title>Quản lý mượn - trả sách thư viện</title>
+</head>
+<body class="body-bg">
+    <div id="blazor-error-ui">
+        <environment include="Staging,Production">
+            An error has occurred. This application may no longer respond until reloaded.
+        </environment>
+        <environment include="Development">
+            An unhandled exception has occurred. See browser dev tools for details.
+        </environment>
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <div id="components-reconnect-modal" class="my-reconnect-modal components-reconnect-hide">
+        <div class="show">
+            <p>Mất kết nối tới máy chủ. Vui lòng chờ 30s để dược kết nối tự động</p>
+            <div class="spinner-border"></div>
+        </div>
+        <div class="failed">
+            <div class="m1-custom-failed">
+                <h1 class="mb-2">:(</h1>
+                <br />
+                <h2>Mất kết nối tới máy chủ. Vui lòng chờ đến khi server được ổn định</h2>
+                <br />
+                <div class="gears">
+                    <div class="gear one">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
+                    <div class="gear two">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
+                    <div class="gear three">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="rejected">
+            <div class="m1-custom-failed">
+                <h1 class="mb-2">:(</h1>
+                <br />
+                <h2>Đã ngắt kết nối đến máy chủ. Vui lòng liên hệ bộ phận IT để được hổ trợ!</h2>
+                <br />
+                <div class="gears">
+                    <div class="gear one">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
+                    <div class="gear two">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
+                    <div class="gear three">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page">
+        @RenderBody()
+    </div>
+
+    <script src="_framework/blazor.server.js"></script>
+    <!-- Tabler Core -->
+    <script src="~/js/tabler.min.js" defer></script>
+    <!-- NProgress -->
+    <script src="~/js/nprogress.js"></script>
+    <!-- Telerik Kendo UI Scripts -->
+    <script src="_content/Telerik.UI.for.Blazor/js/telerik-blazor.js" defer></script>
+    <!-- Script -->
+    <script src="~/js/myscript.js"></script>
+</body>
+</html>

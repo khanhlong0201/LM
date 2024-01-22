@@ -1,0 +1,160 @@
+﻿@page "/user"
+@inherits UserController;
+@*@attribute [Authorize(Roles = "administrator, manager")]*@
+
+<TelerikToolBar Class="border-bottom-0">
+    <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/add-new-icon.png" OnClick="@(()=> OnOpenDialogHandler())">Thêm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/remove_grid.png" OnClick="@DeleteDataHandler">Xóa dòng</ToolBarButton>
+</TelerikToolBar>
+<div class="h-table-content" style=" height: calc(100vh - 170px);">
+    <TelerikLoaderContainer OverlayThemeColor="light"
+                            Visible="@(!IsInitialDataLoadComplete)"
+                            Text="@null" Class="grid-initial-data-loader">
+        <Template>
+            <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                           Size="@(ThemeConstants.Loader.Size.Medium)">
+            </TelerikLoader>
+        </Template>
+    </TelerikLoaderContainer>
+
+    <TelerikGrid Data="@ListUsers"
+                 Height="100%"
+                 Width="100%"
+                 RowHeight="25"
+                 Pageable="true"
+                 PageSize="@DefaultConstants.PAGE_SIZE"
+                 Sortable="true"
+                 Resizable="true"
+                 FilterMode="@GridFilterMode.FilterMenu"
+                 SelectionMode="@GridSelectionMode.Multiple"
+                 ScrollMode="@GridScrollMode.Scrollable"
+                 OnRowDoubleClick="@OnRowDoubleClickHandler"
+                 @bind-SelectedItems="@SelectedUsers">
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input" />
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(UserModel.Id) Aggregate="@GridAggregateType.Count" />
+        </GridAggregates>
+        <GridColumns>
+            <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+           <GridColumn Field=@nameof(UserModel.Id) Width="130px" MaxResizableWidth="150" Title="Mã tài khoản">
+                <Template>
+                    @{
+                        var model = (context as UserModel);
+                        <span class="h-link" @onclick="@(() => OnOpenDialogHandler(EnumType.Update, model))" title="Xem chi tiết">@model!.Id</span>
+                    }
+                </Template>
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(UserModel.UserName) Width="270px" Title="Tên đăng nhập"></GridColumn>
+            <GridColumn Field=@nameof(UserModel.FullName) Width="270px" Title="Tên người dùng"></GridColumn>
+            <GridColumn Field=@nameof(UserModel.IsAdmin) Width="120px" Title="Admin ?">
+                <Template>
+                    @{
+                        var model = (context as UserModel);
+                        <TelerikCheckBox @bind-Value="@model!.IsAdmin" Enabled="false" />
+                    }
+                </Template>
+            </GridColumn>
+            <GridColumn Field=@nameof(UserModel.PhoneNumber) Width="140px" Title="Số điện thoại"></GridColumn>
+            <GridColumn Field=@nameof(UserModel.Address) Width="240px" Title="Địa chỉ"></GridColumn>
+            <GridColumn Field=@nameof(UserModel.Email) Width="120px" Title="Email"></GridColumn>
+            <GridColumn Field=@nameof(UserModel.DateOfBirth) DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE" Width="140px" Title="Ngày sinh"></GridColumn>
+        </GridColumns>
+    </TelerikGrid>
+</div>
+
+<HDialog @bind-IsVisible="@IsShowDialog"
+         SaveAndClosed="@(()=> SaveDataHandler())"
+         Title="@(IsCreate ? "Thêm mới người dùng" : $"Cập nhật người dùng {UserUpdate!.UserName}")">
+    <EditForm EditContext="@_EditContext">
+        <DataAnnotationsValidator />
+        <div class="row row-gap-2 align-items-end mt-1">
+            <div class="col-md-6 col-sm-12">
+                <HLabel Value="Mã người dùng:" />
+                 <TelerikNumericTextBox Enabled="false" Min="500"  Step="500" Format="@DefaultConstants.FORMAT_CURRENCY" @bind-Value="@UserUpdate.Id" Class="bh-link"  Id="txtId" />
+            </div>
+            <div class="col-md-6 col-sm-12">
+                <TelerikCheckBox @bind-Value="@UserUpdate.IsAdmin" Id="ckbIsAdmin" />
+                <HLabel Value="Quản trị viên?" For="ckbIsAdmin" />
+            </div>
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtFullName" Value="Họ tên người  dùng:" IsRequired="true" />
+            <TelerikTextBox @bind-Value="@UserUpdate.FullName" Id="txtFullName" />
+            <HValidationTooltip ValidationFor="@(()=> UserUpdate.FullName)" Id="txtFullName" />
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtUserName" Value="Tên đăng nhập:" IsRequired="true" />
+            <TelerikTextBox @bind-Value="@UserUpdate.UserName" Id="txtUserName" />
+            <HValidationTooltip ValidationFor="@(()=> UserUpdate.UserName)" Id="txtUserName" />
+        </div>
+        @if(IsCreate)
+        {
+            <div class="row row-gap-2 mt-2">
+                <div class="col-md-6 col-sm-12">
+                    <HLabel For="txtPassWord" Value="Mật khẩu:" IsRequired="true" />
+                    <div style="display: flex">
+                        <TelerikTextBox Password="@isPasswordHidden" @bind-Value="@UserUpdate.Password" Id="txtPassWord" />
+                        <i @onclick="@(() => HiddenPassword())" class="@(isPasswordHidden ? "fa fa-eye-slash":"far fa-eye")" id="togglePassword" style="margin-left: 5px; margin-top:7px; cursor: pointer;"></i>
+                    </div>
+                    <HValidationTooltip ValidationFor="@(()=> UserUpdate.Password)" Id="txtPassWord" />
+                </div>
+                <div class="col-md-6 col-sm-12">
+                    <HLabel For="txtPassWord" Value="Nhập lại mật khẩu:" IsRequired="true" />
+                    <div style="display: flex">
+                        <TelerikTextBox Password="@isReEnterPasswordAgainHidden" @bind-Value="@UserUpdate.ReEnterPassword" Id="txtPassWord" />
+                        <i @onclick="@(() => HiddenReEnterPassword())" class="@(isReEnterPasswordAgainHidden ? "fa fa-eye-slash":"far fa-eye")" id="togglePassword" style="margin-left: 5px;margin-top:7px; cursor: pointer;"></i>
+                    </div>
+                    <HValidationTooltip ValidationFor="@(()=> UserUpdate.ReEnterPassword)" Id="txtPassWord" />
+                </div>
+            </div>
+        } 
+        
+        <div class="row row-gap-2 mt-2">
+            <div class="col-md-6 col-sm-12">
+                <HLabel For="txtPhoneNumber" Value="Số điện thoại:" />
+                <TelerikTextBox @bind-Value="@UserUpdate.PhoneNumber" Id="txtPhoneNumber" />
+            </div>
+            <div class="col-md-6 col-sm-12">
+                <HLabel For="txtEmail" Value="Email:" />
+                <TelerikTextBox @bind-Value="@UserUpdate.Email" Id="txtEmail" />
+            </div>
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtAddress" Value="Địa chỉ:" />
+            <TelerikTextBox @bind-Value="@UserUpdate.Address" Id="txtAddress" />
+        </div>
+        <div class="mt-2 row">
+            <div class="col-6">
+                <HLabel For="txtUserName" Value="Ngày sinh:" />
+                <TelerikDatePicker @bind-Value="@UserUpdate.DateOfBirth"
+                    Placeholder=""
+                    Format="dd/MM/yyyy"
+                    Class="btn-noborder-radius-left">
+                </TelerikDatePicker>
+            </div>
+        </div>
+    </EditForm>
+</HDialog>
+
+
+<HConfirm @ref="@_rDialogs" />
+@code {
+    private bool isPasswordHidden = true;
+     private bool isReEnterPasswordAgainHidden = true;
+
+    private void HiddenPassword()
+    {
+        isPasswordHidden = !isPasswordHidden;
+    }
+
+     private void HiddenReEnterPassword()
+    {
+        isReEnterPasswordAgainHidden = !isReEnterPasswordAgainHidden;
+    }
+}

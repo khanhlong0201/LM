@@ -1,0 +1,67 @@
+﻿@implements IDisposable;
+<TelerikRootComponent >
+    <TelerikDialog @bind-Visible="@isVisible" Class="h-confirm"
+                   Title="@Title" ShowCloseButton="false">
+        <DialogContent>
+            @Message
+        </DialogContent>
+        <DialogButtons>
+            <div class="d-flex justify-content-end">
+                <div>
+                    <TelerikButton OnClick="@NoClick">&nbsp;Đóng&nbsp;</TelerikButton>
+                    <TelerikButton ThemeColor="@(ThemeConstants.Button.ThemeColor.Primary)" OnClick="@YesClick">Xác nhận</TelerikButton>
+                </div>
+            </div>
+        </DialogButtons>
+    </TelerikDialog>
+</TelerikRootComponent>
+
+@code {
+    private bool isVisible { get; set; }
+    private string Title { get; set; } = "Thông báo";
+    private string Message { get; set; } = "";
+    TaskCompletionSource<bool>? _TaskCompletionSource;
+
+    public Task<bool> ConfirmAsync(string message)
+    {
+        Message = message;
+        isVisible = true;
+        InvokeAsync(StateHasChanged);
+        _TaskCompletionSource = new TaskCompletionSource<bool>();
+        _TaskCompletionSource.Task.ContinueWith(_ =>
+        {
+            isVisible = false;
+        });
+        return _TaskCompletionSource.Task;
+    }
+    public Task<bool> ConfirmAsync(string pTitle, string message)
+    {
+        Title = pTitle;
+        Message = message;
+        isVisible = true;
+        InvokeAsync(StateHasChanged);
+        _TaskCompletionSource = new TaskCompletionSource<bool>();
+        _TaskCompletionSource.Task.ContinueWith(_ =>
+        {
+            isVisible = false;
+        });
+        return _TaskCompletionSource.Task;
+    }
+    private void YesClick()
+    {
+        try
+        {
+            _TaskCompletionSource!.SetResult(true);
+        }
+        catch (Exception) { }
+    }
+    private void NoClick()
+    {
+        try
+        {
+            _TaskCompletionSource!.SetResult(false);
+        }
+        catch(Exception){}
+    }
+    public void Dispose() => _TaskCompletionSource = null;
+}

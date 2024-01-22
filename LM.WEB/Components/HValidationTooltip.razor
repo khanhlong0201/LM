@@ -1,0 +1,18 @@
+﻿@typeparam IDataType;
+<TelerikValidationTooltip Class="h-validate-input" For="@ValidationFor" TargetSelector="@($"#{Id}")">
+    <Template Context="ValidationMessages">
+        @foreach (var validationMessage in ValidationMessages)
+        {
+            <span class="@Class">
+                <span class="k-icon k-i-warning"></span>
+                @validationMessage
+            </span>
+        }
+    </Template>
+</TelerikValidationTooltip>
+
+@code {
+    [Parameter] public Expression<Func<IDataType>>? ValidationFor { get; set; } = default!;
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public string? Class { get; set; } = "h-error";
+}

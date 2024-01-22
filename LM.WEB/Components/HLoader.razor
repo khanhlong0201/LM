@@ -1,0 +1,24 @@
+﻿@implements IDisposable
+@inject LoaderService LoaderService;
+<TelerikLoaderContainer OverlayThemeColor="light"
+                        Visible="@isShowloader"
+                        Text="@null" Class="initial-data-loader">
+    <Template>
+        <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                       Size="@(ThemeConstants.Loader.Size.Medium)">
+        </TelerikLoader>
+    </Template>
+</TelerikLoaderContainer>
+
+@code {
+    private bool isShowloader { get; set; } = false;
+    protected override void OnInitialized() => LoaderService.OnShow += showLoader;
+
+    private void showLoader(bool isLoader)
+    {
+        isShowloader = isLoader;
+        StateHasChanged();
+    }
+
+    public void Dispose() => LoaderService.OnShow -= showLoader;
+}

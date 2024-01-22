@@ -1,0 +1,23 @@
+﻿
+<div class="h-breadcrumb d-flex justify-content-between align-items-center">
+    <div style="width: 100%;">
+        <TelerikBreadcrumb Data="@Breadcrumbs" class="">
+            <ItemTemplate>
+                <div class="item">
+                    @if (context.IsShowIcon)
+                    {
+                        <i class="@context.Icon" style="margin-right: 3px"></i>
+                    }
+                    <span>@context.Text</span>
+                </div>
+            </ItemTemplate>
+        </TelerikBreadcrumb>
+    </div>
+    <div style="width: fit-content; cursor: pointer;">
+        <i class="fa-regular fa-star px-2"></i>
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<BreadcrumLModel>? Breadcrumbs { get; set; }
+} 

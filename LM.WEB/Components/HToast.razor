@@ -1,0 +1,72 @@
+﻿@implements IDisposable
+@inject ToastService ToastService;
+<div class="notification-parent">
+    <TelerikNotification @ref="NotificationComponent"
+                         Class="h-notification"
+                         AnimationType="@AnimationType.Fade"
+                         HorizontalPosition="@NotificationHorizontalPosition.Right"
+                         VerticalPosition="@NotificationVerticalPosition.Bottom">
+    </TelerikNotification>
+</div>
+@code {
+    public TelerikNotification? NotificationComponent { get; set; }
+    protected override void OnInitialized()
+    {
+        ToastService.OnShowError += ShowError;
+        ToastService.OnShowInfo += ShowInfo;
+        ToastService.OnShowSuccess += ShowSuccess;
+        ToastService.OnShowWarning += ShowWarning;
+    }
+    private void ShowSuccess(string message, int CloseAfter)
+    {
+        if (NotificationComponent == null) return;
+        NotificationComponent.Show(new NotificationModel
+            {
+                Text = message,
+                ThemeColor = "success",
+                CloseAfter = CloseAfter
+            });
+        StateHasChanged();
+    }
+    private void ShowError(string message, int CloseAfter)
+    {
+        if (NotificationComponent == null) return;
+        NotificationComponent.Show(new NotificationModel
+            {
+                Text = message,
+                ThemeColor = "error",
+                CloseAfter = CloseAfter
+            });
+        StateHasChanged();
+    }
+    private void ShowInfo(string message, int CloseAfter)
+    {
+        if (NotificationComponent == null) return;
+        NotificationComponent.Show(new NotificationModel
+            {
+                Text = message,
+                ThemeColor = "info",
+                CloseAfter = CloseAfter
+            });
+        StateHasChanged();
+    }
+    private void ShowWarning(string message, int CloseAfter)
+    {
+        if (NotificationComponent == null) return;
+        NotificationComponent.Show(new NotificationModel
+            {
+                Text = message,
+                ThemeColor = "warning",
+                CloseAfter = CloseAfter
+            });
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        ToastService.OnShowError -= ShowError;
+        ToastService.OnShowInfo -= ShowInfo;
+        ToastService.OnShowSuccess -= ShowSuccess;
+        ToastService.OnShowWarning -= ShowWarning;
+    }
+}

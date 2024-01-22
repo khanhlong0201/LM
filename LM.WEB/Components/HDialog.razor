@@ -1,0 +1,43 @@
+﻿<TelerikRootComponent>
+    <TelerikDialog Visible="@IsVisible" VisibleChanged="@CloseDialogHandler"
+                   Title="@Title" Width="@Width" Height="@Height" ShowCloseButton="true">
+        <DialogContent>
+            @ChildContent
+        </DialogContent>
+        <DialogButtons>
+            @if (IsShowButtons)
+            {
+                <div class="d-flex justify-content-end">
+                    <div>
+                        <TelerikButton OnClick="@CloseDialogHandler">&nbsp;Đóng&nbsp;</TelerikButton>
+                        <TelerikButton ThemeColor="@(ThemeConstants.Button.ThemeColor.Primary)" Hidden="@(!IsShowButtonSaveAndClosed)" OnClick="@SaveAndClosed">@TitleBtnSaveAndClosed</TelerikButton>
+                    </div>
+                </div>
+            }
+        </DialogButtons>
+    </TelerikDialog>
+</TelerikRootComponent>
+
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+    [Parameter] public string Title { get; set; } = "Xác nhận";
+    [Parameter] public string Width { get; set; } = "50%";
+    [Parameter] public string Height { get; set; } = "";
+    [Parameter] public bool IsShowButtons { get; set; } = true;
+    [Parameter] public bool IsShowButtonSaveAdnCreate { get; set; } = true;
+    [Parameter] public bool IsShowButtonSaveAndClosed { get; set; } = true;
+    [Parameter] public string TitleBtnSaveAndClosed { get; set; } = "Lưu & Đóng";
+    [Parameter] public string TitleBtnSaveAndCreate { get; set; } = "Lưu & Tạo mới";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback SaveAndClosed { get; set; }
+    [Parameter] public EventCallback SaveAndCreate { get; set; }
+    [Parameter] public bool IsShowButtonSaveAndCreates { get; set; } = true;
+
+    private async Task CloseDialogHandler()
+    {
+        IsVisible = false;
+        await IsVisibleChanged.InvokeAsync(IsVisible);
+    }
+}

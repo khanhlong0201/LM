@@ -1,0 +1,62 @@
+﻿@page "/login"
+@layout LM.WEB.Shared.AuthLayout;
+
+<div class="row mx-0">
+    <div class="col-lg-4 col md-6 col-sm-10" style="margin: 0 auto;">
+        <div class="card" style="">
+            <div class="mt-2" style="margin: 0 auto;">
+                <div class="d-flex align-items-center text-decoration-none">
+                    <img src="../assets/logo_1.png" width="110" height="32" alt="HSystem" class="navbar-brand-image">
+                    <span class="h-logo__title">Đăng nhập</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <EditForm Model="LoginRequest" OnValidSubmit="@(()=> LoginHandler())">
+                    <DataAnnotationsValidator></DataAnnotationsValidator>
+                    @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+                    {
+                        <ul class="validation-errors">
+                            <li class="validation-message">
+                                @ErrorMessage
+                            </li>   
+                        </ul>
+                    }
+                    <div style="text-align: center;">
+                        <TelerikLoader Visible="@IsLoading" Type="@LoaderType.Pulsing" Size="@(ThemeConstants.Loader.Size.Medium)"></TelerikLoader>
+                    </div>
+                    <div class="mt-2">
+                        <TelerikTextBox PlaceHolder="Tài khoản*:" @bind-Value="@LoginRequest.UserName"
+                                        FillMode="@ThemeConstants.TextBox.FillMode.Flat" Id="txtUserName" />
+                        <HValidationTooltip ValidationFor="@(()=> LoginRequest.UserName)" Id="txtUserName" />
+                    </div>
+                    <div class="mt-2" style="display: flex">
+                        <TelerikTextBox FillMode="@ThemeConstants.TextBox.FillMode.Flat" Id="txtPassword"
+                                        PlaceHolder="Mật khẩu*:" @bind-Value="@LoginRequest.Password" Password="@isPasswordHidden" />
+                        <i @onclick="@(() => HiddenPassword())" class="@(isPasswordHidden ? "fa fa-eye-slash":"far fa-eye")" id="togglePassword" style="margin-top:7px; cursor: pointer;"></i>  
+                        <HValidationTooltip ValidationFor="@(()=> LoginRequest.Password)" Id="txtPassword" />
+                    </div>
+                    <div class="mt-2 d-flex justify-content-start align-items-end">
+                        <TelerikCheckBox @bind-Value="@LoginRequest.RememberMe" />
+                        <span style="font-size: 13px;margin-left: 5px;line-height: 1.1;">Ghi nhớ đăng nhập?</span>
+                    </div>
+                    <div class="mt-2">
+                        <TelerikButton ButtonType="@ButtonType.Submit" ImageUrl="../assets/key.png" Class="h-button--login"
+                                       ThemeColor="@(ThemeConstants.Button.ThemeColor.Primary)">
+                            Đăng nhập
+                        </TelerikButton>
+                    </div>
+                </EditForm>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isPasswordHidden = true;
+
+    private void HiddenPassword()
+    {
+        isPasswordHidden = !isPasswordHidden;
+    }
+}

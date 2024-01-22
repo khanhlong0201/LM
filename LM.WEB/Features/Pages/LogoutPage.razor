@@ -1,0 +1,20 @@
+﻿@page "/logout"
+@inject Services.ICliMasterDataService _masterDataService;
+@inject NavigationManager _navigationManager
+
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await _masterDataService.LogoutAsync();
+                _navigationManager.NavigateTo($"login");
+            }
+            catch (Exception) { }
+
+        }
+    }
+}
