@@ -9,6 +9,8 @@ using System.Diagnostics;
 using System.Net.Http.Headers;
 using static System.Net.Mime.MediaTypeNames;
 using System.Text;
+using Microsoft.AspNetCore.Components.Forms;
+using System.Text.Json;
 
 namespace LM.WEB.Services;
 
@@ -23,19 +25,27 @@ public interface ICliMasterDataService
     Task<bool> DeleteDataAsync(string pTableName, string pReasonDelete, string pValue, int pUserId);
     Task<List<PublisherModel>?> GetDataPublishersAsync();
     Task<bool> UpdatePublisherAsync(string pJson, string pAction, int pUserId);
+    Task<List<BookModel>?> GetDataBooksAsync();
+    Task<bool> UpdateBookAsync(string pJson, string pAction, int pUserId);
+    Task<string> UploadMultiFiles(string link, List<IBrowserFile> lstIBrowserFiles);
+    Task<List<ImageDetailModel>?> GetDataImageDetailsAsync(int imageId);
+
 }
 public class CliMasterDataService : CliServiceBase, ICliMasterDataService 
 {
     private readonly ToastService _toastService;
     private readonly ILocalStorageService _localStorage;
     private readonly AuthenticationStateProvider _authenticationStateProvider;
+    private readonly IWebHostEnvironment _webHostEnvironment;
+    long maxFileSize = 134217728;
     public CliMasterDataService(IHttpClientFactory factory, ILogger<CliMasterDataService> logger
-        , ToastService toastService, ILocalStorageService localStorage, AuthenticationStateProvider authenticationStateProvider)
+        , ToastService toastService, ILocalStorageService localStorage, AuthenticationStateProvider authenticationStateProvider, IWebHostEnvironment webHostEnvironment)
         : base(factory, logger)
     {
         _toastService = toastService;
         _localStorage = localStorage;
         _authenticationStateProvider = authenticationStateProvider;
+        _webHostEnvironment = webHostEnvironment;
     }
 
     /// <summary>
@@ -370,7 +380,7 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
     /// Call API lấy danh sách sách
     /// </summary>
     /// <returns></returns>
-    public async Task<List<PublisherModel>?> GetDataBooksAsync()
+    public async Task<List<BookModel>?> GetDataBooksAsync()
     {
         try
         {
@@ -380,7 +390,7 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
             else
             {
                 var content = await httpResponse.Content.ReadAsStringAsync();
-                if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<List<PublisherModel>>(content);
+                if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<List<BookModel>>(content);
                 if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
                     _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
@@ -444,5 +454,151 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
             _toastService.ShowError(ex.Message);
         }
         return false;
+    }
+
+    /// <summary>
+    /// Xử lý call api Upload file
+    /// </summary>
+    /// <param name="link"></param>
+    /// <param name="lstIBrowserFiles"></param>
+    /// <param name="strSubFolder"></param>
+    /// <param name="strSubFolderProdLine"></param>
+    /// <returns></returns>
+    public async Task<string> UploadMultiFiles(string link, List<IBrowserFile> lstIBrowserFiles,
+            string strSubFolder, string strSubFolderProdLine)
+    {
+        string json = JsonConvert.SerializeObject(lstIBrowserFiles);
+        string strResponse = "";
+        try
+        {
+            _httpClient.DefaultRequestHeaders.Accept.Clear();
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            using var content = new MultipartFormDataContent();
+            content.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data");
+            foreach (var file in lstIBrowserFiles)
+            {
+                var fileContent = new StreamContent(file.OpenReadStream(maxFileSize));
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+                content.Add(
+                    content: fileContent,
+                    name: "\"files\"",
+                    fileName: file.Name);
+            }
+            string URL = $"/api/{link}?strSubFolder={strSubFolder}&strSubFolderProdLine={strSubFolderProdLine}";
+            var objResponse = await _httpClient.PostAsync(URL, content);
+            if (objResponse.IsSuccessStatusCode)
+            {
+                // cho phép properties name trùng, phân biệt hoa thường
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                };
+                strResponse = await objResponse.Content.ReadAsStringAsync();
+            }
+
+            Debug.Print(_httpClient.BaseAddress + URL);
+            Debug.Print(json);
+            return strResponse;
+        }
+        catch (Exception objEx)
+        {
+            _logger.LogError(objEx, json);
+            return JsonConvert.SerializeObject(new ResponseModel<object> { StatusCode = -1, Message = objEx.Message });
+        }
+    }
+
+    /// <summary>
+    /// upload multifile
+    /// </summary>
+    /// <param name="link"></param>
+    /// <param name="lstIBrowserFiles"></param>
+    /// <returns></returns>
+    public async Task<string> UploadMultiFiles(string link, List<IBrowserFile> lstIBrowserFiles)
+    {
+        List<string> listFilePath = new List<string>();
+        try
+        {
+            Console.WriteLine(System.Net.ServicePointManager.DefaultConnectionLimit);
+            _httpClient.DefaultRequestHeaders.Accept.Clear();
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            using var content = new MultipartFormDataContent();
+            content.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data");
+            var rootFolder = Path.Combine(_webHostEnvironment.WebRootPath, "Upload", "TEMP");
+            //tạo thư mục
+            if (!Directory.Exists(rootFolder)) Directory.CreateDirectory(rootFolder);
+            string strFileFullName = string.Empty;
+            foreach (var file in lstIBrowserFiles)
+            {
+                string fileNameNew = $"{Guid.NewGuid()}---{file.Name}";
+                strFileFullName = Path.Combine(rootFolder, fileNameNew);
+                await using FileStream fs = new(strFileFullName, FileMode.Create);
+                await file.OpenReadStream(long.MaxValue).CopyToAsync(fs); // lưu vào www tạm để đọc file
+                listFilePath.Add(strFileFullName); // khi lưu vào www ok -> lưu vào list tạm để finally -> remove ra
+                await fs.FlushAsync();
+                await fs.DisposeAsync();
+                content.Add(new StreamContent(File.OpenRead(@$"{strFileFullName}")), name: "\"files\"", fileName: fileNameNew);
+            }
+
+            string sUrl = $"api/{link}";
+            HttpResponseMessage httpResponse = await _httpClient.PostAsync(sUrl, content);
+            var resContent = await httpResponse.Content.ReadAsStringAsync();
+            if (httpResponse.IsSuccessStatusCode) return resContent; // nếu APi trả về OK 200
+            if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                //_bhDialogService.ShowDialog();
+                _toastService.ShowInfo("Hết phiên đăng nhập!");
+                return "";
+            }
+            var oMessage = JsonConvert.DeserializeObject<ResponseModel>(resContent); // mã lỗi dưới API
+            _toastService.ShowError($"{oMessage?.Message}");
+            return "";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "UploadMultiFiles");
+            _toastService.ShowError(ex.Message);
+            return "";
+        }
+        finally
+        {
+            // xóa các ảnh được lưu vào folder tạm
+            listFilePath.ForEach(item => { if (File.Exists(@$"{item}")) File.Delete(item); });
+        }
+    }
+
+    /// <summary>
+    /// Call API lấy danh sách sách
+    /// </summary>
+    /// <returns></returns>
+    public async Task<List<ImageDetailModel>?> GetDataImageDetailsAsync(int imageId = -1)
+    {
+        try
+        {
+            Dictionary<string, object> pParams = new Dictionary<string, object>()
+            {
+                {"imageId", $"{imageId}"}
+            };
+            HttpResponseMessage httpResponse = await GetAsync(EndpointConstants.URL_MASTERDATA_GET_IMAGE_DETAILS, pParams);
+            var checkContent = ValidateJsonContent(httpResponse.Content);
+            if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
+            else
+            {
+                var content = await httpResponse.Content.ReadAsStringAsync();
+                if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<List<ImageDetailModel>>(content);
+                if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
+                    return null;
+                }
+                var oMessage = JsonConvert.DeserializeObject<ResponseModel>(content);
+                _toastService.ShowError($"{oMessage?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetDataBooksAsync");
+            _toastService.ShowError(ex.Message);
+        }
+        return default;
     }
 }

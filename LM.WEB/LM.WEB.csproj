@@ -16,4 +16,8 @@
     <PackageReference Include="Telerik.UI.for.Blazor" Version="3.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\Upload\TEMP\" />
+  </ItemGroup>
+
 </Project>

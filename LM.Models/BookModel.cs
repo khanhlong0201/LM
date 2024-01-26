@@ -18,5 +18,6 @@ public class BookModel : Auditable
     public string PublisherName { get; set; }
     public string KindBookName { get; set; }
     public string FilePath { get; set; }
+    public List<ImageDetailModel>? ListFile { get; set; }
 }
 

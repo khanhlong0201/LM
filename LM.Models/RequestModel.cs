@@ -1,4 +1,10 @@
-﻿namespace LM.Models;
+﻿using NPOI.SS.Formula.Functions;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace LM.Models;
 
 public class RequestModel
 {
@@ -24,6 +30,20 @@ public class ResponseModel
     {
         StatusCode = status;
         Message = message;
+    }
+}
+
+public class ResponseModel<T>
+{
+    public int StatusCode { get; set; }
+    public string? Message { get; set; }
+    public T Data { get; set; }
+
+    public ResponseModel()
+    {
+        StatusCode = 0;
+        Message = string.Empty;
+        Data = Activator.CreateInstance<T>(); //longtran Tạo một thể hiện
     }
 }
 

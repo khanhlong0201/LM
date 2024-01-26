@@ -4,9 +4,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Image = SixLabors.ImageSharp.Image;
 
 namespace LM.API.Controllers
 {
@@ -18,12 +21,14 @@ namespace LM.API.Controllers
         private readonly IMasterDataService _masterService;
         private ILogger<MasterDataController> _logger { get; set; }
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public MasterDataController(ILogger<MasterDataController> logger, IMasterDataService masterService, IConfiguration configuration)
+        public MasterDataController(ILogger<MasterDataController> logger, IMasterDataService masterService, IConfiguration configuration, IWebHostEnvironment webHostEnvironment)
         {
             _logger = logger;
             _masterService = masterService;
             _configuration = configuration;
+            _webHostEnvironment = webHostEnvironment;
         }
 
        
@@ -300,6 +305,72 @@ namespace LM.API.Controllers
                 });
 
             }
+        }
+
+        [HttpPost]
+        [Route("UploadImages")]
+        public async Task<IActionResult> UploadImages([FromForm] List<IFormFile> files, string subFolder)
+        {
+            try
+            {
+                if (files == null || !files.Any())
+                {
+                    return StatusCode(StatusCodes.Status400BadRequest, new
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Message = "Không có dữ liệu file đính kèm"
+                    });
+                }
+                //
+                var result = new List<ImageDetailModel>();
+                string fileName = string.Empty;
+                string path = $"{this._webHostEnvironment.WebRootPath}\\{subFolder}";
+                if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+
+                foreach (var file in files)
+                {
+                    fileName = file.FileName; // trên kia mã hóa
+                    string fullPath = Path.Combine(path, fileName);
+                    using (var image = Image.Load(file.OpenReadStream()))
+                    {
+                        image.Mutate(m => m.Resize(810, 540));
+                        await image.SaveAsync(fullPath);
+                    }
+                    result.Add(new ImageDetailModel() { FileName = fileName, FilePath = fullPath });
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "UserController", "Update");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+
+            }
+        }
+
+        [HttpGet]
+        [Route("GetImageDetails")]
+        public async Task<IActionResult> GetDataImageDetails(int imageId)
+        {
+            try
+            {
+                var data = await _masterService.GetImageDetailAsync(imageId);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "GetDataImageDetails");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+
         }
     }
 }

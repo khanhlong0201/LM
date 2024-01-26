@@ -17,4 +17,8 @@
     <ProjectReference Include="..\LM.Models\LM.Models.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\ImagesBook\" />
+  </ItemGroup>
+
 </Project>

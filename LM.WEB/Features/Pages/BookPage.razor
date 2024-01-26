@@ -1,0 +1,161 @@
+﻿@page "/book"
+@inherits BookController;
+@using Telerik.Blazor.Components;
+@using Telerik.Blazor.Components.Editor;
+
+<TelerikToolBar Class="border-bottom-0">
+    <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/add-new-icon.png" OnClick="@(()=> OnOpenDialogHandler())">Thêm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/remove_grid.png" OnClick="@DeleteDataHandler">Xóa dòng</ToolBarButton>
+</TelerikToolBar>
+<div class="h-table-content" style=" height: calc(100vh - 170px);">
+    <TelerikLoaderContainer OverlayThemeColor="light"
+                            Visible="@(!IsInitialDataLoadComplete)"
+                            Text="@null" Class="grid-initial-data-loader">
+        <Template>
+            <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                           Size="@(ThemeConstants.Loader.Size.Medium)">
+            </TelerikLoader>
+        </Template>
+    </TelerikLoaderContainer>
+
+    <TelerikGrid Data="@ListBooks"
+                 Height="100%"
+                 Width="100%"
+                 RowHeight="25"
+                 Pageable="true"
+                 PageSize="@DefaultConstants.PAGE_SIZE"
+                 Sortable="true"
+                 Resizable="true"
+                 FilterMode="@GridFilterMode.FilterMenu"
+                 SelectionMode="@GridSelectionMode.Multiple"
+                 ScrollMode="@GridScrollMode.Scrollable"
+                 OnRowDoubleClick="@OnRowDoubleClickHandler"
+                 @bind-SelectedItems="@SelectedBooks">
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input" />
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(BookModel.BookId) Aggregate="@GridAggregateType.Count" />
+        </GridAggregates>
+        <GridColumns>
+            <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+           <GridColumn Field=@nameof(BookModel.BookId) Width="130px" MaxResizableWidth="150" Title="Mã sách">
+                <Template>
+                    @{
+                        var model = (context as BookModel);
+                        <span class="h-link" @onclick="@(() => OnOpenDialogHandler(EnumType.Update, model))" title="Xem chi tiết">@model!.BookId</span>
+                    }
+                </Template>
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(BookModel.BookName) Width="270px" Title="Tên sách"></GridColumn>
+            <GridColumn Field=@nameof(BookModel.PublisherName) Width="270px" Title="Tên nhà xuất bản"></GridColumn>
+            <GridColumn Field=@nameof(BookModel.KindBookName) Width="270px" Title="Tên loại sách"></GridColumn>
+            <GridColumn Field=@nameof(BookModel.Description) Width="270px" Title="Miêu tả"></GridColumn>
+        </GridColumns>
+    </TelerikGrid>
+</div>
+
+<HDialog @bind-IsVisible="@IsShowDialog"
+    SaveAndClosed="@(()=> SaveDataHandler())"
+    Width="80%"
+    Title="@(IsCreate ? "Thêm mới phòng" : "Cập nhật phòng")">
+    <EditForm EditContext="@_EditContext">
+        <DataAnnotationsValidator />
+        <div>
+            <HLabel Value="Tên sách:" IsRequired="true" />
+            <TelerikTextBox @bind-Value="@BookUpdate!.BookName" Class="bh-link" Id="txtBookName" />
+            <HValidationTooltip ValidationFor="@(()=> BookUpdate.BookName)" Id="txtBookName" />
+        </div>
+        <div class="mt-2">
+            <div class="row">
+                <div class="col-lg-4 col-sm-12">
+                    <HLabel Value="Đơn giá:" IsRequired="true" />
+                    <TelerikNumericTextBox 
+                        Format="@DefaultConstants.FORMAT_CURRENCY" 
+                        Min="1"
+                        @bind-Value="@BookUpdate.Price" 
+                        Id="numPrice" />
+                    <HValidationTooltip ValidationFor="@(()=> BookUpdate.Price)" Id="numPrice" />
+                </div>
+                <div class="col-lg-4 col-sm-12">
+                    <HLabel Value="Số lượng" IsRequired="true" />
+                    <TelerikNumericTextBox 
+                        Format="@DefaultConstants.FORMAT_CURRENCY" 
+                        Min="1"
+                        @bind-Value="@BookUpdate.Qty"
+                                           Id="numQty" />
+                    <HValidationTooltip ValidationFor="@(()=> BookUpdate.Qty)" Id="numQty" />
+                </div>
+            </div>
+        </div>
+         <div class="mt-2">
+            <div class="row">
+                <div class="col-lg-4 col-sm-12">
+                   <HLabel Value="Loại sách:" IsRequired="true" />
+                    <TelerikComboBox Data="@ListKindBooks"
+                        Value="@BookUpdate.KindBookId"
+                        ValueExpression="@(() => BookUpdate.KindBookId)"
+                        ValueChanged="@((int? value) => BookUpdate.KindBookId = value)"
+                        Placeholder="Chọn loại sách..."
+                        TextField="@nameof(KindBookModel.KindBookName)"
+                        ValueField="@nameof(KindBookModel.KindBookId)"
+                        Filterable="true"
+                        ClearButton="false"
+                        Id="txtKindBookId" Width="100%">
+                    </TelerikComboBox>
+                    <HValidationTooltip ValidationFor="@(()=> BookUpdate.KindBookId)" Id="txtKindBookId" />
+                </div>
+                <div class="col-lg-4 col-sm-12">
+                    <HLabel Value="Nhà xuất bản:" IsRequired="true" />
+                    <TelerikComboBox Data="@ListPublishers"
+                        Value="@BookUpdate.PublisherId"
+                        ValueExpression="@(() => BookUpdate.PublisherId)"
+                        ValueChanged="@((int? value) => BookUpdate.PublisherId = value)"
+                        Placeholder="Chọn nhà xuất bản..."
+                        TextField="@nameof(PublisherModel.PublisherName)"
+                        ValueField="@nameof(PublisherModel.PublisherId)"
+                        Filterable="true"
+                        ClearButton="false"
+                        Id="txtPublisherId" Width="100%">
+                    </TelerikComboBox>
+                     <HValidationTooltip ValidationFor="@(()=> BookUpdate.PublisherId)" Id="txtPublisherId" />
+                </div>
+            </div>
+        </div>
+        <div class="mt-2">
+            <HLabel Value="Chọn hình ảnh:" IsRequired="true" />
+            <InputFile id="ref-upload" multiple OnChange="@OnLoadFileHandler" accept="image/*" />
+        </div>
+
+        @if (ListImages != null && ListImages.Any())
+        {
+            <div class="mt-2" style="display: flex; flex-direction: row; flex-wrap: wrap;">
+                @foreach (var item in ListImages)
+                {
+                    <div>
+                        <img class="img-thumbnail" src="@item.ImageUrl" style="width: 300px; height: 300px; object-fit: cover; border-radius: 3px;" />
+                    </div>
+                }
+            </div>
+        }
+        <div class="mt-2">
+            <HLabel Value="Điền thông tin mô tả:" IsRequired="true" />
+            <TelerikEditor Value="@BookUpdate.Description" 
+                ValueChanged="@((string value) => BookUpdate.Description = value)"
+                ValueExpression="@(() => BookUpdate.Description)"
+                Tools="@EditorToolSets.All"
+                Id="txtDescription"
+                Height="500px">
+            </TelerikEditor>
+            <HValidationTooltip ValidationFor="@(()=> BookUpdate.Description)" Id="txtDescription" />
+        </div>
+
+    </EditForm>
+
+</HDialog>
+
+<HConfirm @ref="@_rDialogs" />

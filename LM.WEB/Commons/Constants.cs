@@ -21,6 +21,8 @@ public static class DefaultConstants
     public const string MESSAGE_NO_CHOSE_DATA = "Không có dòng nào được chọn!";
     public const string MESSAGE_CONFIRM_DELETE = "Bạn có chắc muốn xóa các dòng được chọn?";
     public const string MESSAGE_NO_DATA = "Không tìm thấy dữ liệu. Vui lòng thử lại!";
+
+    public const string FOLDER_BOOK = "ImagesBook";
 }
 
 
@@ -40,4 +42,6 @@ public static class EndpointConstants
 
     public const string URL_MASTERDATA_GET_BOOK = "MasterData/GetBooks";
     public const string URL_MASTERDATA_UPDATE_BOOK = "MasterData/UpdateBook";
+
+    public const string URL_MASTERDATA_GET_IMAGE_DETAILS = "MasterData/GetImageDetails";
 }
