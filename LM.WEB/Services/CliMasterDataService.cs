@@ -25,10 +25,15 @@ public interface ICliMasterDataService
     Task<bool> DeleteDataAsync(string pTableName, string pReasonDelete, string pValue, int pUserId);
     Task<List<PublisherModel>?> GetDataPublishersAsync();
     Task<bool> UpdatePublisherAsync(string pJson, string pAction, int pUserId);
-    Task<List<BookModel>?> GetDataBooksAsync();
+    Task<List<BookModel>?> GetDataBooksAsync(SearchModel pSearch);
     Task<bool> UpdateBookAsync(string pJson, string pAction, int pUserId);
     Task<string> UploadMultiFiles(string link, List<IBrowserFile> lstIBrowserFiles);
     Task<List<ImageDetailModel>?> GetDataImageDetailsAsync(int imageId);
+    Task<List<ReaderModel>?> GetDataReadersAsync();
+    Task<List<BatchModel>?> GetDataBatchsAsync(int batchId);
+    Task<bool> UpdateBatchAsync(string pJson, string pAction, int pUserId);
+    Task<List<SeriesModel>?> GetDataSeriesAsync(int batchId);
+    Task<bool> UpdateSeriesAsync(string pJson, string pJsonDetail, string pAction, int pUserId);
 
 }
 public class CliMasterDataService : CliServiceBase, ICliMasterDataService 
@@ -380,11 +385,11 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
     /// Call API lấy danh sách sách
     /// </summary>
     /// <returns></returns>
-    public async Task<List<BookModel>?> GetDataBooksAsync()
+    public async Task<List<BookModel>?> GetDataBooksAsync(SearchModel pSearch)
     {
         try
         {
-            HttpResponseMessage httpResponse = await GetAsync(EndpointConstants.URL_MASTERDATA_GET_BOOK);
+            HttpResponseMessage httpResponse = await PostAsync(EndpointConstants.URL_MASTERDATA_GET_BOOK, pSearch);
             var checkContent = ValidateJsonContent(httpResponse.Content);
             if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
             else
@@ -576,7 +581,7 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
         {
             Dictionary<string, object> pParams = new Dictionary<string, object>()
             {
-                {"imageId", $"{imageId}"}
+                {"ImageId", $"{imageId}"}
             };
             HttpResponseMessage httpResponse = await GetAsync(EndpointConstants.URL_MASTERDATA_GET_IMAGE_DETAILS, pParams);
             var checkContent = ValidateJsonContent(httpResponse.Content);
@@ -596,9 +601,210 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "GetDataImageDetailsAsync");
+            _toastService.ShowError(ex.Message);
+        }
+        return default;
+    }
+
+    /// <summary>
+    /// Call API lấy danh sách sách đọc giả
+    /// </summary>
+    /// <returns></returns>
+    public async Task<List<ReaderModel>?> GetDataReadersAsync()
+    {
+        try
+        {
+            HttpResponseMessage httpResponse = await GetAsync(EndpointConstants.URL_MASTERDATA_GET_READER);
+            var checkContent = ValidateJsonContent(httpResponse.Content);
+            if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
+            else
+            {
+                var content = await httpResponse.Content.ReadAsStringAsync();
+                if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<List<ReaderModel>>(content);
+                if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
+                    return null;
+                }
+                var oMessage = JsonConvert.DeserializeObject<ResponseModel>(content);
+                _toastService.ShowError($"{oMessage?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
             _logger.LogError(ex, "GetDataBooksAsync");
             _toastService.ShowError(ex.Message);
         }
         return default;
+    }
+
+    /// <summary>
+    /// Call API lấy danh lô sách
+    /// </summary>
+    /// <returns></returns>
+    public async Task<List<BatchModel>?> GetDataBatchsAsync(int bookId)
+    {
+        try
+        {
+            Dictionary<string, object> pParams = new Dictionary<string, object>()
+            {
+                {"BookId", $"{bookId}"}
+            };
+            HttpResponseMessage httpResponse = await GetAsync(EndpointConstants.URL_MASTERDATA_GET_BATCH,pParams);
+            var checkContent = ValidateJsonContent(httpResponse.Content);
+            if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
+            else
+            {
+                var content = await httpResponse.Content.ReadAsStringAsync();
+                if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<List<BatchModel>>(content);
+                if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
+                    return null;
+                }
+                var oMessage = JsonConvert.DeserializeObject<ResponseModel>(content);
+                _toastService.ShowError($"{oMessage?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetDataBatchsAsync");
+            _toastService.ShowError(ex.Message);
+        }
+        return default;
+    }
+
+    /// <summary>
+    /// cập nhật lô sách
+    /// </summary>
+    /// <param name="pJson"></param>
+    /// <param name="pAction"></param>
+    /// <param name="pUserId"></param>
+    /// <returns></returns>
+    public async Task<bool> UpdateBatchAsync(string pJson, string pAction, int pUserId)
+    {
+        try
+        {
+            RequestModel request = new RequestModel
+            {
+                Json = pJson,
+                Type = pAction,
+                UserId = pUserId
+            };
+            //var savedToken = await _localStorage.GetItemAsync<string>("authToken");
+            //_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", savedToken);
+            HttpResponseMessage httpResponse = await PostAsync(EndpointConstants.URL_MASTERDATA_UPDATE_BATCH, request);
+            if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
+                return false;
+            }
+            var checkContent = ValidateJsonContent(httpResponse.Content);
+            if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
+            else
+            {
+                var content = await httpResponse.Content.ReadAsStringAsync();
+                ResponseModel oResponse = JsonConvert.DeserializeObject<ResponseModel>(content)!;
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    string sMessage = pAction == nameof(EnumType.Add) ? DefaultConstants.MESSAGE_INSERT : DefaultConstants.MESSAGE_UPDATE;
+                    _toastService.ShowSuccess($"{sMessage} Sách!");
+                    return true;
+                }
+                _toastService.ShowError($"{oResponse.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "UpdateBatchAsync");
+            _toastService.ShowError(ex.Message);
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Call API lấy danh seri của sách
+    /// </summary>
+    /// <returns></returns>
+    public async Task<List<SeriesModel>?> GetDataSeriesAsync(int batchId)
+    {
+        try
+        {
+            Dictionary<string, object> pParams = new Dictionary<string, object>()
+            {
+                {"BatchId", $"{batchId}"}
+            };
+            HttpResponseMessage httpResponse = await GetAsync(EndpointConstants.URL_MASTERDATA_GET_SERI, pParams);
+            var checkContent = ValidateJsonContent(httpResponse.Content);
+            if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
+            else
+            {
+                var content = await httpResponse.Content.ReadAsStringAsync();
+                if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<List<SeriesModel>>(content);
+                if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
+                    return null;
+                }
+                var oMessage = JsonConvert.DeserializeObject<ResponseModel>(content);
+                _toastService.ShowError($"{oMessage?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetDataSeriesAsync");
+            _toastService.ShowError(ex.Message);
+        }
+        return default;
+    }
+
+    /// <summary>
+    /// cập nhật só seri sách
+    /// </summary>
+    /// <param name="pJson"></param>
+    /// <param name="pAction"></param>
+    /// <param name="pUserId"></param>
+    /// <returns></returns>
+    public async Task<bool> UpdateSeriesAsync(string pJson,string pJsonDetail, string pAction, int pUserId)
+    {
+        try
+        {
+            RequestModel request = new RequestModel
+            {
+                Json = pJson,
+                JsonDetail = pJsonDetail,
+                Type = pAction,
+                UserId = pUserId
+            };
+            //var savedToken = await _localStorage.GetItemAsync<string>("authToken");
+            //_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", savedToken);
+            HttpResponseMessage httpResponse = await PostAsync(EndpointConstants.URL_MASTERDATA_UPDATE_SERI, request);
+            if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
+                return false;
+            }
+            var checkContent = ValidateJsonContent(httpResponse.Content);
+            if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
+            else
+            {
+                var content = await httpResponse.Content.ReadAsStringAsync();
+                ResponseModel oResponse = JsonConvert.DeserializeObject<ResponseModel>(content)!;
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    string sMessage = pAction == nameof(EnumType.Add) ? DefaultConstants.MESSAGE_INSERT : DefaultConstants.MESSAGE_UPDATE;
+                    _toastService.ShowSuccess($"{sMessage} SERI!");
+                    return true;
+                }
+                _toastService.ShowError($"{oResponse.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "UpdateBatchAsync");
+            _toastService.ShowError(ex.Message);
+        }
+        return false;
     }
 }

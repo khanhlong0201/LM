@@ -44,4 +44,13 @@ public static class EndpointConstants
     public const string URL_MASTERDATA_UPDATE_BOOK = "MasterData/UpdateBook";
 
     public const string URL_MASTERDATA_GET_IMAGE_DETAILS = "MasterData/GetImageDetails";
+
+    public const string URL_MASTERDATA_GET_READER = "MasterData/GetReaders";
+    public const string URL_MASTERDATA_UPDATE_READER = "MasterData/UpdateBook";
+
+    public const string URL_MASTERDATA_GET_BATCH = "MasterData/GetBatchs";
+    public const string URL_MASTERDATA_UPDATE_BATCH = "MasterData/UpdateBatch";
+
+    public const string URL_MASTERDATA_GET_SERI = "MasterData/GetSeries";
+    public const string URL_MASTERDATA_UPDATE_SERI = "MasterData/UpdateSeries";
 }

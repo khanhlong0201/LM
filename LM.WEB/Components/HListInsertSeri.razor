@@ -1,0 +1,278 @@
+﻿<div class="h-table-content" style=" height: calc(100vh - 170px);">
+    <TelerikToolBar Class="border-bottom-0">
+        <div class="row row-gap-2 align-items-end mt-1" style="margin: 2px">
+            <div class="col-md-1 col-sm-12">  
+                 <HLabel Value="Nhà xuất bản:" IsRequired="true"/>
+            </div>
+            <div class="col-md-2 col-sm-12">
+                    <TelerikComboBox Value="selectSeried.PublisherId"
+                            ValueChanged="@((int value) => SelectedChangePublisherChanged(value,selectPublisher))"
+                            Data="@listPublishers"
+                            Placeholder="Chọn nhà xuất bản"
+                            TextField="@nameof(PublisherModel.PublisherName)"
+                            ValueField="@nameof(PublisherModel.PublisherId)"
+                            Filterable="true"
+                            ClearButton="false"
+                            Class="btn-noborder-radius-left"
+                            Id="txtBookId" Width="100%">
+                        </TelerikComboBox>   
+            </div>
+             <div class="col-md-1 col-sm-12">  
+                 <HLabel Value="Loại sách:" IsRequired="true"/>
+            </div>
+            <div class="col-md-2 col-sm-12">
+                    <TelerikComboBox Value="selectSeried.KindBookId"
+                            ValueChanged="@((int value) => SelectedChangeKindBookChanged(value,selectKindBook))"
+                            Data="@listKindBooks"
+                            Placeholder="Chọn loại sách"
+                            TextField="@nameof(KindBookModel.KindBookName)"
+                            ValueField="@nameof(KindBookModel.KindBookId)"
+                            Filterable="true"
+                            ClearButton="false"
+                            Class="btn-noborder-radius-left"
+                            Id="txtBookId" Width="100%">
+                        </TelerikComboBox>   
+            </div>
+               <div class="col-md-1 col-sm-12">  
+                 <HLabel Value="Sách" IsRequired="true"/>
+            </div>
+             <div class="col-md-2 col-sm-12">
+                        <TelerikComboBox Value="selectSeried.BookId"
+                                ValueChanged="@((int value) => SelectedChangeBookChanged(value,selectBook))"
+                                Data="@listBooks"
+                                Placeholder="Chọn sách - năm xuất bản"
+                                TextField="@nameof(BookModel.Name)"
+                                ValueField="@nameof(BookModel.BookId)"
+                                Filterable="true"
+                                ClearButton="false"
+                                Class="btn-noborder-radius-left"
+                                Id="txtBookId" Width="100%">
+                            </TelerikComboBox>   
+                </div>
+                <div class="col-md-1 col-sm-12">  
+                     <HLabel Value="Nhập số seri:" IsRequired="true"/>
+                </div>
+                <div class="col-md-2 col-sm-12">
+                        <TelerikComboBox Value="selectSeried.BatchId"     
+                                 ValueChanged="@((int value) => SelectedChangeBatchChanged(value,selectBatch))"
+                                Data="@listBatchs"
+                                Placeholder="Chọn số lô"
+                                TextField="@nameof(BatchModel.Name)"
+                                ValueField="@nameof(BatchModel.BatchId)"
+                                Filterable="true"
+                                ClearButton="false"
+                                Class="btn-noborder-radius-left"
+                                Id="txtBookId" Width="100%">
+                            </TelerikComboBox>   
+                </div>
+        </div>
+         <div class="row row-gap-2 align-items-end mt-1" style="margin: 6px">
+            <div class="col-md-4 col-sm-12"/>  
+             <div class="col-md-2 col-sm-12" style="color: red">  
+                 <HLabel Value="Số lượng sách phải nhập số seri:" />
+            </div>
+             <div class="col-md-2 col-sm-12">  
+                 <TelerikNumericTextBox Enabled="false" Min="500"  Step="500" Format="@DefaultConstants.FORMAT_CURRENCY" @bind-Value="@selectBatch.Qty" Class="bh-link"  Id="txtQty" />
+            </div>
+        </div>
+    </TelerikToolBar>
+    <TelerikGrid Data="@ListSelectReturn"
+                    @ref="@grid"
+                    Height="80%"
+                    Width="100%"
+                    RowHeight="25"
+                    Pageable="true"
+                    PageSize="@DefaultConstants.PAGE_SIZE"
+                    Sortable="true"
+                    Resizable="true"
+                    FilterMode="@GridFilterMode.FilterMenu"
+                    SelectionMode="@GridSelectionMode.Multiple"
+                    ScrollMode="@GridScrollMode.Scrollable"
+                    >
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input" />
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(SeriesModel.SeriesCode) Aggregate="@GridAggregateType.Count" />
+        </GridAggregates>
+        <GridColumns>
+            <GridColumn Field=@nameof(SeriesModel.STT) Width="140px" Title="STT" ></GridColumn>
+            <GridColumn Field=@nameof(SeriesModel.SeriesCode) Width="130px" MaxResizableWidth="150" Title="Số seri">
+                <Template>
+                   <TelerikTextBox @bind-Value="@((context as SeriesModel).SeriesCode)" Class="bh-link"  />
+                </Template>
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(SeriesModel.BatchId) Width="140px" Title="Số lô" ></GridColumn>
+            <GridColumn Field=@nameof(SeriesModel.BookName) Width="140px" Title="Tên sách - NXB" ></GridColumn>
+            <GridColumn Field=@nameof(SeriesModel.KindBookName) Width="140px" Title="Loại sách" ></GridColumn>
+            <GridColumn Field=@nameof(SeriesModel.PublisherName) Width="140px" Title="Nhà xuất bản" ></GridColumn>
+        </GridColumns>
+    </TelerikGrid>
+</div>
+<HConfirm @ref="@_rDialogs" />
+
+@code{
+    [Inject] private ToastService? _toastService { get; init; }
+    [Inject] private ILogger<BatchController>? _logger { get; init; }
+    [Inject] private IProgressService? _progressService { get; init; }
+    [Inject] private ICliMasterDataService? _masterDataService { get; init; }
+
+    //List<SeriesModel> ListSelectReturn { get; set; } = new List<SeriesModel>();
+    [Parameter]
+    public List<SeriesModel> ListSelectReturn { get; set; }
+
+    [Parameter]
+    public EventCallback<List<SeriesModel>> ListSelectReturnChanged { get; set; }
+    TelerikGrid<SeriesModel>? grid;
+
+    public HConfirm? _rDialogs { get; set; }
+
+    SeriesModel selectSeried { get; set; } = new SeriesModel();
+
+    List<BookModel> listBooks { get; set; } = new List<BookModel>();
+    List<BatchModel> listBatchs { get; set; } = new List<BatchModel>();
+    BatchModel selectBatch { get; set; } = new BatchModel();
+    PublisherModel selectPublisher { get; set; } = new PublisherModel();
+    KindBookModel selectKindBook { get; set; } = new KindBookModel();
+    BookModel selectBook { get; set; } = new BookModel();
+
+    List<KindBookModel> listKindBooks { get; set; } = new List<KindBookModel>();
+    List<PublisherModel> listPublishers { get; set; } = new List<PublisherModel>();
+    SearchModel ItemFilter { get; set; } = new SearchModel();
+
+    /// <summary>
+    /// chọn số lô tạo ra sẵn sống dòng theo số lượng trong lô
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="batch"></param>
+    async void SelectedChangeBatchChanged(int value,BatchModel batch)
+    {
+        try
+        {
+            if (batch == null) return;
+            selectBatch = new BatchModel();
+            selectBatch = listBatchs.Where(d => d.BatchId == value).First();
+            selectSeried.BatchId = selectBatch.BatchId;
+            ListSelectReturn = new List<SeriesModel>();
+            for(int i=1; i <= selectBatch.Qty; i++)
+            {
+                SeriesModel item = new SeriesModel();
+                item.STT = i;
+                item.BatchId = selectBatch.BatchId;
+                item.PublisherName = selectPublisher.PublisherName;
+                item.KindBookName = selectKindBook.KindBookName;
+                item.BookName = selectBook.Name;
+                ListSelectReturn.Add(item);
+            }
+            grid?.Rebind();
+            await ListSelectReturnChanged.InvokeAsync(ListSelectReturn);
+            await InvokeAsync(StateHasChanged);        
+        }catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="batch"></param>
+    async void SelectedChangePublisherChanged(int value, PublisherModel publisher)
+    {
+        try
+        {
+            selectPublisher = listPublishers.Where(d => d.PublisherId == value).First();
+            selectSeried.PublisherId = value;
+            ItemFilter.PublisherId = value;
+            listBooks = await _masterDataService.GetDataBooksAsync(ItemFilter);
+            await InvokeAsync(StateHasChanged);        
+        }catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="batch"></param>
+    async void SelectedChangeKindBookChanged(int value,KindBookModel kindBook)
+    {
+        try
+        {
+            selectKindBook = listKindBooks.Where(d => d.KindBookId == value).First();
+            selectSeried.KindBookId = value;
+            ItemFilter.KindBookId = value;
+            listBooks = await _masterDataService.GetDataBooksAsync(ItemFilter);
+            await InvokeAsync(StateHasChanged);        
+        }catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="batch"></param>
+     async void SelectedChangeBookChanged(int value,BookModel book)
+    {
+        try
+        {
+            selectBook = listBooks.Where(d => d.BookId == value).First();
+            selectSeried.BookId = value;
+            ItemFilter.BookId = value;
+            listBatchs = await _masterDataService.GetDataBatchsAsync(ItemFilter.BookId);
+            await InvokeAsync(StateHasChanged);        
+        }catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    private async Task getDataCombo()
+    {
+        listKindBooks = new List<KindBookModel>();
+        listPublishers = new List<PublisherModel>();
+        listKindBooks = await _masterDataService!.GetDataKindBooksAsync();
+        listPublishers = await _masterDataService!.GetDataPublishersAsync();
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await base.OnInitializedAsync();
+            
+        }
+        catch (Exception ex)
+        {
+            _logger!.LogError(ex, "OnInitializedAsync");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if (firstRender)
+        {
+            try
+            {
+                await _progressService!.SetPercent(0.4);
+                await getDataCombo();
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "OnAfterRenderAsync");
+                _toastService.ShowError(ex.Message);
+            }
+            finally
+            {
+                await _progressService!.Done();
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+}

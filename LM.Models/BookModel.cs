@@ -18,6 +18,8 @@ public class BookModel : Auditable
     public string PublisherName { get; set; }
     public string KindBookName { get; set; }
     public string FilePath { get; set; }
+    public int?  PublishingYear { get; set; } // năm xuất bản
     public List<ImageDetailModel>? ListFile { get; set; }
+    public string Name { get; set; }
 }
 

@@ -74,10 +74,11 @@ public class SearchModel
     public DateTime? ToDate { get; set; }
     public string? StatusId { get; set; }
     public bool IsAdmin { get; set; }
-    public int IdDraftDetail { get; set; }
-    public string? BranchId { get; set; }
     public string? Type { get; set; }
-    public string? CusNo { get; set; }
+    public int KindBookId { get; set; }
+    public int PublisherId { get; set; }
+    public int BookId { get; set; }
+    public int BatchId { get; set; }
 }
 
 public enum EnumType
@@ -95,7 +96,10 @@ public enum EnumTable
     @Users,
     @KindBooks,
     @Publishers,
-    @Books
+    @Books,
+    @Readers,
+    @Batchs,
+    @Series,
 }
 
 public enum DocStatus

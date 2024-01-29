@@ -8,7 +8,7 @@ public class BorrowingModel : Auditable
     public DateTime BorrowDate { get; set; }
     public DateTime DueDate { get; set; }
     public DateTime? ReturnDate { get; set; }
-    public decimal FineAmount { get; set; }
+    public decimal TotalFine { get; set; }
     public int UserId { get; set; }
     public int BookId { get; set; }
 }

@@ -32,6 +32,7 @@ public class BookController : LMControllerBase
     public List<PublisherModel>? ListPublishers { get; set; }
     public List<IBrowserFile> ListBrowserFiles { get; set; } = new();   // Danh sách file lưu tạm => Upload file
     public List<ImageDetailModel> ListImages = new List<ImageDetailModel>();
+    public SearchModel ItemFilter { get; set; } = new SearchModel();
     #endregion
 
     #region Override Functions
@@ -84,7 +85,7 @@ public class BookController : LMControllerBase
     {
         ListBooks = new List<BookModel>();
         SelectedBooks = new List<BookModel>();
-        ListBooks = await _masterDataService!.GetDataBooksAsync();
+        ListBooks = await _masterDataService!.GetDataBooksAsync(ItemFilter);
     }
 
     private async Task getDataCombo()
@@ -168,8 +169,7 @@ public class BookController : LMControllerBase
                 BookUpdate.BookName = pItemDetails!.BookName;
                 BookUpdate.Language = pItemDetails!.Language;
                 BookUpdate.NumOfPage = pItemDetails!.NumOfPage;
-                BookUpdate.Price = pItemDetails!.Price;
-                BookUpdate.Qty = pItemDetails!.Qty;
+                BookUpdate.PublishingYear = pItemDetails!.PublishingYear;
                 BookUpdate.FilePath = pItemDetails!.FilePath;
                 BookUpdate.ImageId = pItemDetails!.ImageId;
                 BookUpdate.PublisherId = pItemDetails!.PublisherId;
@@ -269,7 +269,7 @@ public class BookController : LMControllerBase
             var checkData = _EditContext!.Validate();
             if (!checkData) return;
 
-            if(BookUpdate !=null && BookUpdate.PublisherId + "" == "")
+            if (BookUpdate != null && BookUpdate.PublisherId + "" == "")
             {
                 _toastService.ShowWarning("Bạn phải chọn nhà xuất bản !");
                 return;
@@ -282,6 +282,11 @@ public class BookController : LMControllerBase
             if (BookUpdate.Description + "" == "")
             {
                 _toastService.ShowWarning("Bạn phải chọn miêu tả !");
+                return;
+            }
+            if (BookUpdate.PublishingYear == 0 )
+            {
+                _toastService.ShowWarning("Bạn phải nhập năm xuất bản !");
                 return;
             }
             await ShowLoader();
@@ -332,7 +337,7 @@ public class BookController : LMControllerBase
             }
 
             await getDataBooks();
-                IsShowDialog = false;
+            IsShowDialog = false;
         }
         catch (Exception ex)
         {
@@ -351,7 +356,7 @@ public class BookController : LMControllerBase
     {
         try
         {
-            if(SelectedBooks == null || !SelectedBooks.Any())
+            if (SelectedBooks == null || !SelectedBooks.Any())
             {
                 ShowWarning(DefaultConstants.MESSAGE_NO_CHOSE_DATA);
                 return;
@@ -359,8 +364,8 @@ public class BookController : LMControllerBase
             var confirm = await _rDialogs!.ConfirmAsync($" {DefaultConstants.MESSAGE_CONFIRM_DELETE} ");
             if (!confirm) return;
             await ShowLoader();
-            bool isSuccess = await _masterDataService!.DeleteDataAsync(nameof(EnumTable.Books), "", string.Join(",", SelectedBooks.Select(m=>m.BookId)), pUserId);
-            if(isSuccess)
+            bool isSuccess = await _masterDataService!.DeleteDataAsync(nameof(EnumTable.Books), "", string.Join(",", SelectedBooks.Select(m => m.BookId)), pUserId);
+            if (isSuccess)
             {
                 await getDataBooks();
             }

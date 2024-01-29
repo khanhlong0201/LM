@@ -260,13 +260,13 @@ namespace LM.API.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("GetBooks")]
-        public async Task<IActionResult> GetDataBooks()
+        public async Task<IActionResult> GetDataBooks([FromBody] SearchModel pSearchData)
         {
             try
             {
-                var data = await _masterService.GetBooksAsync();
+                var data = await _masterService.GetBooksAsync(pSearchData);
                 return Ok(data);
             }
             catch (Exception ex)
@@ -371,6 +371,121 @@ namespace LM.API.Controllers
                 });
             }
 
+        }
+
+        [HttpGet]
+        [Route("GetReaders")]
+        public async Task<IActionResult> GetDataReaders()
+        {
+            try
+            {
+                var data = await _masterService.GetReadersAsync();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "GetDataReaders");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+
+        }
+        [HttpGet]
+        [Route("GetBatchs")]
+        public async Task<IActionResult> GetDataBatchs(int bookId)
+        {
+            try
+            {
+                var data = await _masterService.GetBatchsAsync(bookId);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "GetDataBatchs");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+
+        }
+
+        [HttpPost]
+        [Route("UpdateBatch")]
+        public async Task<IActionResult> UpdateBatch([FromBody] RequestModel request)
+        {
+            try
+            {
+                var response = await _masterService.UpdateBatchs(request);
+                if (response == null || response.StatusCode != 0) return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = response?.Message ?? "Vui lòng liên hệ IT để được hổ trợ."
+                });
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "UpdateBatch");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+
+            }
+        }
+
+        [HttpGet]
+        [Route("GetSeries")]
+        public async Task<IActionResult> GetDataSeries(int batchId)
+        {
+            try
+            {
+                var data = await _masterService.GetSeriesAsync(batchId);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "GetDataSeries");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+
+        }
+
+        [HttpPost]
+        [Route("UpdateSeries")]
+        public async Task<IActionResult> UpdateSeries([FromBody] RequestModel request)
+        {
+            try
+            {
+                var response = await _masterService.UpdateSeries(request);
+
+                if (response == null || response.StatusCode != 0) return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = response?.Message ?? "Vui lòng liên hệ IT để được hổ trợ."
+                });
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DocumentController", "UpdateSalesOrder");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+
+            }
         }
     }
 }

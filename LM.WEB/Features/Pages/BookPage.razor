@@ -51,9 +51,12 @@
                     Số dòng: @context.Count
                 </FooterTemplate>
             </GridColumn>
-            <GridColumn Field=@nameof(BookModel.BookName) Width="270px" Title="Tên sách"></GridColumn>
-            <GridColumn Field=@nameof(BookModel.PublisherName) Width="270px" Title="Tên nhà xuất bản"></GridColumn>
-            <GridColumn Field=@nameof(BookModel.KindBookName) Width="270px" Title="Tên loại sách"></GridColumn>
+            <GridColumn Field=@nameof(BookModel.PublisherName) Width="150px" Title="Tên nhà xuất bản"></GridColumn>
+            <GridColumn Field=@nameof(BookModel.KindBookName) Width="150px" Title="Tên loại sách"></GridColumn>
+            <GridColumn Field=@nameof(BookModel.BookName) Width="150px" Title="Tên sách"></GridColumn>
+            <GridColumn Field=@nameof(BookModel.PublishingYear) Width="150px" Title="Năm xuất bản"></GridColumn>
+            <GridColumn Field=@nameof(BookModel.Qty) Width="150px" Title="Tổng số lượng" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY"></GridColumn>
+            <GridColumn Field=@nameof(BookModel.Price) Width="150px" Title="Đơn giá/sách" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY"></GridColumn>
             <GridColumn Field=@nameof(BookModel.Description) Width="270px" Title="Miêu tả"></GridColumn>
         </GridColumns>
     </TelerikGrid>
@@ -62,7 +65,7 @@
 <HDialog @bind-IsVisible="@IsShowDialog"
     SaveAndClosed="@(()=> SaveDataHandler())"
     Width="80%"
-    Title="@(IsCreate ? "Thêm mới phòng" : "Cập nhật phòng")">
+    Title="@(IsCreate ? "Thêm mới sách" : "Cập nhật sách")">
     <EditForm EditContext="@_EditContext">
         <DataAnnotationsValidator />
         <div>
@@ -73,22 +76,12 @@
         <div class="mt-2">
             <div class="row">
                 <div class="col-lg-4 col-sm-12">
-                    <HLabel Value="Đơn giá:" IsRequired="true" />
+                    <HLabel Value="Năm xuất bản:" IsRequired="true" />
                     <TelerikNumericTextBox 
-                        Format="@DefaultConstants.FORMAT_CURRENCY" 
-                        Min="1"
-                        @bind-Value="@BookUpdate.Price" 
-                        Id="numPrice" />
-                    <HValidationTooltip ValidationFor="@(()=> BookUpdate.Price)" Id="numPrice" />
-                </div>
-                <div class="col-lg-4 col-sm-12">
-                    <HLabel Value="Số lượng" IsRequired="true" />
-                    <TelerikNumericTextBox 
-                        Format="@DefaultConstants.FORMAT_CURRENCY" 
-                        Min="1"
-                        @bind-Value="@BookUpdate.Qty"
-                                           Id="numQty" />
-                    <HValidationTooltip ValidationFor="@(()=> BookUpdate.Qty)" Id="numQty" />
+                        Min="1800"
+                        @bind-Value="@BookUpdate.PublishingYear" 
+                        Id="numPublishingYear" />
+                    <HValidationTooltip ValidationFor="@(()=> BookUpdate.PublishingYear)" Id="numPublishingYear" />
                 </div>
             </div>
         </div>
