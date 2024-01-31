@@ -1,0 +1,84 @@
+﻿@inject IConfiguration _configuration;
+@inject IJSRuntime _jsRuntime;
+
+<TelerikCard class="bh-item__hover mt-3" Width="100%">
+    <div class="row mb-1">
+        <div class="col-lg-6 col-md-6 col-sm-12">
+            <CardImage Height="140px" Width="100%" Src="@($"{ImageUrlBook}")" Class="bhimage-cover"></CardImage>
+            @if(ListImages != null && ListImages.Any())
+            {
+                <div class="d-flex justify-content-between" style="width: 100%; margin-top: 2px;">
+                    @for (int i = 0; i < ListImages.Count(); i++)
+                    {
+                        if(i<3)
+                        {
+                            <CardImage Height="100px" Width="33%" Src="@($"{ListImages[i]}")" Class="bhimage-cover"></CardImage>
+                        }
+                    }
+                </div>
+            }
+            
+        </div>
+        <div class="col-lg-6 col-md-6 col-sm-12">
+            <CardBody>
+                <Telerik.Blazor.Components.CardTitle Class="bh-hover"><a href="@($"/chi-tiet?key={BookId}")">@Title</a></Telerik.Blazor.Components.CardTitle>
+                <div class="">
+                    <Telerik.Blazor.Components.CardTitle Class="k-button-flat-primary">@Price /Quyển</Telerik.Blazor.Components.CardTitle>
+                    <CardSubTitle>Diện tích: @Size</CardSubTitle>
+                    <CardSubTitle><i class="fa-solid fa-location-dot" style="margin-right: 5px;"></i>@Name</CardSubTitle>
+                </div>
+                <CardSubTitle Class="bh-subtitle-bhouseIndex">
+                    @((MarkupString)$"{Description}")
+                </CardSubTitle>
+            </CardBody>
+        </div>
+    </div>
+    <CardSeparator></CardSeparator>
+    <div class="k-card-actions k-card-actions-horizontal justify-content-between">
+        <div class="bh-font-size-sm d-flex justify-content-end align-items-center">
+            <div>
+                <img src="https://cdn-icons-png.flaticon.com/128/12597/12597109.png" style="height: 24px; width: 24px; border-radius: 50%;" alt="">
+            </div>
+            <div style="margin-left: 5px;">
+                <p class="mb-0">@FullName</p>
+                <p class="mb-0">
+                    @("Đăng tin ")
+                    @((DateTime.Now - CreateDate).Days / 365 > 0 ?
+                        (DateTime.Now - CreateDate).Days / 365 + " năm trước" :
+                        (DateTime.Now - CreateDate).Days / 30 > 0 ?
+                        (DateTime.Now - CreateDate).Days / 30 + " tháng trước" :
+                        (DateTime.Now - CreateDate).Days / 7 > 0 ?
+                        (DateTime.Now - CreateDate).Days / 7 + " tuần trước" :
+                        (DateTime.Now - CreateDate).Days > 0 ?
+                        (DateTime.Now - CreateDate).Days + " ngày trước" :
+                        (DateTime.Now - CreateDate).Hours + (DateTime.Now - CreateDate).Days * 24 > 0 ?
+                        (DateTime.Now - CreateDate).Hours + (DateTime.Now - CreateDate).Days * 24 + " giờ trước" :
+                        (DateTime.Now - CreateDate).Minutes + (DateTime.Now - CreateDate).Days * 24 * 60 > 0 ?
+                        (DateTime.Now - CreateDate).Minutes + (DateTime.Now - CreateDate).Days * 24 * 60 + " phút trước" :
+                        (DateTime.Now - CreateDate).Seconds + (DateTime.Now - CreateDate).Days * 24 * 60 * 60 > 0 ?
+                        (DateTime.Now - CreateDate).Seconds + (DateTime.Now - CreateDate).Days * 24 * 60 * 60 + " giây trước" : ""
+                        )
+                </p>
+            </div>
+        </div>
+        <div>
+            <TelerikButton ThemeColor="@(ThemeConstants.Button.ThemeColor.Primary)"><a href="@($"tel:{@Contact}")" target="_blank" style="color: white">Liên hệ: @Contact</a></TelerikButton>
+            <TelerikButton ThemeColor="@(ThemeConstants.Button.ThemeColor.Base)"><i class="fa-regular fa-heart"></i></TelerikButton>
+        </div>
+    </div>
+</TelerikCard>
+
+@code {
+    [Parameter] public List<string>? ListImages { get; set; } // ds ảnh
+    [Parameter] public string FullName { get; set; } = ""; // Tên người đăng tin
+    [Parameter] public string CreateTime { get; set; } = ""; // chuỗi đăng tin...
+    [Parameter] public string? Title { get; set; } // title
+    [Parameter] public string? Description { get; set; } // mô tả về sách
+    [Parameter] public string? Price { get; set; } // số tiền
+    [Parameter] public string? Size { get; set; } // Kích thước
+    [Parameter] public string? Contact { get; set; } = "070-499.0471";// liên hệ
+    [Parameter] public string? ImageUrlBook { get; set; } = "./images/img-default.png";
+    [Parameter] public int BookId { get; set; }
+    [Parameter] public DateTime CreateDate { get; set; }
+    [Parameter] public string? Name { get; set; } // mô tả về sách
+}

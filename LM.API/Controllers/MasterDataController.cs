@@ -487,5 +487,26 @@ namespace LM.API.Controllers
 
             }
         }
+
+        [HttpPost]
+        [Route("GetBookClients")]
+        public async Task<IActionResult> GetDataBookClients([FromBody] SearchModel pSearchData)
+        {
+            try
+            {
+                var data = await _masterService.GetBookClientsAsync(pSearchData);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "GetDataBooks");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+
+        }
     }
 }

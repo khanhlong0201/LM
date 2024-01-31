@@ -34,6 +34,8 @@ public interface ICliMasterDataService
     Task<bool> UpdateBatchAsync(string pJson, string pAction, int pUserId);
     Task<List<SeriesModel>?> GetDataSeriesAsync(int batchId);
     Task<bool> UpdateSeriesAsync(string pJson, string pJsonDetail, string pAction, int pUserId);
+    Task<List<CliBookModel>?> GetDataBookClientsAsync(SearchModel pSearch);
+    Task<BorrowingModel> GetDataBookDetailClientsAsync(int bookId);
 
 }
 public class CliMasterDataService : CliServiceBase, ICliMasterDataService 
@@ -806,5 +808,73 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
             _toastService.ShowError(ex.Message);
         }
         return false;
+    }
+
+    /// <summary>
+    /// Call API lấy danh sách sách hiển thị ở client
+    /// </summary>
+    /// <returns></returns>
+    public async Task<List<CliBookModel>?> GetDataBookClientsAsync(SearchModel pSearch)
+    {
+        try
+        {
+            HttpResponseMessage httpResponse = await PostAsync(EndpointConstants.URL_MASTERDATA_GET_BOOK_CLIENT, pSearch);
+            var checkContent = ValidateJsonContent(httpResponse.Content);
+            if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
+            else
+            {
+                var content = await httpResponse.Content.ReadAsStringAsync();
+                if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<List<CliBookModel>>(content);
+                if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
+                    return null;
+                }
+                var oMessage = JsonConvert.DeserializeObject<ResponseModel>(content);
+                _toastService.ShowError($"{oMessage?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetDataBooksAsync");
+            _toastService.ShowError(ex.Message);
+        }
+        return default;
+    }
+
+    /// <summary>
+    /// Call API lấy danh seri chi tiết sach
+    /// </summary>
+    /// <returns></returns>
+    public async Task<BorrowingModel> GetDataBookDetailClientsAsync(int bookId)
+    {
+        try
+        {
+            Dictionary<string, object> pParams = new Dictionary<string, object>()
+            {
+                {"bookId", $"{bookId}"}
+            };
+            HttpResponseMessage httpResponse = await GetAsync(EndpointConstants.URL_MASTERDATA_GET_BOOK_DETAIL_CLIENT, pParams);
+            var checkContent = ValidateJsonContent(httpResponse.Content);
+            if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
+            else
+            {
+                var content = await httpResponse.Content.ReadAsStringAsync();
+                if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<BorrowingModel>(content);
+                if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
+                    return null;
+                }
+                var oMessage = JsonConvert.DeserializeObject<ResponseModel>(content);
+                _toastService.ShowError($"{oMessage?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetDataSeriesAsync");
+            _toastService.ShowError(ex.Message);
+        }
+        return default;
     }
 }

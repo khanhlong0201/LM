@@ -1,0 +1,248 @@
+﻿@inherits LayoutComponentBase
+<style>
+   
+
+* {
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: none;
+  text-decoration: none;
+  font-family: "Poppins", sans-serif;
+}
+
+i::before {
+  font-family: "Font Awesome 6 Free";
+}
+
+html {
+  font-size: 62.5%;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  scroll-padding-top: 9rem;
+}
+
+html::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+html::-webkit-scrollbar-track {
+  background: rgba(36, 34, 34, 0.7);
+}
+
+html::-webkit-scrollbar-thumb {
+  background: #719ca3;
+  border-radius: 5rem;
+}
+
+body {
+  font-size: 1.3rem;
+  color: #0d0c22;
+  font-weight: normal;
+  overflow-x: hidden;
+}
+
+</style>
+<BHLoading />
+<Blazored.Toast.BlazoredToasts Position="ToastPosition.BottomRight"
+                               Timeout="5"
+                               IconType="IconType.FontAwesome"
+                               ErrorIcon="fas fa-times"
+                               InfoIcon="fas fa-info"
+                               SuccessIcon="fas fa-check"
+                               WarningIcon="fas fa-exclamation"
+                               ShowProgressBar="@true"
+                               ShowCloseButton="@true">
+    <CloseButtonContent>
+        <div>
+            <span>&times;</span>
+        </div>
+    </CloseButtonContent>
+</Blazored.Toast.BlazoredToasts>
+<TelerikRootComponent>
+    <!-- Header -->
+    <div id="header">
+        <div class="header-wrapper">
+            <div class="h-top-bar h-flex-box">
+                <div class="h-top-bar__left">Đặt sách thư viện Duy Khánh</div>
+                <div class="h-top-bar__right h-flex-box">
+                    <div>
+                        <i class="fa-regular fa-heart"></i>
+                        <span style="margin-left: 2.5px">Yêu thích</span>
+                    </div>
+                    <div>
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span style="margin-left: 2.5px"><a href="/client/register">Đăng kí</a></span>
+                    </div>
+                    @if(@FullName + "" == "")
+                    {
+                        <div>
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                            <span style="margin-left: 2.5px"><a href="/client/login">Đăng nhập</a></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div>
+                            <i class="c"></i>
+                            <span style="margin-left: 2.5px"><a href="/client/logout">Đăng xuất</a></span>
+                        </div>
+                    }
+                     <div>
+                        <span style="margin-left: 2.5px" @onclick="@NavigatoEncrypt">@FullName</span>
+                    </div>
+                </div>
+            </div>
+
+            <section class="h-header-main h-flex-box">
+                <div class="h-header-main__left">
+                    <a href="#">
+                        <img class="h-logo" src="./images/logo_1.png" />
+                    </a>
+                    <nav class="h-navbar @(IsActive ? "active": "")">
+                        <a href="trang-chu">Trang chủ</a>
+                        @*<a href="#">Bảng giá dịch vụ</a>
+                        <a href="#">Tìm phòng trọ</a>*@
+                        <a href="/news">Tin tức</a>
+                    </nav>
+                </div>
+                <a onclick="@OnClickShowSearch" style="cursor: pointer" class="h-header-main__booking">Tra cứu</a>
+                <!-- <BiMenu id="menu-btn" /> -->
+                <i id="menu-btn" class="fa-solid fa-bars" @onclick="@ActiveMenuHander"></i>
+            </section>
+        </div>
+    </div>
+    <!-- Header -->
+    <!-- Body -->
+    <CascadingValue Value="@UserId" Name="pUserId">
+        @Body
+    </CascadingValue>
+    <!-- Body -->
+    <!-- Map -->
+    <div id="h-contact">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.835923091856!2d106.6894111140712!3d10.82386546127772!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x317528f1b76f9fed%3A0x4c73436d7210e287!2zNDk3IMSQLiBQaGFuIFbEg24gVHLhu4ssIFBoxrDhu51uZyA1LCBHw7IgVuG6pXAsIFRow6BuaCBwaOG7kSBI4buTIENow60gTWluaCwgVmnhu4d0IE5hbQ!5e0!3m2!1svi!2s!4v1678725544760!5m2!1svi!2s" width="100%" height="450px" allowfullscreen="" aria-hidden="false" tabindex="0"></iframe>
+    </div>
+    <!-- Map -->
+    <!-- Footre -->
+    <div id="h-footer">
+        <div class="h-wrapper">
+            <section class="h-footer">
+                <div class="box-container">
+                    <div class="content--info">
+
+                    </div>
+                </div>
+                <div class="box-container">
+                    <div class="box">
+                        <a href="#">
+                            <img class="h-logo" src="./images/logoclient.jpg" />
+                        </a>
+                        <p style="margin-bottom: 0px;">Đặt lịch online</p>
+                        <div class="share" style="padding-top: 0px;">
+                            <a href="#">
+                                <i class="fa-brands fa-facebook"></i>
+                            </a>
+                            <a href="#">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="#">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            <a href="#">
+                                <i class="fab fa-linkedin"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="box">
+                        <h3>DỊCH VỤ CỦA CHÚNG TÔI</h3>
+                        <a href="#home" class="links">
+                            <i class="fas fa-arrow-right"></i>
+                            <span>Báo giá & hổ trợ</span>
+                        </a>
+                        <a href="#about" class="links">
+                            <i class="fas fa-arrow-right"></i>
+                            <span>Câu hỏi thường gặp</span>
+                        </a>
+                        <a href="#destination" class="links">
+                            <i class="fas fa-arrow-right"></i>
+                            <span>Góp ý báo lỗi</span>
+                        </a>
+                        <a href="#gallery" class="links">
+                            <i class="fas fa-arrow-right"></i>
+                            <span>Sitemap</span>
+                        </a>
+                    </div>
+                    <div class="box contact">
+                        <h3>CÔNG TY CỔ PHẦN PROPERTYGURU VIỆT NAM</h3>
+                        <p>
+                            <i class="fas fa-phone"></i>
+                            <span>+035-786-6848</span>
+                        </p>
+                        <p>
+                            <i class="fas fa-map"></i>
+                            <span>Quận 12, TP. Hồ Chí Minh</span>
+                        </p>
+                        <p>
+                            <i class="fas fa-envelope"></i>
+                            <span>chamsockhachhangf@gmail.com</span>
+                        </p>
+                        <p>
+                            <i class="fa-solid fa-headphones"></i>
+                            <span>hotrokhachangf@gmail.com</span>
+                        </p>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <div class="credit">
+            Created By
+            <span>Mr. Duy Khánh</span>| All Rights Reserved.
+        </div>
+    </div>
+    <!-- Footer -->
+</TelerikRootComponent>
+<!-- Boarding House -->
+<HDialog @bind-IsVisible="@IsShowBookingHistory"
+    Width="80%"
+    IsShowButtons= "false"
+    Title="Tra cứu lịch sử đặt sách">
+    @*<ItemBHouseBookingHistory></ItemBHouseBookingHistory>*@
+    
+</HDialog>
+
+@code{
+    public class CarouselModel
+    {
+        public string Url { get; set; } = string.Empty;
+    }
+    public List<CarouselModel> CarouselData { get; set; } = new List<CarouselModel>()
+        {
+            new CarouselModel() { Url = @"https://lighthouse.chotot.com/_next/image?url=https%3A%2F%2Fcdn.chotot.com%2Fadmincentre%2FICGqIPhBAn559vSI4v7jaBAYFYegeRG7xSfUJ6tkugI%2Fpreset%3Araw%2Fplain%2F6ec3994f81e14d768dfc467847ce430c-2820195948173896828.jpg&w=1080&q=90"},
+            new CarouselModel() { Url = @"https://lighthouse.chotot.com/_next/image?url=https%3A%2F%2Fcdn.chotot.com%2Fadmincentre%2FICGqIPhBAn559vSI4v7jaBAYFYegeRG7xSfUJ6tkugI%2Fpreset%3Araw%2Fplain%2F6ec3994f81e14d768dfc467847ce430c-2820195948173896828.jpg&w=1080&q=90"},
+            new CarouselModel() { Url = @"https://lighthouse.chotot.com/_next/image?url=https%3A%2F%2Fcdn.chotot.com%2Fadmincentre%2FICGqIPhBAn559vSI4v7jaBAYFYegeRG7xSfUJ6tkugI%2Fpreset%3Araw%2Fplain%2F6ec3994f81e14d768dfc467847ce430c-2820195948173896828.jpg&w=1080&q=90"},
+            new CarouselModel() { Url = @"https://lighthouse.chotot.com/_next/image?url=https%3A%2F%2Fcdn.chotot.com%2Fadmincentre%2FICGqIPhBAn559vSI4v7jaBAYFYegeRG7xSfUJ6tkugI%2Fpreset%3Araw%2Fplain%2F6ec3994f81e14d768dfc467847ce430c-2820195948173896828.jpg&w=1080&q=90"},
+        };
+
+    public int Page { get; set; } = 3;
+    public int PageSize { get; set; } = 4;
+    public int TotalCount { get; set; } = 50;
+
+    public string binding { get; set; } = "";
+
+    public bool IsActive = false;
+    public bool IsShowBookingHistory { get; set; } = false;
+
+    protected void ActiveMenuHander()
+    {
+        IsActive = !IsActive;
+        StateHasChanged();
+    }
+    protected void OnClickShowSearch()
+    {
+        IsShowBookingHistory = true;
+        StateHasChanged();
+    }
+
+}

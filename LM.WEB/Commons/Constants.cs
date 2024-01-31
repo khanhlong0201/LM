@@ -53,4 +53,7 @@ public static class EndpointConstants
 
     public const string URL_MASTERDATA_GET_SERI = "MasterData/GetSeries";
     public const string URL_MASTERDATA_UPDATE_SERI = "MasterData/UpdateSeries";
+
+    public const string URL_MASTERDATA_GET_BOOK_CLIENT = "MasterData/GetBookClients";
+    public const string URL_MASTERDATA_GET_BOOK_DETAIL_CLIENT = "MasterData/GetBookDetailClients";
 }

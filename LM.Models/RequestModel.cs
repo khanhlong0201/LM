@@ -79,6 +79,11 @@ public class SearchModel
     public int PublisherId { get; set; }
     public int BookId { get; set; }
     public int BatchId { get; set; }
+    public int? PublishingYear { get; set; } // năm xuất bản
+    public string? KeyPrice { get; set; }
+    public string? KeyAcreage { get; set; }
+    public int Page { get; set; }
+    public int Limit { get; set; }
 }
 
 public enum EnumType

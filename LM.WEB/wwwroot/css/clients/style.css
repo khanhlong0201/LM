@@ -1,0 +1,249 @@
+﻿
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap");
+.h-wrapper {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+section {
+  padding: 0rem 9%;
+}
+
+.h-flex-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+img {
+  display: flex;
+  max-width: 100%;
+}
+
+.h-button {
+  cursor: pointer;
+  outline: none;
+  font-size: 1.6rem;
+  text-align: center;
+  color: #1a2b5f;
+  padding: 1.5rem 3rem;
+  display: inline-block;
+  border: 0;
+}
+
+.h-display-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(27rem, 1fr));
+  gap: 1.5rem;
+}
+
+.h-flex-col {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row;
+  gap: 0.75rem;
+}
+
+/* Custom Btn */
+.h-button--border {
+  border: 1px solid currentColor;
+}
+
+.h-button--rounded {
+  border-radius: 5rem;
+}
+
+.h-button--primary {
+  background-color: #ffc87a;
+}
+
+.btn--primary.has-shadow {
+  box-shadow: 0 10px 35px -5px #ffc87a;
+}
+/* end */
+
+/* Input custom */
+input.h-input,
+textarea.h-input {
+  width: 100%;
+  border: 1px solid #ced4da;
+  border-radius: 0.5rem;
+  padding: 4px 10px;
+  line-height: 2.4rem;
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: #003d71;
+  background: linear-gradient(rgba(53, 50, 50, 0.1) 50%, rgba(0, 0, 0, 0.02));
+  transition: border-color 0.15s ease-in-out;
+}
+
+input.h-input:focus,
+textarea.h-input:focus {
+  border-color: #80bdff;
+  /* color: #495057; */
+}
+/* End */
+
+/* responsive */
+@media (max-width: 991px) {
+  html {
+    /*font-size: 55%;*/
+  }
+
+  section {
+    padding: 0rem 2rem;
+  }
+}
+
+@media (max-width: 450px) {
+  html {
+    /*font-size: 50%;*/
+  }
+
+  .h-flex-col {
+    flex-wrap: wrap;
+  }
+}
+
+/* css cho dăng phòng */
+.bh-item__hover:hover {
+  box-shadow: 0px 4px 16px 0px rgba(44, 44, 44, 0.08);
+}
+
+.bh-font-size-sm {
+  font-size: 11px;
+}
+
+.bh-font-size {
+  font-size: 12px;
+  color: black;
+  line-height: 1.7;
+}
+
+.bh-h1 {
+  font-size: 15px;
+  font-weight: 600;
+  color: black;
+}
+
+.bh-link-hover:hover {
+  color: #ffc87a;
+  cursor: pointer;
+}
+
+.bh-pagination li {
+  font-size: 13px;
+}
+
+/* Vùng tìm kiếm */
+#bh-search {
+  border-bottom: 1px solid #e5e5e5;
+  /* box-shadow: rgb(88 102 126 / 8%) 0 0 30px, rgb(88 102 126 / 12%) 0 1px 2px; */
+}
+.filter-box {
+  padding: 5px 0px;
+}
+.bh-btn-search.k-button-outline-primary:hover,
+.bh-btn-search.k-button-outline-primary.k-hover {
+  background-color: transparent !important;
+  color: #ff6358;
+}
+
+.banner__search-info {
+  margin: 0 auto;
+  /* background: rgba(178, 206, 231, 0.8); */
+  /* border: 1px solid #023154; */
+  bottom: 50%;
+  font-size: 13.5px;
+  padding: 10px 15px;
+  border-radius: 10px;
+}
+
+.banner__search-info label {
+  color: #023154;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.bh-combo {
+  font-size: 12px;
+}
+/* Vùng tìm kiếm */
+
+/**/
+.bh-btn-register{
+    width: 100%;
+}
+
+/*bh - detail*/
+.bh-carausel .k-scrollview{
+    border-radius: 5px;
+}
+.bh-detail-contact {
+    text-align: center
+}
+.bh-detail-contact__name {
+    margin-top: 15px;
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: normal !important;
+}
+.bh-detail-contact__avt {
+    height: 44px;
+    width: 44px;
+    border-radius: 50%;
+    margin: 0 auto
+}
+
+.bh-detail-contact__name.contact-fullname{
+    font-weight: 500 !important;
+    font-size: 15px;
+    color: black;
+    margin-top: 5px;
+}
+
+.bh-btn-fullsize button{
+    width: 100%;
+}
+.btn-contact{
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+.bh-img-icon img{
+    width: 18px;
+}
+
+.bh-detail-title {
+    font-size: 22px;
+    line-height: 32px !important;
+    font-weight: 500;
+    color: black;
+    margin-top: 7.5px;
+    margin-bottom: 0px;
+}
+
+.bh-detail-info {
+    padding: 20px 0px 10px 0px;
+    border-bottom: 1px;
+    border-top: 1px;
+    border-left: 0px;
+    border-right: 0px;
+    border-style: solid;
+    border-color: #e5e5e5;
+}
+.bh-detail-info__icon i{
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.bh-detail-desc{
+    font-size: 12.5px;
+    line-height: 1.8;
+    color: black;
+}
+/*bh-detail*/
+
+.bh-color-active {
+    color: #ff6358;
+}

@@ -1,0 +1,188 @@
+﻿@layout ClientLayout
+@page "/chi-tiet"
+
+<!-- Search -->
+<div id="bh-search">
+    <section class="header-wrapper">
+        <div class="filter-box ">
+            <div class="banner__search-info">
+                <div class="row align-items-end">
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+                        <label for="mail" class="k-label k-form-label">Nhà xuất bản</label>
+                        <TelerikComboBox Data="@ListPublisher"
+                                         Value="@Search.PublisherId"
+                                         ValueExpression="@(() => Search.PublisherId)"
+                                         ValueChanged="@((int value) => OnChangePublisherHandler(value))"
+                                         Placeholder="Chọn nhà xuất bản..."
+                                         TextField="@nameof(PublisherModel.PublisherName)"
+                                         ValueField="@nameof(PublisherModel.PublisherId)"
+                                         Filterable="true"
+                                         ClearButton="true"
+                                         Id="txtPublisherId" Width="100%">
+                        </TelerikComboBox>
+                    </div>
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+                        <label for="mail" class="k-label k-form-label">Loại sách</label>
+                        <TelerikComboBox Data="@ListKindBook"
+                                         Value="@Search.KindBookId"
+                                         ValueExpression="@(() => Search.KindBookId)"
+                                         ValueChanged="@((int value) => OnChangeKindBookHandler(value))"
+                                         Placeholder="Chọn loại sách..."
+                                         TextField="@nameof(KindBookModel.KindBookName)"
+                                         ValueField="@nameof(KindBookModel.KindBookId)"
+                                         Filterable="true"
+                                         ClearButton="true"
+                                         Id="textKindBookId" Width="100%">
+                        </TelerikComboBox>
+                    </div>
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+                        <label for="mail" class="k-label k-form-label">Năm xuất bản</label>
+                        <TelerikComboBox Data="@ListPublishingYear"
+                                         Value="@Search.PublishingYear"
+                                         ValueExpression="@(() => Search.PublishingYear)"
+                                         ValueChanged="@((int? value) => Search.PublishingYear = value)"
+                                         Placeholder="Chọn năm xuất bản..."
+                                         TextField="@nameof(BookModel.PublishingYear)"
+                                         ValueField="@nameof(BookModel.PublishingYear)"
+                                         Filterable="true"
+                                         ClearButton="true"
+                                         Id="txtWard_Id" Width="100%">
+                        </TelerikComboBox>
+                    </div>
+                    <div class="col-xl-2 col-lg-4 col-md-6 col-sm-12">
+                        <TelerikButton Class="bh-btn-search mb-1" IconClass="fa-solid fa-filter"
+                                       FillMode="@(ThemeConstants.Button.FillMode.Outline)"
+                                       ThemeColor="@(ThemeConstants.Button.ThemeColor.Primary)"
+                                       OnClick="@ReLoadDataHandler">Đặt lại</TelerikButton>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+</div>
+<!-- Search -->
+
+
+<div id="h-service">
+    <div className="h-wrapper">
+        <section className="h-service">
+            <div class="row">
+                <div class="col-lg-9 col-md-8 col-sm-12">
+                    <div class="bh-carausel">
+                        <TelerikCarousel Arrows="@true"
+                                         Pageable="@true"
+                                         LoopPages="@true"
+                                         @bind-Page="@PageIndex"
+                                         AutomaticPageChange="@true"
+                                         Data="@ListImages"
+                                         Width="100%" Height="384px">
+                            <Template>
+                                <img src="@(context)" alt="Photograph" width="512" height="384" style="width: 100%" />
+                            </Template>
+                        </TelerikCarousel>
+                    </div>
+                    <div style="margin-top: 24px">
+                        @*<span>Cho thuê/Hồ Chí Minh/Quận 9/Nhà trọ, phòng trọ tại đường Lò Lu</span>*@
+                        @*<span>
+                            @($"Cho thuê/ {CliBook.CityName}/ {CliBook.DistinctName}/ {CliBook.WardName}/ {CliBook.RoomAddresss}")
+                        </span>*@
+                        <p class="bh-detail-title">@CliBook.BookName</p>
+                        <span class="bh-detail-address">@($"{CliBook.PublisherName}, {CliBook.KindBookName}")</span>
+                    </div>
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between align-items-center bh-detail-info">
+                            <div class="d-flex align-items-center">
+                                <div>
+                                    <p>Mức giá</p>
+                                    <p>@($"{CliBook.Price?.ToString(DefaultConstants.FORMAT_CURRENCY)}")/tháng</p>
+                                </div>
+                                <div style="margin-left: 30px">
+                                    <p>Kích thước</p>
+                                    <p>@($"{CliBook.Size}")</p>
+                                </div>
+                            </div>
+                            <div class="bh-detail-info__icon">
+                                <i class="fa-regular fa-heart" title="Tim"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 bh-detail-desc">
+                        <p class="bh-detail-title bh-detail-desc__title">Thông tin mô tả</p>
+                        @((MarkupString)$"{CliBook.Desciption}")
+                        Với lòng liên hệ qua Hotline: 1900 5049 hoặc Zalo: 0827 372 737 để xem phòng trực tiếp.
+
+                    </div>
+                    <div class="mt-4">
+                        <p class="bh-detail-title bh-detail-desc__title">Xem trên bản đồ</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-12">
+                    <TelerikCard Width="100%">
+                        <CardBody Class="bh-detail-contact">
+                            <div class="bh-detail-header">
+                                <img class="bh-detail-contact__avt" src="https://cdn-icons-png.flaticon.com/128/2102/2102633.png" alt="">
+                                <span class="bh-detail-contact__name">Được đăng bởi</span>
+                                <p class="bh-detail-contact__name contact-fullname">@CliBook.FullName</p>
+                            </div>
+                            <div class="mt-2 bh-btn-fullsize">
+                                <TelerikButton Class="bh-btn-search btn-contact mb-1"
+                                    FillMode="@(ThemeConstants.Button.FillMode.Outline)"
+                                               ThemeColor="@(ThemeConstants.Button.ThemeColor.Primary)" OnClick="@OpenPopupBookingHandler">Đăng kí đặt phòng</TelerikButton>
+@*
+                                <TelerikButton Class="bh-btn-search btn-contact bh-img-icon mb-1 mt-3"
+                                               FillMode="@(ThemeConstants.Button.FillMode.Outline)"
+                                               ImageUrl="./images/zalo.png"
+                                               
+                                               ThemeColor="@(ThemeConstants.Button.ThemeColor.Base)">
+                                    <a href="@($"https://zalo.me/{@CliBook.Phone}")" target="_blank">Chat qua Zalo</a>
+                                </TelerikButton>*@
+
+                              @*  <TelerikButton Class="bh-btn-search btn-contact mb-1 mt-3"
+                                               FillMode="@(ThemeConstants.Button.FillMode.Outline)" IconClass="fa-brands fa-whatsapp"
+                                               ThemeColor="@(ThemeConstants.Button.ThemeColor.Base)">
+                                    <a href="@($"tel:{@CliBook.Phone}")" target="_blank">Liên hệ: @CliBook.Phone</a>
+                                </TelerikButton>*@
+                            </div>
+                        </CardBody>
+                    </TelerikCard>
+                    <TelerikCard Class="mt-4" Width="100%">
+                        <CardBody>
+                            <div class="d-flex align-items-center">
+                                <img src="https://cdn-icons-png.flaticon.com/128/1041/1041891.png" style="width: 25px" />
+                                <h1 class="bh-h1" style="margin-left: 15px">Lưu ý</h1>
+                            </div>
+                            <span class="bh-font-size">Không nên đặt cọc, giao dịch trước khi xem nhà và xác minh thông tin của người cho thuê.</span>
+                        </CardBody>
+                    </TelerikCard>
+                    <TelerikCard Class="mt-4" Width="100%">
+                        <CardBody>
+                            <h1 class="bh-h1">Bài viết mới</h1>
+                        </CardBody>
+                    </TelerikCard>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+
+<HDialog @bind-IsVisible="@IsShowDialog"
+    Width="40%"
+    TitleBtnSaveAndClosed="Đăng kí"
+    SaveAndClosed="@(()=> SaveDataHandler())"
+    Title="Đặt phòng">
+    <EditForm EditContext="@_EditContext">
+        <DataAnnotationsValidator />
+        <div>
+            <HLabel Value="Họ & Tên:" IsRequired="true" />
+            <TelerikTextBox Id="txtContactName" @bind-Value="@BorrowingUpdate!.FullName" Class="bh-link"></TelerikTextBox>
+            <HValidationTooltip ValidationFor="@(()=> BorrowingUpdate.FullName)" Id="txtContactName" />
+        </div>
+        <div class="mt-2">
+            <HLabel Value="Số điện thoại:" IsRequired="true" />
+            <TelerikTextBox @bind-Value="@BorrowingUpdate!.Phone" Id="txtContactPhone" />
+            <HValidationTooltip ValidationFor="@(()=> BorrowingUpdate.Phone)" Id="txtContactPhone" />
+        </div>
+    </EditForm>
+</HDialog>

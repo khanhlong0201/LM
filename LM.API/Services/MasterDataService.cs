@@ -30,6 +30,7 @@ public interface IMasterDataService
     Task<ResponseModel> UpdateBatchs(RequestModel pRequest);
     Task<IEnumerable<SeriesModel>> GetSeriesAsync(int batchId);
     Task<ResponseModel> UpdateSeries(RequestModel pRequest); // nhập kho
+    Task<IEnumerable<CliBookModel>> GetBookClientsAsync(SearchModel pSearchData);
 }
 
 public class MasterDataService : IMasterDataService
@@ -693,7 +694,7 @@ public class MasterDataService : IMasterDataService
                                 queryString = @"INSERT INTO [dbo].[ImageDetails] ([FilePath] ,[DateCreate],[UserCreate],[IsDelete],[ImageId])
                                                                         values  (@FilePath, @DateTimeNow, @UserId, 0, @ImageId)";
                                 sqlParameters = new SqlParameter[4];
-                                sqlParameters[0] = new SqlParameter("@FilePath", oImageDetail.FilePath.Substring(oImageDetail.FilePath.LastIndexOf('\\') + 1));
+                                sqlParameters[0] = new SqlParameter("@FilePath", oImageDetail.FileName ?? (object)DBNull.Value);
                                 sqlParameters[1] = new SqlParameter("@UserId", pRequest.UserId);
                                 sqlParameters[2] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
                                 sqlParameters[3] = new SqlParameter("@ImageId", iImageId);
@@ -707,8 +708,7 @@ public class MasterDataService : IMasterDataService
                             queryString = @"UPDATE [dbo].[Books]
                                SET [BookName] = @BookName
                                   ,[Description] = @Description 
-                                  ,[Price] = @Price
-                                  ,[Qty] = @Qty
+                                  ,[PublishingYear] = @PublishingYear
                                   ,[Language] = @Language
                                   ,[Size] = @Size
                                   ,[NumOfPage] = @NumOfPage
@@ -718,7 +718,7 @@ public class MasterDataService : IMasterDataService
                                   ,[DateUpdate] = @DateTimeNow
                                   ,[UserUpdate] = @UserId
                                  WHERE [BookId] = @BookId";
-                                sqlParameters = new SqlParameter[13];
+                                sqlParameters = new SqlParameter[12];
                                 sqlParameters[0] = new SqlParameter("@BookName", oBook.BookName ?? (object)DBNull.Value);
                                 sqlParameters[1] = new SqlParameter("@Description", oBook.Description ?? (object)DBNull.Value);
                                 sqlParameters[2] = new SqlParameter("@PublishingYear", oBook.PublishingYear ?? (object)DBNull.Value);
@@ -1138,15 +1138,15 @@ public class MasterDataService : IMasterDataService
             {
                 case nameof(EnumType.Add):
                     await _context.BeginTranAsync();
-                    queryString = @"INSERT INTO [dbo].[Series]([SeriesCode] ,[Status] ,[Decription],[DateCreate],[UserCreate],[IsDelete],[BatchId])
-                                                        values ( @SeriesCode , @Status , @Decription ,@DateTimeNow, @UserId, 0, @BatchId )";
+                    queryString = @"INSERT INTO [dbo].[Series]([SeriesCode] ,[Status] ,[Description],[DateCreate],[UserCreate],[IsDelete],[BatchId])
+                                                        values ( @SeriesCode , @Status , @Description ,@DateTimeNow, @UserId, 0, @BatchId )";
                     foreach (var oSeries in lstSeri)
                     {
 
                         sqlParameters = new SqlParameter[6];
                         sqlParameters[0] = new SqlParameter("@SeriesCode", oSeries.SeriesCode ?? (object)DBNull.Value);
                         sqlParameters[1] = new SqlParameter("@Status", oSeries.Status ?? (object)DBNull.Value);
-                        sqlParameters[2] = new SqlParameter("@Decription", oSeries.Description ?? (object)DBNull.Value);
+                        sqlParameters[2] = new SqlParameter("@Description", oSeries.Description ?? (object)DBNull.Value);
                         sqlParameters[3] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
                         sqlParameters[4] = new SqlParameter("@UserId", pRequest.UserId);
                         sqlParameters[5] = new SqlParameter("@BatchId", oSeries.BatchId);
@@ -1176,6 +1176,62 @@ public class MasterDataService : IMasterDataService
             await _context.DisConnect();
         }
         return response;
+    }
+
+    /// <summary>
+    /// lấy danh sách ở client
+    /// </summary>
+    /// <returns></returns>
+    public async Task<IEnumerable<CliBookModel>> GetBookClientsAsync(SearchModel pSearchData)
+    {
+        IEnumerable<CliBookModel> data;
+        try
+        {
+            await _context.Connect();
+            SqlParameter[] sqlParameters;
+            sqlParameters = new SqlParameter[3];
+            sqlParameters[0] = new SqlParameter("@KindBookId", pSearchData.KindBookId);
+            sqlParameters[1] = new SqlParameter("@PublisherId", pSearchData.PublisherId);
+            sqlParameters[2] = new SqlParameter("@PublishingYear", pSearchData.PublishingYear ?? (object)DBNull.Value);
+            data = await _context.GetDataAsync(@$"select  t0.[BookId]
+                        ,t0.[BookName]
+                        ,t0.[Description]
+	                    , isnull((Select top 1 t00.Price from Batchs t00 where t00.IsDelete = 0 order by t00.DateCreate desc),0) as 'Price'
+	                    ,  isnull((Select SUM(t00.Qty) from Batchs t00 where t00.IsDelete = 0 and t0.BookId = t00.BookId group by t00.BatchId),0) as 'Qty'
+                        ,t0.[Language]
+                        ,t0.[Size]
+                        ,t0.[NumOfPage]
+                        ,t0.[DateCreate]
+                        ,t0.[UserCreate]
+                        ,t0.[KindBookId]
+                        ,t0.[PublisherId]
+                        ,t0.[ImageId]
+	                    ,t1.PublisherName
+	                    ,t2.KindBookName
+                        ,t0.PublisherId
+	                    ,t0.KindBookId
+                        ,t0.PublishingYear
+						, concat(t0.BookName, N' - NXB: ',t0.PublishingYear) as 'Name'
+						,t4.[ImageDetailId]
+						,t4.[FilePath]
+                        ,t0.ImageId
+                    FROM [dbo].[Books] t0 
+                    inner join  Publishers t1 on t0.PublisherId = t1.PublisherId
+                    inner join  KindBooks t2 on t0.KindBookid = t2.KindBookid
+                    left join  Images t3 on t0.ImageId = t3.ImageId
+					left join  ImageDetails t4 on t3.ImageId = t4.ImageId
+                    where t0.isdelete = 0
+                    and (isnull(@KindBookId,0)=0 or t0.KindBookId = @KindBookId)
+                    and (isnull(@PublisherId,0)=0 or t0.PublisherId = @PublisherId)
+					and (isnull(@PublishingYear,0)=0 or t0.PublishingYear = @PublishingYear)"
+                    , DataRecordToBookClientModel, sqlParameters, commandType: CommandType.Text);
+        }
+        catch (Exception) { throw; }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return data;
     }
     #endregion Public Functions
 
@@ -1392,6 +1448,32 @@ public class MasterDataService : IMasterDataService
         if (!Convert.IsDBNull(record["DateCreate"])) series.DateCreate = Convert.ToDateTime(record["DateCreate"]);
         if (!Convert.IsDBNull(record["UserCreate"])) series.UserCreate = Convert.ToInt32(record["UserCreate"]);
         return series;
+    }
+
+    /// <summary>
+    /// đọc danh sách sách client
+    /// </summary>
+    /// <param name="record"></param>
+    /// <returns></returns>
+    private CliBookModel DataRecordToBookClientModel(IDataRecord record)
+    {
+        CliBookModel book = new();
+        if (!Convert.IsDBNull(record["BookId"])) book.BookId = Convert.ToInt32(record["BookId"]);
+        if (!Convert.IsDBNull(record["BookName"])) book.BookName = Convert.ToString(record["BookName"]);
+        if (!Convert.IsDBNull(record["Description"])) book.Description = Convert.ToString(record["Description"]);
+        if (!Convert.IsDBNull(record["Price"])) book.Price = Convert.ToDecimal(record["Price"]);
+        if (!Convert.IsDBNull(record["Price"])) book.Qty = Convert.ToInt32(record["Qty"]);
+        if (!Convert.IsDBNull(record["Language"])) book.Language = Convert.ToString(record["Language"]);
+        if (!Convert.IsDBNull(record["Size"])) book.Size = Convert.ToString(record["Size"]);
+        if (!Convert.IsDBNull(record["PublisherName"])) book.PublisherName = Convert.ToString(record["PublisherName"]);
+        if (!Convert.IsDBNull(record["KindBookName"])) book.KindBookName = Convert.ToString(record["KindBookName"]);
+        if (!Convert.IsDBNull(record["DateCreate"])) book.DateCreate = Convert.ToDateTime(record["DateCreate"]);
+        if (!Convert.IsDBNull(record["UserCreate"])) book.UserCreate = Convert.ToInt32(record["UserCreate"]);
+        if (!Convert.IsDBNull(record["KindBookId"])) book.KindBookId = Convert.ToInt32(record["KindBookId"]);
+        if (!Convert.IsDBNull(record["PublisherId"])) book.PublisherId = Convert.ToInt32(record["PublisherId"]);
+        if (!Convert.IsDBNull(record["FilePath"])) book.FilePath = Convert.ToString(record["FilePath"]);
+        if (!Convert.IsDBNull(record["ImageId"])) book.ImageId = Convert.ToInt32(record["ImageId"]);
+        return book;
     }
     #endregion Private Funtions
 }

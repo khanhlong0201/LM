@@ -1,0 +1,187 @@
+﻿#h-banner .h-banner {
+  background: linear-gradient(#1d4e56, rgba(201, 195, 195, 0.1)),
+    url("../../assets/banner.jpg") no-repeat;
+  background-size: cover;
+  background-position: top;
+  padding: 3rem 2rem;
+  background-attachment: fixed;
+  height: 350px;
+  text-align: center;
+}
+
+#h-banner .h-banner .content span {
+  font-size: 2.5rem;
+  color: #fff;
+}
+
+#h-banner .h-banner .content h3 {
+  font-size: 4rem;
+  color: #fff;
+  margin-top: 1rem;
+}
+
+#h-banner .h-banner .content p {
+  padding: 1rem 0;
+  font-size: 1.4rem;
+  color: #fff;
+  line-height: 1.5;
+}
+
+/* Footer start */
+
+#h-footer {
+  margin-top: 3.5rem;
+}
+
+.h-footer .box-container {
+  border-top: 2px solid #1d4e56;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.h-footer .box-container .box {
+  width: 33%;
+  padding: 1rem 0;
+}
+
+.h-footer.box-container .box img {
+  width: 150px;
+  height: 80px;
+  object-fit: cover;
+}
+
+.h-footer .box-container .box h3 {
+  font-size: 2.2rem;
+  padding: 1rem 0;
+  color: #1d4e56;
+}
+
+.h-footer .box-container .box p {
+  font-size: 1.4rem;
+  color: #1d4e56;
+  padding: 1rem 0;
+  line-height: 1.7;
+}
+
+.h-footer .box-container .share {
+  padding-top: 1rem;
+  display: flex;
+}
+
+.h-footer .box-container .share a {
+  height: 3.5rem;
+  width: 3.5rem;
+  border-radius: 50%;
+  font-size: 2rem;
+  font-weight: 600;
+  border: 0.2rem solid currentColor;
+  color: #1d4e56;
+  margin-right: 0.5rem;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: color 0.25s ease-in-out, border 0.25s ease-in-out;
+}
+
+.h-footer .box-container .share a:hover {
+  color: #ffc87a;
+}
+
+.h-footer .box-container .box .links {
+  font-size: 1.4rem;
+  color: #1d4e56;
+  padding: 1rem 0;
+  display: block;
+}
+
+.h-footer .box-container .box .links {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  transition: color 0.2s linear;
+  width: fit-content;
+}
+
+.h-footer .box-container .box .links:hover {
+  color: #ffc87a;
+}
+
+.h-footer .box-container .box .links i {
+  margin-right: 5px;
+  font-size: 15px;
+}
+
+.h-footer .box-container .box .links:hover span {
+  padding-left: 0.75rem;
+  transition: padding-left 0.2s linear;
+}
+
+.h-footer .box-container .contact p {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  line-height: 1.4;
+  margin-bottom: 0;
+}
+
+.h-footer .box-container .contact p i {
+  padding-right: 5px;
+  color: #1d4e56;
+  font-size: 17px;
+}
+
+#h-footer .credit {
+  /* background-color: #1d4e56; */
+  background-image: linear-gradient(
+    to right,
+    #1d4e56 0%,
+    #1c5861 24%,
+    #144a55 100%
+  );
+  text-align: center;
+  font-size: 1.3rem;
+  padding: 0.5rem 1rem;
+  color: #fff;
+  text-transform: none;
+}
+
+#h-footer .credit span {
+  color: #ffc87a;
+  margin-right: 5px;
+  margin-left: 5px;
+}
+
+@media (max-width: 768px) {
+  .h-footer .box-container {
+    display: block;
+  }
+
+  .h-footer .box-container .box {
+    width: 100%;
+  }
+}
+
+.introduce {
+  font-size: 12px;
+  text-align: center;
+  font-weight: 400;
+  line-height: 1.4;
+}
+.introduce__item,
+.introduce__item__image {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+.introduce__item__title {
+  margin-top: 24px;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 16px;
+}
+.introduce__item__desc {
+  margin-top: 8px;
+}

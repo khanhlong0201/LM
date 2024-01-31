@@ -1,0 +1,92 @@
+﻿<TelerikCard class="bh-item__hover mt-3" Width="100%">
+    <div style="width: 100%;">
+        <div class="d-flex">
+            <div style="width: 60%; height: 220px;">
+                <CardImage Height="100%" Width="100%" Src="@($"{ImageUrlBook}")" Class="bhimage-cover"></CardImage>
+            </div>
+            <div style="width: 40%; height: 218px; margin-left: 2px;">
+                @if (ListImages != null && ListImages.Any())
+                {
+                    <CardImage Height="50%" Width="100%" Src="@($"{ListImages[0]}")" Class="bhimage-cover"></CardImage>
+                <div class="d-flex" style="height: 50%; margin-top: 2px;">
+                    @for (int i = 1; i < ListImages.Count(); i++)
+                    {
+                        if (i < 3)
+                        {
+                            <CardImage Height="100%" Width="50%" Src="@($"{ListImages[i]}")" Class="bhimage-cover mx-1"></CardImage>
+                        }
+                    }
+                </div>
+                    
+                }
+                @*<div class="d-flex" style="height: 50%; margin-top: 2px;">
+                    <CardImage Height="100%" Width="50%" Src="@($"https://file4.batdongsan.com.vn/crop/140x140/2023/10/06/20231006104703-446c_wm.jpg")"></CardImage>
+                    <CardImage Class="mx-1" Height="100%" Width="100%" Src="@($"https://file4.batdongsan.com.vn/crop/140x140/2023/10/06/20231006104702-9de7_wm.jpg")"></CardImage>
+                </div>*@
+            </div>
+        </div>
+    </div>
+    <CardBody>
+        <Telerik.Blazor.Components.CardTitle Class="bh-hover"><a href="@($"/chi-tiet?key={BookId}")">@Title</a></Telerik.Blazor.Components.CardTitle>
+        <div class="d-flex justify-content-start align-items-end">
+            <Telerik.Blazor.Components.CardTitle Class="k-button-flat-primary">@Price /Quyển</Telerik.Blazor.Components.CardTitle>
+            <CardSubTitle Class="mx-3">Kích thước: @Size </CardSubTitle>
+            <CardSubTitle Class="mx-2">@Name</CardSubTitle>
+        </div>
+        <CardSubTitle Class="bh-subtitle-bhouseIndex">
+            @((MarkupString)$"{Description}")
+        </CardSubTitle>
+    </CardBody>
+    <CardSeparator></CardSeparator>
+    <div class="k-card-actions k-card-actions-horizontal justify-content-between">
+        <div class="bh-font-size-sm d-flex justify-content-end align-items-center">
+            <div>
+                <img src="https://cdn-icons-png.flaticon.com/128/12597/12597109.png" style="height: 24px; width: 24px; border-radius: 50%;" alt="">
+            </div>
+            <div style="margin-left: 5px;">
+                <p class="mb-0">@FullName</p>
+                <p class="mb-0">
+                    @("Đăng tin ")
+                    @((DateTime.Now - CreateDate).Days / 365 > 0 ?
+                        (DateTime.Now - CreateDate).Days / 365 + " năm trước" :
+                        (DateTime.Now - CreateDate).Days / 30 > 0 ?
+                        (DateTime.Now - CreateDate).Days / 30 + " tháng trước" :
+                        (DateTime.Now - CreateDate).Days / 7 > 0 ?
+                        (DateTime.Now - CreateDate).Days / 7 + " tuần trước" :
+                        (DateTime.Now - CreateDate).Days > 0 ?
+                        (DateTime.Now - CreateDate).Days + " ngày trước" :
+                        (DateTime.Now - CreateDate).Hours + (DateTime.Now - CreateDate).Days * 24 > 0 ?
+                        (DateTime.Now - CreateDate).Hours + (DateTime.Now - CreateDate).Days * 24 + " giờ trước" :
+                        (DateTime.Now - CreateDate).Minutes + (DateTime.Now - CreateDate).Days * 24 * 60 > 0 ?
+                        (DateTime.Now - CreateDate).Minutes + (DateTime.Now - CreateDate).Days * 24 * 60 + " phút trước" :
+                        (DateTime.Now - CreateDate).Seconds + (DateTime.Now - CreateDate).Days * 24 * 60 * 60 > 0 ?
+                        (DateTime.Now - CreateDate).Seconds + (DateTime.Now - CreateDate).Days * 24 * 60 * 60 + " giây trước" : ""
+                        )
+                </p>
+            </div>
+        </div>
+        <div>
+            @*<TelerikButton ThemeColor="@(ThemeConstants.Button.ThemeColor.Primary)">Liên hệ: @Contact</TelerikButton>*@
+            <TelerikButton ThemeColor="@(ThemeConstants.Button.ThemeColor.Primary)"><a style="color: white" href="@($"tel:{@Contact}")" target="_blank">Liên hệ: @Contact</a></TelerikButton>
+            <TelerikButton ThemeColor="@(ThemeConstants.Button.ThemeColor.Base)"><i class="fa-regular fa-heart"></i></TelerikButton>
+        </div>
+    </div>
+</TelerikCard>
+
+@code{
+
+    [Parameter] public List<string>? ListImages { get; set; } // ds ảnh
+    [Parameter] public string FullName { get; set; } = ""; // Tên người đăng tin
+    [Parameter] public string CreateTime { get; set; } = ""; // chuỗi đăng tin...
+    [Parameter] public string? Title { get; set; } // title
+    [Parameter] public string? Description { get; set; } // mô tả về sách
+    [Parameter] public string? Price{ get; set; } // số tiền
+    [Parameter] public string? ImageUrlBook { get; set; } = "./images/img-default.png";
+    [Parameter] public DateTime CreateDate { get; set; }
+    [Parameter] public string? Name { get; set; } // nhà xuất bản - loại sách
+    [Parameter] public string Language { get; set; } //ngôn ngữ
+    [Parameter] public string Size { get; set; } // kích thước (vd: 13 x 19 cm)
+    [Parameter] public int? NumOfPage { get; set; } // tổng số trang
+    [Parameter] public string? Contact { get; set; } = "070.499.0471";
+    [Parameter] public int? BookId { get; set; } // tổng số trang
+}

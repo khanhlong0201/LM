@@ -1,0 +1,113 @@
+﻿@*@using System.IO;
+@using Microsoft.AspNetCore.Hosting;
+@using Newtonsoft.Json;
+
+<BHLabel Value="Nhập số điện thoại để tìm kiếm:" IsRequired="true" />
+<div style="display: flex">
+    <div style="margin-bottom: 5px">
+         <TelerikTextBox @bind-Value="@phone" Class="bh-link" Id="txtSdt" />
+    </div>
+    <div style="margin-left:10px; margin-top: 2px;font-size: 20px;cursor: pointer" @onclick=@searchBookingHistory><i class="fa-solid fa-magnifying-glass"></i></div>
+</div>
+
+<div class="bh-table-content" style=" height: calc(100vh - 250px);">
+ <TelerikGrid Data="@ListBookingHistory"
+                 Height="100%"
+                 Width="100%"
+                 RowHeight="25"
+                 Pageable="true"
+                 PageSize="50"
+                 Sortable="true"
+                 Resizable="true"
+                 FilterMode="@GridFilterMode.FilterMenu"
+                 SelectionMode="@GridSelectionMode.Multiple"
+                 ScrollMode="@GridScrollMode.Scrollable">
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input" />
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(BookingModel.FullName) Aggregate="@GridAggregateType.Count" />
+        </GridAggregates>
+        <GridColumns>
+            <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+            <GridColumn Field=@nameof(BookingModel.FullName) Width="130px" MaxResizableWidth="150" Title="Tên khách hàng">
+                <Template>
+                    @{
+                        var model = (context as BookingModel);
+                                <span class="h-link">@model!.FullName</span>
+                    }
+                </Template>
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(BookingModel.BHouse_Name) Width="140px" Title="Tên trọ"></GridColumn>
+            <GridColumn Field=@nameof(BookingModel.Room_Name) Width="170px" Title="Tên phòng trọ"></GridColumn>
+            <GridColumn Field=@nameof(BookingModel.Status) Width="170px" Title="Trạng thái"></GridColumn>
+            <GridColumn Field=@nameof(BookingModel.Date_Create) DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE_TIME" Width="120px" Title="Ngày đặt phòng"></GridColumn>
+        </GridColumns>
+    </TelerikGrid>
+</div>
+
+@code {
+
+    #region "Properties"
+    [Inject] IWebHostEnvironment Environment { get; set; }
+    [Inject] private ILoadingCore? _spinner { get; set; }
+
+
+    public List<BookingModel> ListBookingHistory = new List<BookingModel>();
+
+    [Inject] IToastService toastService { get; set; }
+    [Inject]  IApiService? _service { get; set; }
+    [Inject]  ILogger<IndexClient>? _logger { get; init; }
+    private BHConfirm? _rDialogs { get; set; }
+
+
+    string phone { get; set; }
+
+    #endregion "Properties"
+
+
+    #region "Private Functions"
+
+    private async Task showLoading(bool isShow = true)
+    {
+        if (isShow) { _spinner!.Show(); await Task.Yield(); }
+        else _spinner!.Hide();
+    }
+
+    private async Task searchBookingHistory()
+    {
+        try
+        {
+            if(phone + "" == "")
+            {
+                toastService.ShowWarning("Bạn cần nhập số điện thoại");
+                return;
+            }
+            await showLoading();
+            ListBookingHistory = new List<BookingModel>();
+            var request = new Dictionary<string, object>
+            {
+                { "phone", phone }
+            };
+            var resString = await _service!.GetData(EndpointConstants.URL_BOOKING_GET_BY_PHONE, request);
+            ListBookingHistory = JsonConvert.DeserializeObject<List<BookingModel>>(resString);
+        }
+        catch (Exception ex)
+        {
+            _logger!.LogError(ex, "OnAfterRenderAsync");
+        }
+        finally
+        {
+            await showLoading(false);
+            StateHasChanged();
+        }
+    }
+
+    
+     #endregion "Private Functions"
+    
+}
+*@

@@ -14,7 +14,7 @@ namespace LM.WEB.Features.Controllers;
 public class SeriesController : LMControllerBase
 {
     #region Dependency Injection
-    [Inject] private ILogger<BatchController>? _logger { get; init; }
+    [Inject] private ILogger<SeriesController>? _logger { get; init; }
     [Inject] private ICliMasterDataService? _masterDataService { get; init; }
     [Inject] private IConfiguration? _configuration { get; set; }
     #endregion

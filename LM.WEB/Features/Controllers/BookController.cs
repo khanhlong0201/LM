@@ -180,6 +180,7 @@ public class BookController : LMControllerBase
                 ListImages = await _masterDataService!.GetDataImageDetailsAsync(BookUpdate.ImageId.Value);
                 string url = _configuration!.GetSection("appSettings:ApiUrl").Value + DefaultConstants.FOLDER_BOOK + "/"; ;
                 ListImages = ListImages.Select(m => new ImageDetailModel() { ImageUrl = url + m.ImageUrl, ImageDetailId = m.ImageDetailId, ImageId = m.ImageId, FileName = m.ImageUrl }).ToList();
+                BookUpdate.ListFile = ListImages;
                 IsCreate = false;
             }
             IsShowDialog = true;
