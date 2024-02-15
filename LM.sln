@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32516.85
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LM.WEB", "LM.WEB\LM.WEB.csproj", "{30ED6201-7F9C-48A9-9000-A29DE9BE25BA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LM.WEB", "LM.WEB\LM.WEB.csproj", "{30ED6201-7F9C-48A9-9000-A29DE9BE25BA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LM.API", "LM.API\LM.API.csproj", "{82216627-C950-4959-A2B0-6D1EB6BA5182}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LM.API", "LM.API\LM.API.csproj", "{82216627-C950-4959-A2B0-6D1EB6BA5182}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LM.Models", "LM.Models\LM.Models.csproj", "{7EF9D689-E8D6-4F17-A9C6-3FB4EDC737E8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LM.Models", "LM.Models\LM.Models.csproj", "{7EF9D689-E8D6-4F17-A9C6-3FB4EDC737E8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

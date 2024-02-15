@@ -1,14 +1,7 @@
-﻿using LM.Models;
-using Blazored.LocalStorage;
-using Microsoft.AspNetCore.Components;
-using Newtonsoft.Json;
+﻿using Blazored.LocalStorage;
 using LM.Models;
-using LM.Models.Shared;
-using LM.WEB.Commons;
-using LM.WEB.Components;
-using LM.WEB.Models;
 using LM.WEB.Services;
-using LM.WEB.Shared;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.WebUtilities;
 
@@ -16,10 +9,10 @@ namespace LM.WEB.Features.Pages
 {
     public partial class BookDetailClient
     {
-        [Inject] private ILogger<IndexClient>? _logger { get; init; }
-        [Inject] NavigationManager? _navigationManager { get; set; }
-        [Inject] IConfiguration? _configuration { get; set; }
-        [Inject] ILocalStorageService? _localStorage { get; set; }
+        [Inject] private ILogger<BookDetailClient>? _logger { get; init; }
+        [Inject] private NavigationManager? _navigationManager { get; set; }
+        [Inject] private IConfiguration? _configuration { get; set; }
+        [Inject] private ILocalStorageService? _localStorage { get; set; }
         [Inject] private ICliMasterDataService? _masterDataService { get; init; }
         [Inject] public LoaderService? _loaderService { get; init; }
         [Inject] public ToastService? _toastService { get; init; }
@@ -27,10 +20,12 @@ namespace LM.WEB.Features.Pages
         public bool IsShowDialog { get; set; }
 
         public int PageIndex = 1;
+
         public class CarouselModel
         {
             public string Url { get; set; } = string.Empty;
         }
+
         public List<CarouselModel> CarouselData { get; set; } = new List<CarouselModel>()
         {
             new CarouselModel() { Url = @"https://lighthouse.chotot.com/_next/image?url=https%3A%2F%2Fcdn.chotot.com%2Fadmincentre%2FICGqIPhBAn559vSI4v7jaBAYFYegeRG7xSfUJ6tkugI%2Fpreset%3Araw%2Fplain%2F6ec3994f81e14d768dfc467847ce430c-2820195948173896828.jpg&w=1080&q=90"},
@@ -45,7 +40,6 @@ namespace LM.WEB.Features.Pages
         public BorrowingModel BorrowingUpdate { get; set; } = new BorrowingModel();
         public EditContext? _EditContext { get; set; }
 
-
         //[CascadingParameter(Name = "pUserId")]
         //private int pUserId { get; set; } // giá trị từ ClientLayout
 
@@ -53,6 +47,7 @@ namespace LM.WEB.Features.Pages
         //private bool pIsSupperAdmin { get; set; } // giá trị từ MainLayout
 
         #region Properties
+
         public CliBookModel CliBook { get; set; } = new CliBookModel();
         public List<string> ListImages { get; set; } = new List<string>();
         public int pBookId { get; set; }
@@ -60,7 +55,8 @@ namespace LM.WEB.Features.Pages
         public List<KindBookModel>? ListKindBook { get; set; } = new List<KindBookModel>();
         public List<BookModel>? ListPublishingYear { get; set; } = new List<BookModel>();
         public SearchModel Search { get; set; } = new SearchModel();
-        #endregion
+
+        #endregion Properties
 
         #region Override Functions
 
@@ -89,7 +85,7 @@ namespace LM.WEB.Features.Pages
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            if(firstRender)
+            if (firstRender)
             {
                 try
                 {
@@ -107,11 +103,13 @@ namespace LM.WEB.Features.Pages
                     //await ShowLoader(false);
                     await InvokeAsync(StateHasChanged);
                 }
-            }    
+            }
         }
-        #endregion
+
+        #endregion Override Functions
 
         #region "Private Functions"
+
         /// <summary>
         /// loading
         /// </summary>
@@ -127,12 +125,12 @@ namespace LM.WEB.Features.Pages
             }
             _loaderService!.ShowLoader(isShow);
         }
+
         private async Task getDataDetail()
         {
             try
             {
                 BorrowingUpdate = await _masterDataService!.GetDataBookDetailClientsAsync(pBookId);
-
             }
             catch (Exception ex)
             {
@@ -154,9 +152,10 @@ namespace LM.WEB.Features.Pages
             ListKindBook = await _masterDataService!.GetDataKindBooksAsync();
         }
 
-        #endregion
+        #endregion "Private Functions"
 
         #region "Protected Functions"
+
         protected void OpenPopupBookingHandler()
         {
             try
@@ -165,7 +164,7 @@ namespace LM.WEB.Features.Pages
                 _EditContext = new EditContext(BorrowingUpdate);
                 IsShowDialog = true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger!.LogError(ex, "OnOpenDialogHandler");
                 _toastService!.ShowError(ex.Message);
@@ -249,6 +248,7 @@ namespace LM.WEB.Features.Pages
                 await InvokeAsync(StateHasChanged);
             }
         }
-        #endregion
+
+        #endregion "Protected Functions"
     }
 }

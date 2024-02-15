@@ -1,0 +1,78 @@
+﻿@page "/location"
+@inherits LocationController
+
+<TelerikToolBar Class="border-bottom-0">
+    <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/add-new-icon.png" OnClick="@(()=> OnOpenDialogHandler())">Thêm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/remove_grid.png">Xóa dòng</ToolBarButton>
+</TelerikToolBar>
+
+<div class="h-table-content" style=" height: calc(100vh - 170px);">
+    <TelerikLoaderContainer OverlayThemeColor="light"
+                            Visible="@(!IsInitialDataLoadComplete)"
+                            Text="@null" Class="grid-initial-data-loader">
+        <Template>
+            <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                           Size="@(ThemeConstants.Loader.Size.Medium)">
+            </TelerikLoader>
+        </Template>
+    </TelerikLoaderContainer>
+
+    <TelerikGrid Data="@ListLocations"
+                 Height="100%"
+                 Width="100%"
+                 RowHeight="25"
+                 Pageable="true"
+                 PageSize="@DefaultConstants.PAGE_SIZE"
+                 Sortable="true"
+                 Resizable="true"
+                 FilterMode="@GridFilterMode.FilterMenu"
+                 SelectionMode="@GridSelectionMode.Multiple"
+                 ScrollMode="@GridScrollMode.Scrollable"
+                 OnRowDoubleClick="@OnRowDoubleClickHandler"
+                 @bind-SelectedItems="@SelectedLocations">
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input" />
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(LocationModel.Id) Aggregate="@GridAggregateType.Count" />
+        </GridAggregates>
+        <GridColumns>
+            <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+            <GridColumn Field=@nameof(LocationModel.Id) Width="130px" MaxResizableWidth="150" Title="Mã vị trí">
+                <Template>
+                    @{
+                        var model = (context as LocationModel);
+                        <span class="h-link" title="Xem chi tiết" @onclick="@(() => OnOpenDialogHandler(EnumType.Update, model))">@model!.Id</span>
+                    }
+                </Template>
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(LocationModel.LocationName) Width="270px" Title="Vị trí"></GridColumn>
+            <GridColumn Field=@nameof(LocationModel.Description) Width="270px" Title="Mô tả"></GridColumn>
+        </GridColumns>
+    </TelerikGrid>
+</div>
+
+<HDialog @bind-IsVisible="@IsShowDialog"
+         SaveAndClosed="@(()=> SaveDataHandler())"
+         Title="@(IsCreate ? "Thêm mới vị trí" : $"Cập nhật vị trí {LocationUpdate!.Id}")">
+    <EditForm EditContext="@_EditContext">
+        <DataAnnotationsValidator />
+        <div>
+            <HLabel Value="Mã Vị trí:" />
+            <TelerikNumericTextBox @bind-Value="@LocationUpdate!.Id" Class="h-link" Enabled="false" Arrows="false" />
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtLocationName" Value="Tên vị trí:" IsRequired="true" />
+            <TelerikTextBox @bind-Value="@LocationUpdate.LocationName" Id="txtLocationName" />
+            <HValidationTooltip ValidationFor="@(()=> LocationUpdate.LocationName)" Id="txtLocationName" />
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtDescription" Value="Mô tả vị trí:" />
+            <TelerikTextBox @bind-Value="@LocationUpdate.Description" Id="txtDescription" />
+        </div>
+    </EditForm>
+</HDialog>

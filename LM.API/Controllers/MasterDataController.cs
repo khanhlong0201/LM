@@ -508,5 +508,100 @@ namespace LM.API.Controllers
             }
 
         }
+
+        //
+        [HttpGet]
+        [Route("GetLocations")]
+        public async Task<IActionResult> GetLocations()
+        {
+            try
+            {
+                var data = await _masterService.GetLocationsAsync();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "GetLocations");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+
+        }
+
+        [HttpPost]
+        [Route("UpdateLocation")]
+        public async Task<IActionResult> UpdateLocation([FromBody] RequestModel request)
+        {
+            try
+            {
+                var response = await _masterService.UpdateLocationAsync(request);
+                if (response == null || response.StatusCode != 0) return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = response?.Message ?? "Vui lòng liên hệ IT để được hổ trợ."
+                });
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "UpdateLocation");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+
+            }
+        }
+
+        [HttpGet]
+        [Route("GetAuthors")]
+        public async Task<IActionResult> GetAuthors()
+        {
+            try
+            {
+                var data = await _masterService.GetAuthorsAsync();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "GetAuthors");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+
+        }
+
+        [HttpPost]
+        [Route("UpdateAuthor")]
+        public async Task<IActionResult> UpdateAuthor([FromBody] RequestModel request)
+        {
+            try
+            {
+                var response = await _masterService.UpdateAuthorAsync(request);
+                if (response == null || response.StatusCode != 0) return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = response?.Message ?? "Vui lòng liên hệ IT để được hổ trợ."
+                });
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "UpdateAuthor");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+
+            }
+        }
     }
 }

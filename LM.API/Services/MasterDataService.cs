@@ -5,6 +5,7 @@ using LM.Models.Shared;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
+using NPOI.POIFS.Crypt.Dsig;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
@@ -31,6 +32,12 @@ public interface IMasterDataService
     Task<IEnumerable<SeriesModel>> GetSeriesAsync(int batchId);
     Task<ResponseModel> UpdateSeries(RequestModel pRequest); // nhập kho
     Task<IEnumerable<CliBookModel>> GetBookClientsAsync(SearchModel pSearchData);
+
+    //
+    Task<IEnumerable<LocationModel>> GetLocationsAsync();
+    Task<ResponseModel> UpdateLocationAsync(RequestModel pRequest);
+    Task<IEnumerable<AuthorModel>> GetAuthorsAsync();
+    Task<ResponseModel> UpdateAuthorAsync(RequestModel pRequest);
 }
 
 public class MasterDataService : IMasterDataService
@@ -1232,6 +1239,178 @@ public class MasterDataService : IMasterDataService
             await _context.DisConnect();
         }
         return data;
+    }
+    
+    /// <summary>
+    /// lấy danh sách vị trí
+    /// </summary>
+    /// <returns></returns>
+    public async Task<IEnumerable<LocationModel>> GetLocationsAsync()
+    {
+        IEnumerable<LocationModel> data;
+        try
+        {
+            await _context.Connect();
+            string querry = @$"Select *
+                                     from [dbo].[Locations] as T0 with(nolock)
+                                    where T0.[IsDelete] = 0 order by T0.Id desc";
+            Func<IDataRecord, LocationModel> readData = record =>
+            {
+                LocationModel model = new LocationModel();
+                if (!Convert.IsDBNull(record["Id"])) model.Id = Convert.ToInt32(record["Id"]);
+                if (!Convert.IsDBNull(record["LocationName"])) model.LocationName = Convert.ToString(record["LocationName"]);
+                if (!Convert.IsDBNull(record["Description"])) model.Description = Convert.ToString(record["Description"]);
+                if (!Convert.IsDBNull(record["DateCreate"])) model.DateCreate = Convert.ToDateTime(record["DateCreate"]);
+                if (!Convert.IsDBNull(record["UserCreate"])) model.UserCreate = Convert.ToInt32(record["UserCreate"]);
+                return model;
+            };
+            data = await _context.GetDataAsync(querry, readData, commandType: CommandType.Text);
+        }
+        catch (Exception) { throw; }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return data;
+    }
+
+    /// <summary>
+    /// thêm mới/ cập nhật thông tin vị trí sách
+    /// </summary>
+    /// <param name="pRequest"></param>
+    /// <returns></returns>
+    public async Task<ResponseModel> UpdateLocationAsync(RequestModel pRequest)
+    {
+        ResponseModel response = new ResponseModel();
+        try
+        {
+            await _context.Connect();
+            string queryString = "";
+            LocationModel oItem = JsonConvert.DeserializeObject<LocationModel>(pRequest.Json + "")!;
+            var lstFiles = JsonConvert.DeserializeObject<List<ImageModel>>(pRequest.JsonDetail + "");
+            SqlParameter[] sqlParameters;
+            sqlParameters = new SqlParameter[5];
+            sqlParameters[0] = new SqlParameter("@LocationName", oItem.LocationName);
+            sqlParameters[1] = new SqlParameter("@Description", oItem.Description ?? (object)DBNull.Value);
+            sqlParameters[2] = new SqlParameter("@DateCreate", _dateTimeService.GetCurrentVietnamTime());
+            sqlParameters[3] = new SqlParameter("@UserCreate", pRequest.UserId);
+            sqlParameters[4] = new SqlParameter("@Id", oItem.Id);
+            if(pRequest.Type == nameof(EnumType.Add))
+            {
+                queryString = @"Insert Into [dbo].[Locations]([LocationName],[Description],[DateCreate],[UserCreate])
+                                        Values (@LocationName, @Description, @DateCreate, @UserCreate)";
+            }  
+            else
+            {
+                queryString = @"Update [dbo].[Locations]
+                                           set [LocationName] = @LocationName, [Description] = @Description, [DateUpdate] = @DateCreate, [UserUpdate] = @UserCreate
+                                         where [Id] = @Id";
+            }
+
+            var data = await _context.AddOrUpdateAsync(queryString, sqlParameters, CommandType.Text);
+            if (data != null && data.Rows.Count > 0)
+            {
+                response.StatusCode = int.Parse(data.Rows[0]["StatusCode"]?.ToString() ?? "-1");
+                response.Message = data.Rows[0]["ErrorMessage"]?.ToString();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            response.StatusCode = (int)HttpStatusCode.BadRequest;
+            response.Message = ex.Message;
+        }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return response;
+    }
+
+    /// <summary>
+    /// lấy danh sách tác gả
+    /// </summary>
+    /// <returns></returns>
+    public async Task<IEnumerable<AuthorModel>> GetAuthorsAsync()
+    {
+        IEnumerable<AuthorModel> data;
+        try
+        {
+            await _context.Connect();
+            string querry = @$"Select *
+                                     from [dbo].[Authors] as T0 with(nolock)
+                                    where T0.[IsDelete] = 0 order by T0.Id desc";
+            Func<IDataRecord, AuthorModel> readData = record =>
+            {
+                AuthorModel model = new AuthorModel();
+                if (!Convert.IsDBNull(record["Id"])) model.Id = Convert.ToInt32(record["Id"]);
+                if (!Convert.IsDBNull(record["AuthorName"])) model.AuthorName = Convert.ToString(record["AuthorName"]);
+                if (!Convert.IsDBNull(record["Description"])) model.Description = Convert.ToString(record["Description"]);
+                if (!Convert.IsDBNull(record["DateCreate"])) model.DateCreate = Convert.ToDateTime(record["DateCreate"]);
+                if (!Convert.IsDBNull(record["UserCreate"])) model.UserCreate = Convert.ToInt32(record["UserCreate"]);
+                return model;
+            };
+            data = await _context.GetDataAsync(querry, readData, commandType: CommandType.Text);
+        }
+        catch (Exception) { throw; }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return data;
+    }
+
+    /// <summary>
+    /// thêm mới/ cập nhật tác gả
+    /// </summary>
+    /// <param name="pRequest"></param>
+    /// <returns></returns>
+    public async Task<ResponseModel> UpdateAuthorAsync(RequestModel pRequest)
+    {
+        ResponseModel response = new ResponseModel();
+        try
+        {
+            await _context.Connect();
+            string queryString = "";
+            AuthorModel oItem = JsonConvert.DeserializeObject<AuthorModel>(pRequest.Json + "")!;
+            var lstFiles = JsonConvert.DeserializeObject<List<ImageModel>>(pRequest.JsonDetail + "");
+            SqlParameter[] sqlParameters;
+            sqlParameters = new SqlParameter[5];
+            sqlParameters[0] = new SqlParameter("@AuthorName", oItem.AuthorName);
+            sqlParameters[1] = new SqlParameter("@Description", oItem.Description ?? (object)DBNull.Value);
+            sqlParameters[2] = new SqlParameter("@DateCreate", _dateTimeService.GetCurrentVietnamTime());
+            sqlParameters[3] = new SqlParameter("@UserCreate", pRequest.UserId);
+            sqlParameters[4] = new SqlParameter("@Id", oItem.Id);
+            if (pRequest.Type == nameof(EnumType.Add))
+            {
+                queryString = @"Insert Into [dbo].[Authors]([AuthorName],[Description],[DateCreate],[UserCreate])
+                                        Values (@AuthorName, @Description, @DateCreate, @UserCreate)";
+            }
+            else
+            {
+                queryString = @"Update [dbo].[Authors]
+                                           set [AuthorName] = @AuthorName, [Description] = @Description, [DateUpdate] = @DateCreate, [UserUpdate] = @UserCreate
+                                         where [Id] = @Id";
+            }
+
+            var data = await _context.AddOrUpdateAsync(queryString, sqlParameters, CommandType.Text);
+            if (data != null && data.Rows.Count > 0)
+            {
+                response.StatusCode = int.Parse(data.Rows[0]["StatusCode"]?.ToString() ?? "-1");
+                response.Message = data.Rows[0]["ErrorMessage"]?.ToString();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            response.StatusCode = (int)HttpStatusCode.BadRequest;
+            response.Message = ex.Message;
+        }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return response;
     }
     #endregion Public Functions
 

@@ -56,4 +56,9 @@ public static class EndpointConstants
 
     public const string URL_MASTERDATA_GET_BOOK_CLIENT = "MasterData/GetBookClients";
     public const string URL_MASTERDATA_GET_BOOK_DETAIL_CLIENT = "MasterData/GetBookDetailClients";
+
+    public const string URL_MASTERDATA_GET_LOCATION = "MasterData/GetLocations";
+    public const string URL_MASTERDATA_UPDATE_LOCATION = "MasterData/UpdateLocation";
+    public const string URL_MASTERDATA_GET_AUTHOR = "MasterData/GetAuthors";
+    public const string URL_MASTERDATA_UPDATE_AUTHOR = "MasterData/UpdateAuthor";
 }

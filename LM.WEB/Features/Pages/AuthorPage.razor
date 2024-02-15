@@ -1,0 +1,78 @@
+﻿@page "/author"
+@inherits AuthorController
+
+<TelerikToolBar Class="border-bottom-0">
+    <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/add-new-icon.png" OnClick="@(()=> OnOpenDialogHandler())">Thêm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/remove_grid.png">Xóa dòng</ToolBarButton>
+</TelerikToolBar>
+
+<div class="h-table-content" style=" height: calc(100vh - 170px);">
+    <TelerikLoaderContainer OverlayThemeColor="light"
+                            Visible="@(!IsInitialDataLoadComplete)"
+                            Text="@null" Class="grid-initial-data-loader">
+        <Template>
+            <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                           Size="@(ThemeConstants.Loader.Size.Medium)">
+            </TelerikLoader>
+        </Template>
+    </TelerikLoaderContainer>
+
+    <TelerikGrid Data="@ListAuthors"
+                 Height="100%"
+                 Width="100%"
+                 RowHeight="25"
+                 Pageable="true"
+                 PageSize="@DefaultConstants.PAGE_SIZE"
+                 Sortable="true"
+                 Resizable="true"
+                 FilterMode="@GridFilterMode.FilterMenu"
+                 SelectionMode="@GridSelectionMode.Multiple"
+                 ScrollMode="@GridScrollMode.Scrollable"
+                 OnRowDoubleClick="@OnRowDoubleClickHandler"
+                 @bind-SelectedItems="@SelectedAuthors">
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input" />
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(AuthorModel.Id) Aggregate="@GridAggregateType.Count" />
+        </GridAggregates>
+        <GridColumns>
+            <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+            <GridColumn Field=@nameof(AuthorModel.Id) Width="130px" MaxResizableWidth="150" Title="Mã tác giả">
+                <Template>
+                    @{
+                        var model = (context as AuthorModel);
+                        <span class="h-link" title="Xem chi tiết" @onclick="@(() => OnOpenDialogHandler(EnumType.Update, model))">@model!.Id</span>
+                    }
+                </Template>
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(AuthorModel.AuthorName) Width="270px" Title="Tên tác giả"></GridColumn>
+            <GridColumn Field=@nameof(AuthorModel.Description) Width="270px" Title="Mô tả"></GridColumn>
+        </GridColumns>
+    </TelerikGrid>
+</div>
+
+<HDialog @bind-IsVisible="@IsShowDialog"
+         SaveAndClosed="@(()=> SaveDataHandler())"
+         Title="@(IsCreate ? "Thêm mới tác giả" : $"Cập nhật tác giả {AuthorUpdate!.Id}")">
+    <EditForm EditContext="@_EditContext">
+        <DataAnnotationsValidator />
+        <div>
+            <HLabel Value="Mã Vị trí:" />
+            <TelerikNumericTextBox @bind-Value="@AuthorUpdate!.Id" Class="h-link" Enabled="false" Arrows="false" />
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtAuthorName" Value="Tên vị trí:" IsRequired="true" />
+            <TelerikTextBox @bind-Value="@AuthorUpdate.AuthorName" Id="txtAuthorName" />
+            <HValidationTooltip ValidationFor="@(()=> AuthorUpdate.AuthorName)" Id="txtAuthorName" />
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtDescription" Value="Mô tả:" />
+            <TelerikTextBox @bind-Value="@AuthorUpdate.Description" Id="txtDescription" />
+        </div>
+    </EditForm>
+</HDialog>
