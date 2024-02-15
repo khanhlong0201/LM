@@ -100,21 +100,23 @@
                                 <li class="nav-item dropdown @(PageActive == "/sales-doclist" || PageActive == "/outbound-list" || PageActive == "/service-call-list" ? "active": "")">
                                     <a class="nav-link dropdown-toggle" href="#navbar-psmonitor" data-bs-toggle="dropdown" role="button" aria-expanded="false">
                                         <span class="nav-link-icon d-md-none d-lg-inline-block">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                                                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                                <path d="M13 5h8" />
-                                                <path d="M13 9h5" />
-                                                <path d="M13 15h8" />
-                                                <path d="M13 19h5" />
-                                                <path d="M3 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
-                                                <path d="M3 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                                                <path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0" />
+                                                <path d="M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0" />
+                                                <path d="M3 6l0 13" />
+                                                <path d="M12 6l0 13" />
+                                                <path d="M21 6l0 13" />
                                             </svg>
                                         </span>
                                         <span class="nav-link-title">
-                                            Danh mục
+                                            Thông tin sách
                                         </span>
                                     </a>
                                     <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="book">
+                                            Sách
+                                        </a>
                                         <a class="dropdown-item" href="kindbook">
                                             Loại sách
                                         </a>
@@ -143,18 +145,39 @@
                                             </svg>
                                         </span>
                                         <span class="nav-link-title">
-                                            QL Kho
+                                            Kho
                                         </span>
                                     </a>
                                     <div class="dropdown-menu">
                                         <a class="dropdown-item" href="batch">
                                             Lô Sách
                                         </a>
-                                        <a class="dropdown-item" href="book">
-                                            Sách
-                                        </a>
                                         <a class="dropdown-item" href="series">
                                             Số Series Sách
+                                        </a>
+                                    </div>
+                                </li>
+                                <li class="nav-item dropdown @(PageActive == "/sales-doclist" || PageActive == "/outbound-list" || PageActive == "/service-call-list" ? "active": "")">
+                                    <a class="nav-link dropdown-toggle" href="#navbar-psmonitor" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                                        <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                                <path d="M3 12m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                                                <path d="M9 8m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                                                <path d="M15 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                                                <path d="M4 20l14 0" />
+                                            </svg>
+                                        </span>
+                                        <span class="nav-link-title">
+                                            Báo cáo
+                                        </span>
+                                    </a>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="user`">
+                                            Người dùng
+                                        </a>
+                                        <a class="dropdown-item" href="publisher">
+                                            Cấu hình số lượng
                                         </a>
                                     </div>
                                 </li>

@@ -41,6 +41,8 @@ public interface ICliMasterDataService
 
     Task<List<AuthorModel>?> GetAuthorsAsync();
     Task<bool> UpdateAuthorAsync(string pJson, string pAction, int pUserId);
+
+    Task<List<ImageModel>?> UploadImagesAsync(List<ImageModel> pListImgs);
 }
 public class CliMasterDataService : CliServiceBase, ICliMasterDataService 
 {
@@ -1042,5 +1044,65 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
             _toastService.ShowError(ex.Message);
         }
         return false;
+    }
+
+    /// <summary>
+    /// Upload hình ảnh
+    /// </summary>
+    /// <param name="pListImgs"></param>
+    /// <returns></returns>
+    public async Task<List<ImageModel>?> UploadImagesAsync(List<ImageModel> pListImgs)
+    {
+        try
+        {
+            _httpClient.DefaultRequestHeaders.Accept.Clear();
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            using var content = new MultipartFormDataContent();
+            content.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data");
+            if (pListImgs != null && pListImgs.Any())
+            {
+                var lstUpload = pListImgs.Where(m => m.IsDelete == false); // lấy ra hình ảnh nào cần upload
+                foreach (var file in lstUpload)
+                {
+                    if (File.Exists($"{file.FilePath}"))
+                    {
+                        content.Add(new StreamContent(File.OpenRead(@$"{file.FilePath}")), name: "\"files\"", fileName: file.FileName + "");
+                    }
+                }
+            }
+            HttpResponseMessage httpResponse = await _httpClient.PostAsync($"api/{EndpointConstants.URL_MASTERDATA_UPLOAD_IMAGE}?subFolder={EnumTable.Books}", content);
+            var checkContent = ValidateJsonContent(httpResponse.Content);
+            if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
+            else
+            {
+                var resContent = await httpResponse.Content.ReadAsStringAsync();
+                if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<List<ImageModel>>(resContent);
+                if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
+                    return null;
+                }
+                var oMessage = JsonConvert.DeserializeObject<ResponseModel>(resContent);
+                _toastService.ShowError($"{oMessage?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "UploadImagesAsync");
+            _toastService.ShowError(ex.Message);
+        }
+        finally
+        {
+            // xóa hình ảnh trong folder tạm
+            if (pListImgs != null && pListImgs.Any())
+            {
+                foreach (var file in pListImgs)
+                {
+                    if (File.Exists($"{file.FilePath}")) File.Delete($"{file.FilePath}");
+                }
+            }
+        }
+        return default;
+
     }
 }

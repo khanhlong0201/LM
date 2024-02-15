@@ -61,4 +61,5 @@ public static class EndpointConstants
     public const string URL_MASTERDATA_UPDATE_LOCATION = "MasterData/UpdateLocation";
     public const string URL_MASTERDATA_GET_AUTHOR = "MasterData/GetAuthors";
     public const string URL_MASTERDATA_UPDATE_AUTHOR = "MasterData/UpdateAuthor";
+    public const string URL_MASTERDATA_UPLOAD_IMAGE = "MasterData/UploadImages";
 }

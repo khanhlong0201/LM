@@ -34,9 +34,11 @@
     [Parameter] public EventCallback SaveAndClosed { get; set; }
     [Parameter] public EventCallback SaveAndCreate { get; set; }
     [Parameter] public bool IsShowButtonSaveAndCreates { get; set; } = true;
+    [Parameter] public Action? ActionClosed { get; set; }
 
     private async Task CloseDialogHandler()
     {
+        if (ActionClosed != null) ActionClosed();
         IsVisible = false;
         await IsVisibleChanged.InvokeAsync(IsVisible);
     }

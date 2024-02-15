@@ -51,19 +51,21 @@
                     Số dòng: @context.Count
                 </FooterTemplate>
             </GridColumn>
-            <GridColumn Field=@nameof(BookModel.PublisherName) Width="150px" Title="Tên nhà xuất bản"></GridColumn>
-            <GridColumn Field=@nameof(BookModel.KindBookName) Width="150px" Title="Tên loại sách"></GridColumn>
             <GridColumn Field=@nameof(BookModel.BookName) Width="150px" Title="Tên sách"></GridColumn>
+            <GridColumn Field=@nameof(BookModel.AuthorName) Width="150px" Title="Tác giả"></GridColumn>
+            <GridColumn Field=@nameof(BookModel.PublisherName) Width="150px" Title="Nhà xuất bản"></GridColumn>
+            <GridColumn Field=@nameof(BookModel.KindBookName) Width="150px" Title="Loại sách"></GridColumn>
             <GridColumn Field=@nameof(BookModel.PublishingYear) Width="150px" Title="Năm xuất bản"></GridColumn>
-            <GridColumn Field=@nameof(BookModel.Qty) Width="150px" Title="Tổng số lượng" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY"></GridColumn>
-            <GridColumn Field=@nameof(BookModel.Price) Width="150px" Title="Đơn giá/sách" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY"></GridColumn>
-            <GridColumn Field=@nameof(BookModel.Description) Width="270px" Title="Miêu tả"></GridColumn>
+            <GridColumn Field=@nameof(BookModel.Qty) Width="150px" Title="Số lượng" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY"></GridColumn>
+            @*<GridColumn Field=@nameof(BookModel.Price) Width="150px" Title="Đơn giá/sách" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY"></GridColumn>*@
+            @*<GridColumn Field=@nameof(BookModel.Description) Width="270px" Title="Miêu tả"></GridColumn>*@
         </GridColumns>
     </TelerikGrid>
 </div>
 
 <HDialog @bind-IsVisible="@IsShowDialog"
     SaveAndClosed="@(()=> SaveDataHandler())"
+    ActionClosed="@RemoveFileCallbackHandler"
     Width="80%"
     Title="@(IsCreate ? "Thêm mới sách" : "Cập nhật sách")">
     <EditForm EditContext="@_EditContext">
@@ -73,26 +75,29 @@
             <TelerikTextBox @bind-Value="@BookUpdate!.BookName" Class="bh-link" Id="txtBookName" />
             <HValidationTooltip ValidationFor="@(()=> BookUpdate.BookName)" Id="txtBookName" />
         </div>
-        <div class="mt-2">
-            <div class="row">
-                <div class="col-lg-4 col-sm-12">
-                    <HLabel Value="Năm xuất bản:" IsRequired="true" />
-                    <TelerikNumericTextBox 
-                        Min="1800"
-                        @bind-Value="@BookUpdate.PublishingYear" 
-                        Id="numPublishingYear" />
-                    <HValidationTooltip ValidationFor="@(()=> BookUpdate.PublishingYear)" Id="numPublishingYear" />
-                </div>
-            </div>
-        </div>
          <div class="mt-2">
-            <div class="row">
-                <div class="col-lg-4 col-sm-12">
+            <div class="row row-gap-2">
+                <div class="col-md-6 col-sm-12">
+                   <HLabel Value="Tác giả:" IsRequired="true" />
+                    <TelerikComboBox Data="@ListAuthors"
+                        Value="@BookUpdate.AuthorId"
+                        ValueExpression="@(() => BookUpdate.AuthorId)"
+                        ValueChanged="@((int value) => BookUpdate.AuthorId = value)"
+                        Placeholder="Chọn tác giả.."
+                        TextField="@nameof(AuthorModel.AuthorName)"
+                        ValueField="@nameof(AuthorModel.Id)"
+                        Filterable="true"
+                        ClearButton="false"
+                        Id="txtAuthorId" Width="100%">
+                    </TelerikComboBox>
+                    <HValidationTooltip ValidationFor="@(()=> BookUpdate.AuthorId)" Id="txtAuthorId" />
+                </div>
+                <div class="col-md-6 col-sm-12">
                    <HLabel Value="Loại sách:" IsRequired="true" />
                     <TelerikComboBox Data="@ListKindBooks"
                         Value="@BookUpdate.KindBookId"
                         ValueExpression="@(() => BookUpdate.KindBookId)"
-                        ValueChanged="@((int? value) => BookUpdate.KindBookId = value)"
+                        ValueChanged="@((int value) => BookUpdate.KindBookId = value)"
                         Placeholder="Chọn loại sách..."
                         TextField="@nameof(KindBookModel.KindBookName)"
                         ValueField="@nameof(KindBookModel.KindBookId)"
@@ -102,12 +107,12 @@
                     </TelerikComboBox>
                     <HValidationTooltip ValidationFor="@(()=> BookUpdate.KindBookId)" Id="txtKindBookId" />
                 </div>
-                <div class="col-lg-4 col-sm-12">
+                <div class="col-md-6 col-sm-12">
                     <HLabel Value="Nhà xuất bản:" IsRequired="true" />
                     <TelerikComboBox Data="@ListPublishers"
                         Value="@BookUpdate.PublisherId"
                         ValueExpression="@(() => BookUpdate.PublisherId)"
-                        ValueChanged="@((int? value) => BookUpdate.PublisherId = value)"
+                        ValueChanged="@((int value) => BookUpdate.PublisherId = value)"
                         Placeholder="Chọn nhà xuất bản..."
                         TextField="@nameof(PublisherModel.PublisherName)"
                         ValueField="@nameof(PublisherModel.PublisherId)"
@@ -117,35 +122,40 @@
                     </TelerikComboBox>
                      <HValidationTooltip ValidationFor="@(()=> BookUpdate.PublisherId)" Id="txtPublisherId" />
                 </div>
+                <div class="col-md-6 col-sm-12">
+                    <HLabel Value="Năm xuất bản:" IsRequired="true" />
+                    <TelerikNumericTextBox 
+                        Min="1800"
+                        @bind-Value="@BookUpdate.PublishingYear" 
+                        Id="numPublishingYear" />
+                    <HValidationTooltip ValidationFor="@(()=> BookUpdate.PublishingYear)" Id="numPublishingYear" />
+                </div>
             </div>
         </div>
         <div class="mt-2">
-            <HLabel Value="Chọn hình ảnh:" IsRequired="true" />
-            <InputFile id="ref-upload" multiple OnChange="@OnLoadFileHandler" accept="image/*" />
-        </div>
-
-        @if (ListImages != null && ListImages.Any())
-        {
-            <div class="mt-2" style="display: flex; flex-direction: row; flex-wrap: wrap;">
-                @foreach (var item in ListImages)
-                {
-                    <div>
-                        <img class="img-thumbnail" src="@item.ImageUrl" style="width: 300px; height: 300px; object-fit: cover; border-radius: 3px;" />
-                    </div>
-                }
-            </div>
-        }
-        <div class="mt-2">
-            <HLabel Value="Điền thông tin mô tả:" IsRequired="true" />
+            <HLabel Value="Điền thông tin mô tả:" />
             <TelerikEditor Value="@BookUpdate.Description" 
                 ValueChanged="@((string value) => BookUpdate.Description = value)"
                 ValueExpression="@(() => BookUpdate.Description)"
                 Tools="@EditorToolSets.All"
                 Id="txtDescription"
-                Height="500px">
+                Height="275px">
             </TelerikEditor>
-            <HValidationTooltip ValidationFor="@(()=> BookUpdate.Description)" Id="txtDescription" />
         </div>
+
+        <div class="mt-2">
+            <HLabel Value="Ảnh bìa:" />
+            <InputFile id="ref-upload" accept="image/*" OnChange="@OnLoadFileHandler" />
+            <div class="text-secondary">
+                *Lưu ý: dung lượng file không quá 2MB và ảnh JPG, PNG
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(BookUpdate.ImageUrlView))
+        {
+            <div class="mt-2" style="display: flex; flex-direction: row; flex-wrap: wrap;">
+                <img class="img-thumbnail" src="@BookUpdate.ImageUrlView" style="width: 240px; height: 366px; object-fit: cover; border-radius: 3px;" />
+            </div>
+        }
 
     </EditForm>
 

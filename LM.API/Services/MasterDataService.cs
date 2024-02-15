@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using NPOI.POIFS.Crypt.Dsig;
+using SixLabors.ImageSharp;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
@@ -44,10 +45,20 @@ public class MasterDataService : IMasterDataService
 {
     private readonly IBMDbContext _context;
     private readonly IDateTimeService _dateTimeService;
-    public MasterDataService(IBMDbContext context, IDateTimeService dateTimeService)
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly string _HOST_API;
+    public MasterDataService(IBMDbContext context, IDateTimeService dateTimeService, IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _dateTimeService = dateTimeService;
+        _httpContextAccessor = httpContextAccessor;
+        var requestContext = _httpContextAccessor!.HttpContext?.Request;
+        string url = string.Empty;
+        if (requestContext != null)
+        {
+            url = @$"{requestContext.Scheme}://{requestContext.Host.Value}";
+        }
+        _HOST_API = url;
     }
 
     #region Public Funtions
@@ -579,19 +590,20 @@ public class MasterDataService : IMasterDataService
                         ,t0.[UserCreate]
                         ,t0.[KindBookId]
                         ,t0.[PublisherId]
-                        ,t0.[ImageId]
+                        ,t0.[ImageUrl]
 	                    ,t1.PublisherName
 	                    ,t2.KindBookName
                         ,t0.PublisherId
 	                    ,t0.KindBookId
                         ,t0.PublishingYear
 						, concat(t0.BookName, N' - NXB: ',t0.PublishingYear) as 'Name'
+                        ,t0.AuthorId, T3.AuthorName
                     FROM [dbo].[Books] t0 
                     inner join  Publishers t1 on t0.PublisherId = t1.PublisherId
                     inner join  KindBooks t2 on t0.KindBookid = t2.KindBookid
-                    left join  Images t3 on t0.ImageId = t3.ImageId
-                    where t0.isdelete = 0
-                    and (isnull(@KindBookId,0)=0 or t0.KindBookId = @KindBookId)
+                    left join  Authors t3 on t0.AuthorId = t3.Id
+                    where t0.isdelete = 0 
+                      and (isnull(@KindBookId,0)=0 or t0.KindBookId = @KindBookId)
                     and (isnull(@PublisherId,0)=0 or t0.PublisherId = @PublisherId)"
                     , DataRecordToBookModel,sqlParameters, commandType: CommandType.Text);
         }
@@ -602,6 +614,7 @@ public class MasterDataService : IMasterDataService
         }
         return data;
     }
+
     /// <summary>
     /// Thêm mới/Cập nhật thông tin sách
     /// </summary>
@@ -616,7 +629,6 @@ public class MasterDataService : IMasterDataService
             string queryString = "";
             bool isUpdated = false;
             BookModel oBook = JsonConvert.DeserializeObject<BookModel>(pRequest.Json + "")!;
-            List<ImageDetailModel> lstImageDetail = oBook.ListFile;
             SqlParameter[] sqlParameters;
             async Task<bool> ExecQuery()
             {
@@ -635,151 +647,78 @@ public class MasterDataService : IMasterDataService
                     sqlParameters = new SqlParameter[1];
                     sqlParameters[0] = new SqlParameter("@BookName", oBook.BookName);
                     // kiểm tra tên đăng nhập
-                    if (await _context.ExecuteScalarAsync("select COUNT(*) from Books with(nolock) where BookName = @BookName", sqlParameters) > 0)
-                    {
-                        response.StatusCode = (int)HttpStatusCode.BadRequest;
-                        response.Message = "Tên đăng nhập đã tồn tại!";
-                        break;
-                    }
-                    queryString = @"INSERT INTO [dbo].[Images] ([Type],[DateCreate],[UserCreate] ,[IsDelete]) 
-                                                                values ('Book',@DateTimeNow ,@UserId, 0)";
-                    sqlParameters = new SqlParameter[2];
-                    sqlParameters[0] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
-                    sqlParameters[1] = new SqlParameter("@UserId", pRequest.UserId);
-                    await _context.BeginTranAsync();
+                    //if (await _context.ExecuteScalarAsync("select COUNT(*) from Books with(nolock) where BookName = @BookName", sqlParameters) > 0)
+                    //{
+                    //    response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    //    response.Message = "Tên đăng nhập đã tồn tại!";
+                    //    break;
+                    //}
+                    queryString = @"INSERT INTO [dbo].[Books] ([BookName], [Description], [PublishingYear], [Language], [Size], [NumOfPage], [DateCreate], [UserCreate], [IsDelete]
+                                                                , [KindBookId], [PublisherId], [ImageUrl], [AuthorId])
+                                                            values (@BookName , @Description , @PublishingYear, @Language, @Size, @NumOfPage,  @DateTimeNow, @UserId, 0, @KindBookId, @PublisherId, @ImageUrl, @AuthorId )";
+                    sqlParameters = new SqlParameter[12];
+                    sqlParameters[0] = new SqlParameter("@BookName", oBook.BookName ?? (object)DBNull.Value);
+                    sqlParameters[1] = new SqlParameter("@Description", oBook.Description ?? (object)DBNull.Value);
+                    sqlParameters[2] = new SqlParameter("@PublishingYear", oBook.PublishingYear);
+                    sqlParameters[3] = new SqlParameter("@Language", oBook.Language ?? (object)DBNull.Value);
+                    sqlParameters[4] = new SqlParameter("@Size", oBook.Size ?? (object)DBNull.Value);
+                    sqlParameters[5] = new SqlParameter("@NumOfPage", oBook.NumOfPage);
+                    sqlParameters[6] = new SqlParameter("@KindBookId", oBook.KindBookId);
+                    sqlParameters[7] = new SqlParameter("@PublisherId", oBook.PublisherId);
+                    sqlParameters[8] = new SqlParameter("@ImageUrl", oBook.ImageUrl ?? (object)DBNull.Value);
+                    sqlParameters[9] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+                    sqlParameters[10] = new SqlParameter("@UserId", pRequest.UserId);
+                    sqlParameters[11] = new SqlParameter("@AuthorId", oBook.AuthorId);
                     isUpdated = await ExecQuery();
-                    if (isUpdated)
-                    {
-                        int iImageId = await _context.ExecuteScalarAsync("select isnull(max(ImageId), 0) from [dbo].[Images] with(nolock)");
-                        foreach (var oImageDetail in lstImageDetail) //thêm chi tiết hình ảnh
-                        {
-                            queryString = @"INSERT INTO [dbo].[ImageDetails] ([FilePath] ,[DateCreate],[UserCreate],[IsDelete],[ImageId])
-                                                                        values  (@FilePath, @DateTimeNow, @UserId, 0, @ImageId)";
-                            sqlParameters = new SqlParameter[4];
-                            sqlParameters[0] = new SqlParameter("@FilePath", oImageDetail.FilePath.Substring(oImageDetail.FilePath.LastIndexOf('\\') + 1));
-                            sqlParameters[1] = new SqlParameter("@UserId", pRequest.UserId);
-                            sqlParameters[2] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
-                            sqlParameters[3] = new SqlParameter("@ImageId", iImageId);
-                            isUpdated = await ExecQuery();
-                            if (!isUpdated)
-                            {
-                                await _context.RollbackAsync();
-                                return response;
-                            }
-                        }
-                        queryString = @"INSERT INTO [dbo].[Books] ([BookName], [Description], [PublishingYear], [Language], [Size], [NumOfPage], [DateCreate], [UserCreate], [IsDelete], [KindBookId], [PublisherId], [ImageId])
-                                                            values (@BookName , @Description , @PublishingYear, @Language, @Size, @NumOfPage,  @DateTimeNow, @UserId, 0, @KindBookId, @PublisherId, @ImageId )";
-                        sqlParameters = new SqlParameter[11];
-                        sqlParameters[0] = new SqlParameter("@BookName", oBook.BookName ?? (object)DBNull.Value);
-                        sqlParameters[1] = new SqlParameter("@Description", oBook.Description ?? (object)DBNull.Value);
-                        sqlParameters[2] = new SqlParameter("@PublishingYear", oBook.PublishingYear ?? (object)DBNull.Value);
-                        sqlParameters[3] = new SqlParameter("@Language", oBook.Language ?? (object)DBNull.Value);
-                        sqlParameters[4] = new SqlParameter("@Size", oBook.Size ?? (object)DBNull.Value);
-                        sqlParameters[5] = new SqlParameter("@NumOfPage", oBook.NumOfPage ?? (object)DBNull.Value);
-                        sqlParameters[6] = new SqlParameter("@KindBookId", oBook.KindBookId ?? (object)DBNull.Value);
-                        sqlParameters[7] = new SqlParameter("@PublisherId", oBook.PublisherId ?? (object)DBNull.Value);
-                        sqlParameters[8] = new SqlParameter("@ImageId", iImageId);
-                        sqlParameters[9] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
-                        sqlParameters[10] = new SqlParameter("@UserId", pRequest.UserId);
-                        isUpdated= await ExecQuery();
-                        if (isUpdated) await _context.CommitTranAsync();
-                    }
                     break;
                 case nameof(EnumType.Update):
-                        queryString = @"INSERT INTO [dbo].[Images] ([Type],[DateCreate],[UserCreate] ,[IsDelete]) 
-                                                                values ('Book',@DateTimeNow ,@UserId, 0)";
-                        sqlParameters = new SqlParameter[2];
-                        sqlParameters[0] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
-                        sqlParameters[1] = new SqlParameter("@UserId", pRequest.UserId);
-                        await _context.BeginTranAsync();
-                        isUpdated = await ExecQuery();
-                        if (isUpdated)
-                        {
-                            int iImageId = await _context.ExecuteScalarAsync("select isnull(max(ImageId), 0) from [dbo].[Images] with(nolock)");
-                            foreach (var oImageDetail in lstImageDetail) //thêm chi tiết hình ảnh
-                            {
-                                queryString = @"INSERT INTO [dbo].[ImageDetails] ([FilePath] ,[DateCreate],[UserCreate],[IsDelete],[ImageId])
-                                                                        values  (@FilePath, @DateTimeNow, @UserId, 0, @ImageId)";
-                                sqlParameters = new SqlParameter[4];
-                                sqlParameters[0] = new SqlParameter("@FilePath", oImageDetail.FileName ?? (object)DBNull.Value);
-                                sqlParameters[1] = new SqlParameter("@UserId", pRequest.UserId);
-                                sqlParameters[2] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
-                                sqlParameters[3] = new SqlParameter("@ImageId", iImageId);
-                                isUpdated = await ExecQuery();
-                                if (!isUpdated)
-                                {
-                                    await _context.RollbackAsync();
-                                    return response;
-                                }
-                            }
-                            queryString = @"UPDATE [dbo].[Books]
-                               SET [BookName] = @BookName
-                                  ,[Description] = @Description 
-                                  ,[PublishingYear] = @PublishingYear
-                                  ,[Language] = @Language
-                                  ,[Size] = @Size
-                                  ,[NumOfPage] = @NumOfPage
-                                  ,[KindBookId] = @KindBookId
-                                  ,[PublisherId] = @PublisherId
-                                  ,[ImageId] = @ImageId
-                                  ,[DateUpdate] = @DateTimeNow
-                                  ,[UserUpdate] = @UserId
-                                 WHERE [BookId] = @BookId";
-                                sqlParameters = new SqlParameter[12];
-                                sqlParameters[0] = new SqlParameter("@BookName", oBook.BookName ?? (object)DBNull.Value);
-                                sqlParameters[1] = new SqlParameter("@Description", oBook.Description ?? (object)DBNull.Value);
-                                sqlParameters[2] = new SqlParameter("@PublishingYear", oBook.PublishingYear ?? (object)DBNull.Value);
-                                sqlParameters[3] = new SqlParameter("@Language", oBook.Language ?? (object)DBNull.Value);
-                                sqlParameters[4] = new SqlParameter("@Size", oBook.Size ?? (object)DBNull.Value);
-                                sqlParameters[5] = new SqlParameter("@NumOfPage", oBook.NumOfPage ?? (object)DBNull.Value);
-                                sqlParameters[6] = new SqlParameter("@KindBookId", oBook.KindBookId ?? (object)DBNull.Value);
-                                sqlParameters[7] = new SqlParameter("@PublisherId", oBook.PublisherId ?? (object)DBNull.Value);
-                                sqlParameters[8] = new SqlParameter("@ImageId", iImageId);
-                                sqlParameters[9] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
-                                sqlParameters[10] = new SqlParameter("@UserId", pRequest.UserId);
-                                sqlParameters[11] = new SqlParameter("@BookId", oBook.BookId);
-                                 isUpdated = await ExecQuery();
-                                if (!isUpdated)
-                                {
-                                    await _context.RollbackAsync();
-                                    return response;
-                                }
-                                queryString = @"UPDATE [dbo].[ImageDetails]
-                                       SET [Isdelete] = 1
-                                         WHERE [ImageId] = @ImageId";
-                                sqlParameters = new SqlParameter[1];
-                                sqlParameters[0] = new SqlParameter("@ImageId", oBook.ImageId);
-                                isUpdated = await ExecQuery();
-                                if (!isUpdated)
-                                {
-                                    await _context.RollbackAsync();
-                                    return response;
-                                }
-                                queryString = @"UPDATE [dbo].[Images]
-                                       SET [Isdelete] = 1
-                                         WHERE [ImageId] = @ImageId";
-                                sqlParameters = new SqlParameter[1];
-                                sqlParameters[0] = new SqlParameter("@ImageId", oBook.ImageId);
-                                isUpdated = await ExecQuery();
-                                if (isUpdated) await _context.CommitTranAsync();
-
-                        }
+                    queryString = @"UPDATE [dbo].[Books]
+                                       SET [BookName] = @BookName
+                                           ,[Description] = @Description 
+                                           ,[PublishingYear] = @PublishingYear
+                                           ,[Language] = @Language
+                                           ,[Size] = @Size
+                                           ,[NumOfPage] = @NumOfPage
+                                           ,[KindBookId] = @KindBookId
+                                           ,[PublisherId] = @PublisherId
+                                           ,[ImageUrl] = @ImageUrl
+                                           ,[DateUpdate] = @DateTimeNow
+                                           ,[UserUpdate] = @UserId
+                                           ,[AuthorId] = @AuthorId
+                                     WHERE [BookId] = @BookId";
+                    sqlParameters = new SqlParameter[13];
+                    sqlParameters[0] = new SqlParameter("@BookName", oBook.BookName);
+                    sqlParameters[1] = new SqlParameter("@Description", oBook.Description ?? (object)DBNull.Value);
+                    sqlParameters[2] = new SqlParameter("@PublishingYear", oBook.PublishingYear);
+                    sqlParameters[3] = new SqlParameter("@Language", oBook.Language ?? (object)DBNull.Value);
+                    sqlParameters[4] = new SqlParameter("@Size", oBook.Size ?? (object)DBNull.Value);
+                    sqlParameters[5] = new SqlParameter("@NumOfPage", oBook.NumOfPage);
+                    sqlParameters[6] = new SqlParameter("@KindBookId", oBook.KindBookId);
+                    sqlParameters[7] = new SqlParameter("@PublisherId", oBook.PublisherId);
+                    sqlParameters[8] = new SqlParameter("@ImageUrl", oBook.ImageUrl ?? (object)DBNull.Value);
+                    sqlParameters[9] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+                    sqlParameters[10] = new SqlParameter("@UserId", pRequest.UserId);
+                    sqlParameters[11] = new SqlParameter("@BookId", oBook.BookId);
+                    sqlParameters[12] = new SqlParameter("@AuthorId", oBook.AuthorId);
+                    isUpdated = await ExecQuery();
                     break;
                 default:
                     response.StatusCode = (int)HttpStatusCode.BadRequest;
                     response.Message = "Không xác định được phương thức!";
                     break;
-            }
+            }    
         }
         catch (Exception ex)
         {
             response.StatusCode = (int)HttpStatusCode.BadRequest;
             response.Message = ex.Message;
+            await _context.RollbackAsync();
         }
         finally
         {
             await _context.DisConnect();
         }
+
         return response;
     }
 
@@ -1547,9 +1486,15 @@ public class MasterDataService : IMasterDataService
         if (!Convert.IsDBNull(record["UserCreate"])) book.UserCreate = Convert.ToInt32(record["UserCreate"]);
         if (!Convert.IsDBNull(record["KindBookId"])) book.KindBookId = Convert.ToInt32(record["KindBookId"]);
         if (!Convert.IsDBNull(record["PublisherId"])) book.PublisherId = Convert.ToInt32(record["PublisherId"]);
-        if (!Convert.IsDBNull(record["ImageId"])) book.ImageId = Convert.ToInt32(record["ImageId"]);
+        if (!Convert.IsDBNull(record["ImageUrl"]))
+        {
+            book.ImageUrl = Convert.ToString(record["ImageUrl"]);
+            book.ImageUrlView = $"{_HOST_API}/{nameof(EnumTable.Books)}/{book.ImageUrl}";
+        }    
         if (!Convert.IsDBNull(record["PublishingYear"])) book.PublishingYear = Convert.ToInt32(record["PublishingYear"]);
         if (!Convert.IsDBNull(record["Name"])) book.Name = Convert.ToString(record["Name"]);
+        if (!Convert.IsDBNull(record["AuthorId"])) book.AuthorId = Convert.ToInt32(record["AuthorId"]);
+        if (!Convert.IsDBNull(record["AuthorName"])) book.AuthorName = Convert.ToString(record["AuthorName"]);
         return book;
     }
 
