@@ -27,7 +27,6 @@ public class BookModel : Auditable
 
     [Range(1, double.MaxValue, ErrorMessage = "Vui lòng điền Năm xuất bản")]
     public int  PublishingYear { get; set; } // năm xuất bản
-    public List<ImageDetailModel>? ListFile { get; set; }
     public string? Name { get; set; }
     public string? AuthorName { get; set; }
 

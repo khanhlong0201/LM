@@ -34,7 +34,6 @@ public class BookController : LMControllerBase
     public List<PublisherModel>? ListPublishers { get; set; }
     public List<AuthorModel>? ListAuthors { get; set; }
     public List<IBrowserFile> ListBrowserFiles { get; set; } = new();   // Danh sách file lưu tạm => Upload file
-    public List<ImageDetailModel> ListImages { get; set; } = new List<ImageDetailModel>();
     public SearchModel ItemFilter { get; set; } = new SearchModel();
 
     public List<ImageModel>? ListImagesTemp { get; set; } // ds hình tạm -> khi chọn lưu vào đây'

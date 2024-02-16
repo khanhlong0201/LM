@@ -25,13 +25,8 @@ public interface IMasterDataService
     Task<ResponseModel> UpdatePublishers(RequestModel pRequest);
     Task<IEnumerable<BookModel>> GetBooksAsync(SearchModel pSearchData);
     Task<ResponseModel> UpdateBooks(RequestModel pRequest);
-    Task<IEnumerable<ImageDetailModel>> GetImageDetailAsync(int imageId);
     Task<ResponseModel> UpdateReaders(RequestModel pRequest);
     Task<IEnumerable<ReaderModel>> GetReadersAsync();
-    Task<IEnumerable<BatchModel>> GetBatchsAsync(int bookId);
-    Task<ResponseModel> UpdateBatchs(RequestModel pRequest);
-    Task<IEnumerable<SeriesModel>> GetSeriesAsync(int batchId);
-    Task<ResponseModel> UpdateSeries(RequestModel pRequest); // nhập kho
     Task<IEnumerable<CliBookModel>> GetBookClientsAsync(SearchModel pSearchData);
 
     //
@@ -732,37 +727,6 @@ public class MasterDataService : IMasterDataService
     }
 
     /// <summary>
-    /// lấy danh sách sách
-    /// </summary>
-    /// <returns></returns>
-    public async Task<IEnumerable<ImageDetailModel>> GetImageDetailAsync(int imageId)
-    {
-        IEnumerable<ImageDetailModel> data;
-        try
-        {
-            await _context.Connect();
-            SqlParameter[] sqlParameters = new SqlParameter[1];
-            sqlParameters[0] = new SqlParameter("@ImageId", imageId);
-            data = await _context.GetDataAsync(@$"SELECT t1.[ImageDetailId]
-                                                  ,t1.[FilePath]
-                                                  ,t1.[DateCreate]
-                                                  ,t1.[UserCreate]
-                                                  ,t1.[ImageId] 
-                                                  ,t1.[FilePath] as [ImageUrl]
-	                                              from Images t0 
-                                            inner join ImageDetails t1 on t0.ImageId = t1.ImageId
-                                            where isnull(@ImageId,'')=-1 or t0.ImageId = @ImageId"
-                    , DataRecordToImageDetailModel,sqlParameters, commandType: CommandType.Text);
-        }
-        catch (Exception) { throw; }
-        finally
-        {
-            await _context.DisConnect();
-        }
-        return data;
-    }
-
-    /// <summary>
     /// Thêm mới/Cập nhật thông tin đọc giả
     /// </summary>
     /// <param name="pRequest"></param>
@@ -919,218 +883,6 @@ public class MasterDataService : IMasterDataService
             await _context.DisConnect();
         }
         return data;
-    }
-
-    /// <summary>
-    /// lấy danh sách đôc giả
-    /// </summary>
-    /// <returns></returns>
-    public async Task<IEnumerable<BatchModel>> GetBatchsAsync(int bookId)
-    {
-        IEnumerable<BatchModel> data;
-        try
-        {
-            await _context.Connect();
-            SqlParameter[] sqlParameters = new SqlParameter[1];
-            sqlParameters[0] = new SqlParameter("@BookId", bookId);
-            data = await _context.GetDataAsync(@$"SELECT t0.[BatchId]
-		                                        ,t0.[Qty]
-		                                        ,t0.[Price]
-		                                        ,t0.[IsDelete]
-		                                        ,t0.[DateCreate]
-		                                        ,t0.[UserCreate]
-		                                        ,t0.[BookId]
-		                                        ,t1.[BookName]
-                                                ,t2.[KindBookId]
-		                                        ,t3.[PublisherId]
-		                                        ,t2.[KindBookName]
-		                                        ,t3.[PublisherName]
-												,CONCAT(N'Số lô: ',t0.BatchId, ' - ','SL: ' ,t0.Qty) as 'Name'
-	                                        FROM [dbo].[Batchs] t0 
-	                                        inner join [Books] t1 on t0.BookId = t1.BookId
-	                                        inner join [KindBooks] t2 on t1.KindBookId = t2.KindBookId
-	                                        inner join [Publishers] t3 on t1.PublisherId = t3.PublisherId
-                                              where t0.IsDelete = 0 and isnull(@BookId,'')=-1 or t0.BookId = @BookId"
-                    , DataRecordToBatchModel,sqlParameters, commandType: CommandType.Text);
-        }
-        catch (Exception) { throw; }
-        finally
-        {
-            await _context.DisConnect();
-        }
-        return data;
-    }
-
-    /// <summary>
-    /// Thêm mới/Cập nhật thông tin lô
-    /// </summary>
-    /// <param name="pRequest"></param>
-    /// <returns></returns>
-    public async Task<ResponseModel> UpdateBatchs(RequestModel pRequest)
-    {
-        ResponseModel response = new ResponseModel();
-        try
-        {
-            await _context.Connect();
-            string queryString = "";
-            bool isUpdated = false;
-            BatchModel batch = JsonConvert.DeserializeObject<BatchModel>(pRequest.Json + "")!;
-            SqlParameter[] sqlParameters;
-            async Task<bool> ExecQuery()
-            {
-                var data = await _context.AddOrUpdateAsync(queryString, sqlParameters, CommandType.Text);
-                if (data != null && data.Rows.Count > 0)
-                {
-                    response.StatusCode = int.Parse(data.Rows[0]["StatusCode"]?.ToString() ?? "-1");
-                    response.Message = data.Rows[0]["ErrorMessage"]?.ToString();
-                    return response.StatusCode == 0;
-                }
-                return false;
-            }
-            switch (pRequest.Type)
-            {
-                case nameof(EnumType.Add):
-                    queryString = @"INSERT INTO [dbo].[Batchs]([Qty],[Price],[DateCreate],[UserCreate],[BookId] )
-                                                        values (@Qty , @Price , @DateTimeNow, @UserId, @BookId)";
-
-                    sqlParameters = new SqlParameter[5];
-                    sqlParameters[0] = new SqlParameter("@Qty", batch.Qty);
-                    sqlParameters[1] = new SqlParameter("@Price", batch.Price);
-                    sqlParameters[2] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
-                    sqlParameters[3] = new SqlParameter("@UserId", pRequest.UserId);
-                    sqlParameters[4] = new SqlParameter("@BookId", batch.BookId);
-                    await ExecQuery();
-                    break;
-                default:
-                    response.StatusCode = (int)HttpStatusCode.BadRequest;
-                    response.Message = "Không xác định được phương thức!";
-                    break;
-            }
-        }
-        catch (Exception ex)
-        {
-            response.StatusCode = (int)HttpStatusCode.BadRequest;
-            response.Message = ex.Message;
-        }
-        finally
-        {
-            await _context.DisConnect();
-        }
-        return response;
-    }
-
-    public async Task<IEnumerable<SeriesModel>> GetSeriesAsync(int batchId)
-    {
-        IEnumerable<SeriesModel> data;
-        try
-        {
-            await _context.Connect();
-            SqlParameter[] sqlParameters = new SqlParameter[1];
-            sqlParameters[0] = new SqlParameter("@BatchId", batchId);
-            data = await _context.GetDataAsync(@$"SELECT t0.[SeriesId]
-                                                  ,t0.[SeriesCode]
-                                                  ,isnull(t0.[Status],'') as 'Status'
-                                                  ,isnull(t0.[Description],'') as 'Description'
-                                                  ,t0.[DateCreate]
-                                                  ,t0.[UserCreate]
-                                                  ,t0.[BatchId]
-	                                              ,t2.BookId
-	                                              ,t2.BookName
-	                                              ,t3.KindBookId
-	                                              ,t3.KindBookName
-	                                              ,t4.PublisherId
-	                                              ,t4.PublisherName
-                                              FROM [dbo].[Series] t0 
-                                              inner join Batchs t1 on t0.BatchId = t1.BatchId
-                                              inner join Books t2 on t1.BookId = t2.BookId
-                                              inner join KindBooks t3 on t2.KindBookId = t3.KindBookId
-                                              inner join Publishers t4 on t2.PublisherId = t4.PublisherId
-                                              where t0.IsDelete = 0 
-                                              and t1.IsDelete = 0 
-                                              and t2.IsDelete = 0 
-                                              and t3.IsDelete = 0 
-                                              and t4.IsDelete = 0 
-                                              and isnull(@BatchId,'')=-1 or t0.BatchId = @BatchId"
-                    , DataRecordToSeriesModel,sqlParameters, commandType: CommandType.Text);
-        }
-        catch (Exception) { throw; }
-        finally
-        {
-            await _context.DisConnect();
-        }
-        return data;
-    }
-
-    /// <summary>
-    /// Thêm mới/Cập nhật số seri
-    /// </summary>
-    /// <param name="pRequest"></param>
-    /// <returns></returns>
-    public async Task<ResponseModel> UpdateSeries(RequestModel pRequest)
-    {
-        ResponseModel response = new ResponseModel();
-        try
-        {
-            await _context.Connect();
-            string queryString = "";
-            bool isUpdated = false;
-            SeriesModel oSeri = JsonConvert.DeserializeObject<SeriesModel>(pRequest.Json + "")!;
-            List<SeriesModel> lstSeri = JsonConvert.DeserializeObject<List<SeriesModel>>(pRequest.JsonDetail + "");
-
-            SqlParameter[] sqlParameters;
-            async Task<bool> ExecQuery()
-            {
-                var data = await _context.AddOrUpdateAsync(queryString, sqlParameters, CommandType.Text);
-                if (data != null && data.Rows.Count > 0)
-                {
-                    response.StatusCode = int.Parse(data.Rows[0]["StatusCode"]?.ToString() ?? "-1");
-                    response.Message = data.Rows[0]["ErrorMessage"]?.ToString();
-                    return response.StatusCode == 0;
-                }
-                return false;
-            }
-            switch (pRequest.Type)
-            {
-                case nameof(EnumType.Add):
-                    await _context.BeginTranAsync();
-                    queryString = @"INSERT INTO [dbo].[Series]([SeriesCode] ,[Status] ,[Description],[DateCreate],[UserCreate],[IsDelete],[BatchId])
-                                                        values ( @SeriesCode , @Status , @Description ,@DateTimeNow, @UserId, 0, @BatchId )";
-                    foreach (var oSeries in lstSeri)
-                    {
-
-                        sqlParameters = new SqlParameter[6];
-                        sqlParameters[0] = new SqlParameter("@SeriesCode", oSeries.SeriesCode ?? (object)DBNull.Value);
-                        sqlParameters[1] = new SqlParameter("@Status", oSeries.Status ?? (object)DBNull.Value);
-                        sqlParameters[2] = new SqlParameter("@Description", oSeries.Description ?? (object)DBNull.Value);
-                        sqlParameters[3] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
-                        sqlParameters[4] = new SqlParameter("@UserId", pRequest.UserId);
-                        sqlParameters[5] = new SqlParameter("@BatchId", oSeries.BatchId);
-                        isUpdated = await ExecQuery();
-
-                        if (!isUpdated)
-                        {
-                            await _context.RollbackAsync();
-                            break;
-                        }
-                    }
-                    if (isUpdated) await _context.CommitTranAsync();
-                    break;
-                default:
-                    response.StatusCode = (int)HttpStatusCode.BadRequest;
-                    response.Message = "Không xác định được phương thức!";
-                    break;
-            }
-        }
-        catch (Exception ex)
-        {
-            response.StatusCode = (int)HttpStatusCode.BadRequest;
-            response.Message = ex.Message;
-        }
-        finally
-        {
-            await _context.DisConnect();
-        }
-        return response;
     }
 
     /// <summary>
@@ -1663,18 +1415,6 @@ public class MasterDataService : IMasterDataService
         return book;
     }
 
-    private ImageDetailModel DataRecordToImageDetailModel(IDataRecord record)
-    {
-        ImageDetailModel imageDetail = new();
-        if (!Convert.IsDBNull(record["ImageDetailId"])) imageDetail.ImageDetailId = Convert.ToInt32(record["ImageDetailId"]);
-        if (!Convert.IsDBNull(record["FilePath"])) imageDetail.FilePath = Convert.ToString(record["FilePath"]);
-        if (!Convert.IsDBNull(record["DateCreate"])) imageDetail.DateCreate = Convert.ToDateTime(record["DateCreate"]);
-        if (!Convert.IsDBNull(record["UserCreate"])) imageDetail.UserCreate = Convert.ToInt32(record["UserCreate"]);
-        if (!Convert.IsDBNull(record["ImageId"])) imageDetail.ImageId = Convert.ToInt32(record["ImageId"]);
-        if (!Convert.IsDBNull(record["ImageUrl"])) imageDetail.ImageUrl = Convert.ToString(record["ImageUrl"]);
-        return imageDetail;
-    }
-
     /// <summary>
     /// đọc danh sách đôc giả
     /// </summary>
@@ -1695,48 +1435,6 @@ public class MasterDataService : IMasterDataService
         if (!Convert.IsDBNull(record["UserCreate"])) reader.UserCreate = Convert.ToInt32(record["UserCreate"]);
         if (!Convert.IsDBNull(record["UserId"])) reader.UserId = Convert.ToInt32(record["UserId"]);
         return reader;
-    }
-
-    /// <summary>
-    /// đọc danh sách số lô
-    /// </summary>
-    /// <param name="record"></param>
-    /// <returns></returns>
-    private BatchModel DataRecordToBatchModel(IDataRecord record)
-    {
-        BatchModel batch = new();
-        if (!Convert.IsDBNull(record["BatchId"])) batch.BatchId = Convert.ToInt32(record["BatchId"]);
-        if (!Convert.IsDBNull(record["Qty"])) batch.Qty = Convert.ToInt32(record["Qty"]);
-        if (!Convert.IsDBNull(record["Price"])) batch.Price = Convert.ToInt32(record["Price"]);
-        if (!Convert.IsDBNull(record["DateCreate"])) batch.DateCreate = Convert.ToDateTime(record["DateCreate"]);
-        if (!Convert.IsDBNull(record["UserCreate"])) batch.UserCreate = Convert.ToInt32(record["UserCreate"]);
-        if (!Convert.IsDBNull(record["BookId"])) batch.BookId = Convert.ToInt32(record["BookId"]);
-        if (!Convert.IsDBNull(record["BookName"])) batch.BookName = Convert.ToString(record["BookName"]);
-        if (!Convert.IsDBNull(record["BookName"])) batch.KindBookName = Convert.ToString(record["KindBookName"]);
-        if (!Convert.IsDBNull(record["PublisherName"])) batch.PublisherName = Convert.ToString(record["PublisherName"]);
-        if (!Convert.IsDBNull(record["PublisherId"])) batch.PublisherId = Convert.ToInt32(record["PublisherId"]);
-        if (!Convert.IsDBNull(record["KindBookId"])) batch.KindBookId = Convert.ToInt32(record["KindBookId"]);
-        if (!Convert.IsDBNull(record["Name"])) batch.Name = Convert.ToString(record["Name"]);
-        return batch;
-    }
-
-    private SeriesModel DataRecordToSeriesModel(IDataRecord record)
-    {
-        SeriesModel series = new();
-        if (!Convert.IsDBNull(record["SeriesId"])) series.SeriesId = Convert.ToInt32(record["SeriesId"]);
-        if (!Convert.IsDBNull(record["SeriesCode"])) series.SeriesCode = Convert.ToString(record["SeriesCode"]);
-        if (!Convert.IsDBNull(record["Status"])) series.Status = Convert.ToString(record["Status"]);
-        if (!Convert.IsDBNull(record["Description"])) series.Description = Convert.ToString(record["Description"]);
-        if (!Convert.IsDBNull(record["BatchId"])) series.BatchId = Convert.ToInt32(record["BatchId"]);
-        if (!Convert.IsDBNull(record["BookId"])) series.BookId = Convert.ToInt32(record["BookId"]);
-        if (!Convert.IsDBNull(record["BookName"])) series.BookName = Convert.ToString(record["BookName"]);
-        if (!Convert.IsDBNull(record["BookName"])) series.KindBookName = Convert.ToString(record["KindBookName"]);
-        if (!Convert.IsDBNull(record["PublisherName"])) series.PublisherName = Convert.ToString(record["PublisherName"]);
-        if (!Convert.IsDBNull(record["PublisherId"])) series.PublisherId = Convert.ToInt32(record["PublisherId"]);
-        if (!Convert.IsDBNull(record["KindBookId"])) series.KindBookId = Convert.ToInt32(record["KindBookId"]);
-        if (!Convert.IsDBNull(record["DateCreate"])) series.DateCreate = Convert.ToDateTime(record["DateCreate"]);
-        if (!Convert.IsDBNull(record["UserCreate"])) series.UserCreate = Convert.ToInt32(record["UserCreate"]);
-        return series;
     }
 
     /// <summary>

@@ -28,14 +28,10 @@ public interface ICliMasterDataService
     Task<List<BookModel>?> GetDataBooksAsync(SearchModel pSearch);
     Task<bool> UpdateBookAsync(string pJson, string pAction, int pUserId);
     Task<string> UploadMultiFiles(string link, List<IBrowserFile> lstIBrowserFiles);
-    Task<List<ImageDetailModel>?> GetDataImageDetailsAsync(int imageId);
     Task<List<ReaderModel>?> GetDataReadersAsync();
-    Task<List<BatchModel>?> GetDataBatchsAsync(int batchId);
     Task<bool> UpdateBatchAsync(string pJson, string pAction, int pUserId);
-    Task<List<SeriesModel>?> GetDataSeriesAsync(int batchId);
     Task<bool> UpdateSeriesAsync(string pJson, string pJsonDetail, string pAction, int pUserId);
     Task<List<CliBookModel>?> GetDataBookClientsAsync(SearchModel pSearch);
-    Task<BorrowingModel> GetDataBookDetailClientsAsync(int bookId);
     Task<List<LocationModel>?> GetLocationsAsync();
     Task<bool> UpdateLocationAsync(string pJson, string pAction, int pUserId);
 
@@ -582,41 +578,6 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
         }
     }
 
-    /// <summary>
-    /// Call API lấy danh sách sách
-    /// </summary>
-    /// <returns></returns>
-    public async Task<List<ImageDetailModel>?> GetDataImageDetailsAsync(int imageId = -1)
-    {
-        try
-        {
-            Dictionary<string, object> pParams = new Dictionary<string, object>()
-            {
-                {"ImageId", $"{imageId}"}
-            };
-            HttpResponseMessage httpResponse = await GetAsync(EndpointConstants.URL_MASTERDATA_GET_IMAGE_DETAILS, pParams);
-            var checkContent = ValidateJsonContent(httpResponse.Content);
-            if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
-            else
-            {
-                var content = await httpResponse.Content.ReadAsStringAsync();
-                if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<List<ImageDetailModel>>(content);
-                if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                {
-                    _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
-                    return null;
-                }
-                var oMessage = JsonConvert.DeserializeObject<ResponseModel>(content);
-                _toastService.ShowError($"{oMessage?.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "GetDataImageDetailsAsync");
-            _toastService.ShowError(ex.Message);
-        }
-        return default;
-    }
 
     /// <summary>
     /// Call API lấy danh sách sách đọc giả
@@ -650,41 +611,6 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
         return default;
     }
 
-    /// <summary>
-    /// Call API lấy danh lô sách
-    /// </summary>
-    /// <returns></returns>
-    public async Task<List<BatchModel>?> GetDataBatchsAsync(int bookId)
-    {
-        try
-        {
-            Dictionary<string, object> pParams = new Dictionary<string, object>()
-            {
-                {"BookId", $"{bookId}"}
-            };
-            HttpResponseMessage httpResponse = await GetAsync(EndpointConstants.URL_MASTERDATA_GET_BATCH,pParams);
-            var checkContent = ValidateJsonContent(httpResponse.Content);
-            if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
-            else
-            {
-                var content = await httpResponse.Content.ReadAsStringAsync();
-                if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<List<BatchModel>>(content);
-                if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                {
-                    _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
-                    return null;
-                }
-                var oMessage = JsonConvert.DeserializeObject<ResponseModel>(content);
-                _toastService.ShowError($"{oMessage?.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "GetDataBatchsAsync");
-            _toastService.ShowError(ex.Message);
-        }
-        return default;
-    }
 
     /// <summary>
     /// cập nhật lô sách
@@ -734,41 +660,6 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
         return false;
     }
 
-    /// <summary>
-    /// Call API lấy danh seri của sách
-    /// </summary>
-    /// <returns></returns>
-    public async Task<List<SeriesModel>?> GetDataSeriesAsync(int batchId)
-    {
-        try
-        {
-            Dictionary<string, object> pParams = new Dictionary<string, object>()
-            {
-                {"BatchId", $"{batchId}"}
-            };
-            HttpResponseMessage httpResponse = await GetAsync(EndpointConstants.URL_MASTERDATA_GET_SERI, pParams);
-            var checkContent = ValidateJsonContent(httpResponse.Content);
-            if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
-            else
-            {
-                var content = await httpResponse.Content.ReadAsStringAsync();
-                if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<List<SeriesModel>>(content);
-                if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                {
-                    _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
-                    return null;
-                }
-                var oMessage = JsonConvert.DeserializeObject<ResponseModel>(content);
-                _toastService.ShowError($"{oMessage?.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "GetDataSeriesAsync");
-            _toastService.ShowError(ex.Message);
-        }
-        return default;
-    }
 
     /// <summary>
     /// cập nhật só seri sách
@@ -846,42 +737,6 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
         catch (Exception ex)
         {
             _logger.LogError(ex, "GetDataBooksAsync");
-            _toastService.ShowError(ex.Message);
-        }
-        return default;
-    }
-
-    /// <summary>
-    /// Call API lấy danh seri chi tiết sach
-    /// </summary>
-    /// <returns></returns>
-    public async Task<BorrowingModel> GetDataBookDetailClientsAsync(int bookId)
-    {
-        try
-        {
-            Dictionary<string, object> pParams = new Dictionary<string, object>()
-            {
-                {"bookId", $"{bookId}"}
-            };
-            HttpResponseMessage httpResponse = await GetAsync(EndpointConstants.URL_MASTERDATA_GET_BOOK_DETAIL_CLIENT, pParams);
-            var checkContent = ValidateJsonContent(httpResponse.Content);
-            if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
-            else
-            {
-                var content = await httpResponse.Content.ReadAsStringAsync();
-                if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<BorrowingModel>(content);
-                if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                {
-                    _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
-                    return null;
-                }
-                var oMessage = JsonConvert.DeserializeObject<ResponseModel>(content);
-                _toastService.ShowError($"{oMessage?.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "GetDataSeriesAsync");
             _toastService.ShowError(ex.Message);
         }
         return default;
