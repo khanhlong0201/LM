@@ -591,8 +591,7 @@ public class MasterDataService : IMasterDataService
             data = await _context.GetDataAsync(@$"select  t0.[BookId]
                         ,t0.[BookName]
                         ,t0.[Description]
-	                    , isnull((Select top 1 t00.Price from Batchs t00 where t00.IsDelete = 0 order by t00.DateCreate desc),0) as 'Price'
-	                    ,  isnull((Select SUM(t00.Qty) from Batchs t00 where t00.IsDelete = 0 and t0.BookId = t00.BookId group by t00.BatchId),0) as 'Qty'
+	                    ,isnull((Select count(*) from BookSerials t00 where t00.IsActive = 1 and t0.BookId = t00.BookId),0) as 'Qty'
                         ,t0.[Language]
                         ,t0.[Size]
                         ,t0.[NumOfPage]
@@ -1641,8 +1640,8 @@ public class MasterDataService : IMasterDataService
         if (!Convert.IsDBNull(record["BookId"])) book.BookId = Convert.ToInt32(record["BookId"]);
         if (!Convert.IsDBNull(record["BookName"])) book.BookName = Convert.ToString(record["BookName"]);
         if (!Convert.IsDBNull(record["Description"])) book.Description = Convert.ToString(record["Description"]);
-        if (!Convert.IsDBNull(record["Price"])) book.Price = Convert.ToDecimal(record["Price"]);
-        if (!Convert.IsDBNull(record["Price"])) book.Qty = Convert.ToInt32(record["Qty"]);
+        //if (!Convert.IsDBNull(record["Price"])) book.Price = Convert.ToDecimal(record["Price"]);
+        if (!Convert.IsDBNull(record["Qty"])) book.Qty = Convert.ToInt32(record["Qty"]);
         if (!Convert.IsDBNull(record["Language"])) book.Language = Convert.ToString(record["Language"]);
         if (!Convert.IsDBNull(record["Size"])) book.Size = Convert.ToString(record["Size"]);
         if (!Convert.IsDBNull(record["PublisherName"])) book.PublisherName = Convert.ToString(record["PublisherName"]);
