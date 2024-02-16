@@ -648,5 +648,26 @@ namespace LM.API.Controllers
 
             }
         }
+
+        [HttpGet]
+        [Route("GetStaffs")]
+        public async Task<IActionResult> GetStaffs()
+        {
+            try
+            {
+                var data = await _masterService.GetStaffsAsync();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "GetStaffs");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+
+        }
     }
 }

@@ -39,6 +39,7 @@ public interface IMasterDataService
     Task<ResponseModel> UpdateLocationAsync(RequestModel pRequest);
     Task<IEnumerable<AuthorModel>> GetAuthorsAsync();
     Task<ResponseModel> UpdateAuthorAsync(RequestModel pRequest);
+    Task<IEnumerable<StaffModel>> GetStaffsAsync();
 }
 
 public class MasterDataService : IMasterDataService
@@ -362,14 +363,18 @@ public class MasterDataService : IMasterDataService
         try
         {
             await _context.Connect();
-            data = await _context.GetDataAsync(@$"SELECT [KindBookId]
-                                                  ,[KindBookName]
-                                                  ,[Description]
-                                                  ,[DateCreate]
-                                                  ,[UserCreate]
-                                                  ,[DateUpdate]
-                                                  ,[UserUpdate]
-                                              FROM [dbo].[KindBooks] t0 where ISNULL(t0.IsDelete,0) = 0" // không lấy lên tk Support
+            data = await _context.GetDataAsync(@$"SELECT t0.[KindBookId]
+                                                  ,t0.[KindBookName]
+                                                  ,t0.[Description]
+                                                  ,t0.[DateCreate]
+                                                  ,t0.[UserCreate]
+                                                  ,t0.[DateUpdate]
+                                                  ,t0.[UserUpdate]
+                                                  ,t0.[LocationId]
+                                                  ,iif(T1.[LocationName] is null, N'Chưa cập nhật', T1.[LocationName] ) as LocationName
+                                              FROM [dbo].[KindBooks] t0 
+                                           left join [Locations] as t1 on T0.LocationId = t1.Id
+                                           where ISNULL(t0.IsDelete,0) = 0" // không lấy lên tk Support
                     , DataRecordToKindBookModel, commandType: CommandType.Text);
         }
         catch (Exception) { throw; }
@@ -414,14 +419,15 @@ public class MasterDataService : IMasterDataService
                         response.Message = "Tên đăng nhập đã tồn tại!";
                         break;
                     }
-                    queryString = @"INSERT INTO [dbo].[KindBooks] ([KindBookName],[Description],[DateCreate],[UserCreate],[IsDelete])
-                                                        values (@KindBookName , @Description , @DateTimeNow, @UserId, 0)";
+                    queryString = @"INSERT INTO [dbo].[KindBooks] ([KindBookName],[Description],[DateCreate],[UserCreate],[IsDelete], [LocationId])
+                                                        values (@KindBookName , @Description , @DateTimeNow, @UserId, 0, @LocationId)";
 
-                    sqlParameters = new SqlParameter[4];
+                    sqlParameters = new SqlParameter[5];
                     sqlParameters[0] = new SqlParameter("@KindBookName", oKindBook.KindBookName ?? (object)DBNull.Value);
                     sqlParameters[1] = new SqlParameter("@Description", oKindBook.Description ?? (object)DBNull.Value);
                     sqlParameters[2] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
                     sqlParameters[3] = new SqlParameter("@UserId", pRequest.UserId);
+                    sqlParameters[4] = new SqlParameter("@LocationId", oKindBook.LocationId);
                     await ExecQuery();
                     break;
                 case nameof(EnumType.Update):
@@ -430,14 +436,16 @@ public class MasterDataService : IMasterDataService
                                   ,[Description] = @Description
                                   ,[DateUpdate] = @DateTimeNow
                                   ,[UserUpdate] = @UserId
+                                  ,[LocationId] = @LocationId
                                  WHERE [KindBookId] = @KindBookId";
 
-                    sqlParameters = new SqlParameter[5];
+                    sqlParameters = new SqlParameter[6];
                     sqlParameters[0] = new SqlParameter("@KindBookId", oKindBook.KindBookId);
                     sqlParameters[1] = new SqlParameter("@KindBookName", oKindBook.KindBookName ?? (object)DBNull.Value);
                     sqlParameters[2] = new SqlParameter("@Description", oKindBook.Description ?? (object)DBNull.Value);
                     sqlParameters[3] = new SqlParameter("@UserId", pRequest.UserId);
                     sqlParameters[4] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+                    sqlParameters[5] = new SqlParameter("@LocationId", oKindBook.LocationId);
                     await ExecQuery();
                     break;
                 default:
@@ -1351,6 +1359,46 @@ public class MasterDataService : IMasterDataService
         }
         return response;
     }
+
+    /// <summary>
+    /// lấy danh sách cán bộ, sinh viên
+    /// </summary>
+    /// <returns></returns>
+    public async Task<IEnumerable<StaffModel>> GetStaffsAsync()
+    {
+        IEnumerable<StaffModel> data;
+        try
+        {
+            await _context.Connect();
+            string querry = @$"Select *, case StaffType when N'SV' then N'Sinh viên' 
+                                      when N'GV' then N'Giáo viên' when N'CB' then N'Cán bộ'
+                                      else N'Sinh viên' end as StaffTypeName
+                                 from [dbo].[Staffs] as T0 with(nolock)
+                                where T0.[IsDelete] = 0";
+            Func<IDataRecord, StaffModel> readData = record =>
+            {
+                StaffModel model = new StaffModel();
+                if (!Convert.IsDBNull(record["StaffCode"])) model.StaffCode = Convert.ToString(record["StaffCode"]);
+                if (!Convert.IsDBNull(record["FullName"])) model.FullName = Convert.ToString(record["FullName"]);
+                if (!Convert.IsDBNull(record["StaffType"])) model.StaffType = Convert.ToString(record["StaffType"]);
+                if (!Convert.IsDBNull(record["StaffTypeName"])) model.StaffTypeName = Convert.ToString(record["StaffTypeName"]);
+                if (!Convert.IsDBNull(record["Department"])) model.Department = Convert.ToString(record["Department"]);
+                if (!Convert.IsDBNull(record["PhoneNumber"])) model.PhoneNumber = Convert.ToString(record["PhoneNumber"]);
+                if (!Convert.IsDBNull(record["Email"])) model.Email = Convert.ToString(record["Email"]);
+                if (!Convert.IsDBNull(record["PlaceOfOrigin"])) model.PlaceOfOrigin = Convert.ToString(record["PlaceOfOrigin"]);
+                if (!Convert.IsDBNull(record["Address"])) model.Address = Convert.ToString(record["Address"]);
+                if (!Convert.IsDBNull(record["IsActive"])) model.IsActive = Convert.ToBoolean(record["IsActive"]);
+                return model;
+            };
+            data = await _context.GetDataAsync(querry, readData, commandType: CommandType.Text);
+        }
+        catch (Exception) { throw; }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return data;
+    }
     #endregion Public Functions
 
     #region Private Funtions
@@ -1443,6 +1491,8 @@ public class MasterDataService : IMasterDataService
         if (!Convert.IsDBNull(record["UserCreate"])) kindBook.UserCreate = Convert.ToInt32(record["UserCreate"]);
         if (!Convert.IsDBNull(record["DateUpdate"])) kindBook.DateUpdate = Convert.ToDateTime(record["DateUpdate"]);
         if (!Convert.IsDBNull(record["UserUpdate"])) kindBook.UserUpdate = Convert.ToInt32(record["UserUpdate"]);
+        if (!Convert.IsDBNull(record["LocationId"])) kindBook.LocationId = Convert.ToInt32(record["LocationId"]);
+        if (!Convert.IsDBNull(record["LocationName"])) kindBook.LocationName = Convert.ToString(record["LocationName"]);
         return kindBook;
     }
 

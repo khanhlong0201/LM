@@ -51,6 +51,7 @@
                 </FooterTemplate>
             </GridColumn>
             <GridColumn Field=@nameof(KindBookModel.KindBookName) Width="270px" Title="Tên loại sách"></GridColumn>
+            <GridColumn Field=@nameof(KindBookModel.LocationName) Width="270px" Title="Vị trí sách"></GridColumn>
             <GridColumn Field=@nameof(KindBookModel.Description) Width="270px" Title="Miêu tả"></GridColumn>
         </GridColumns>
     </TelerikGrid>
@@ -64,7 +65,7 @@
         <div class="row row-gap-2 align-items-end mt-1">
             <div class="col-md-6 col-sm-12">
                 <HLabel Value="Mã loại sách:" />
-                 <TelerikNumericTextBox Enabled="false" Min="500"  Step="500" Format="@DefaultConstants.FORMAT_CURRENCY" @bind-Value="@KindBookUpdate.KindBookId" Class="bh-link"  Id="txtId" />
+                 <TelerikNumericTextBox Enabled="false" Min="500" Arrows="false"  Step="500" @bind-Value="@KindBookUpdate.KindBookId" Class="bh-link"  Id="txtId" />
             </div>
         </div>
         <div class="mt-2">
@@ -73,7 +74,22 @@
             <HValidationTooltip ValidationFor="@(()=> KindBookUpdate.KindBookName)" Id="txtKindBookName" />
         </div>
         <div class="mt-2">
-            <HLabel For="txtDescription" Value="Miêu tả:" IsRequired="true" />
+            <HLabel For="txtLocationId" Value="Vị trí:" />
+            <TelerikComboBox Data="@ListLocations"
+                             Value="@KindBookUpdate.LocationId"
+                             ValueExpression="@(() => KindBookUpdate.LocationId)"
+                             ValueChanged="@((int value) => KindBookUpdate.LocationId = value)"
+                             Placeholder="Chọn vị trí sách.."
+                             TextField="@nameof(LocationModel.LocationName)"
+                             ValueField="@nameof(LocationModel.Id)"
+                             Filterable="true"
+                             ClearButton="false"
+                             Id="txtLocationId" Width="100%">
+            </TelerikComboBox>
+            <HValidationTooltip ValidationFor="@(()=> KindBookUpdate.LocationId)" Id="txtLocationId" />
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtDescription" Value="Mô tả:" IsRequired="true" />
             <TelerikTextArea @bind-Value="@KindBookUpdate.Description" Id="txtDescription"  AutoSize="true"/>
         </div>
         

@@ -27,6 +27,7 @@ public class KindBookController : LMControllerBase
     public bool IsShowDialog { get; set; }
     public bool IsCreate { get; set; } = true;
     public HConfirm? _rDialogs { get; set; }
+    public List<LocationModel>? ListLocations { get; set; }
     #endregion
 
     #region Override Functions
@@ -58,6 +59,7 @@ public class KindBookController : LMControllerBase
             {
                 await _progressService!.SetPercent(0.4);
                 await getDataKindBooks();
+                ListLocations = await _masterDataService!.GetLocationsAsync();
             }
             catch (Exception ex)
             {
@@ -115,11 +117,14 @@ public class KindBookController : LMControllerBase
             }
             else
             {
+                KindBookUpdate = new KindBookModel();
                 KindBookUpdate.KindBookId = pItemDetails!.KindBookId;
                 KindBookUpdate.KindBookName = pItemDetails.KindBookName;
                 KindBookUpdate.Description = pItemDetails.Description;
                 KindBookUpdate.DateCreate = pItemDetails.DateCreate;
                 KindBookUpdate.UserCreate = pItemDetails.UserCreate;
+                KindBookUpdate.LocationId = pItemDetails.LocationId;
+                KindBookUpdate.LocationName = pItemDetails.LocationName;
                 IsCreate = false;
             }
             IsShowDialog = true;
@@ -155,6 +160,7 @@ public class KindBookController : LMControllerBase
         }
         finally
         {
+            await Task.Delay(75);
             await ShowLoader(false);
             await InvokeAsync(StateHasChanged);
         }
@@ -186,6 +192,7 @@ public class KindBookController : LMControllerBase
         }
         finally
         {
+            await Task.Delay(75);
             await ShowLoader(false);
             await InvokeAsync(StateHasChanged);
         }
