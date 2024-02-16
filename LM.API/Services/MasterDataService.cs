@@ -40,6 +40,8 @@ public interface IMasterDataService
     Task<IEnumerable<AuthorModel>> GetAuthorsAsync();
     Task<ResponseModel> UpdateAuthorAsync(RequestModel pRequest);
     Task<IEnumerable<StaffModel>> GetStaffsAsync();
+    Task<ResponseModel> UpdateBookSerial(RequestModel pRequest);
+    Task<IEnumerable<BookSerialModel>> GetBookSerialsAsync();
 }
 
 public class MasterDataService : IMasterDataService
@@ -1347,6 +1349,120 @@ public class MasterDataService : IMasterDataService
                 response.Message = data.Rows[0]["ErrorMessage"]?.ToString();
             }
 
+        }
+        catch (Exception ex)
+        {
+            response.StatusCode = (int)HttpStatusCode.BadRequest;
+            response.Message = ex.Message;
+        }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return response;
+    }
+
+    /// <summary>
+    /// lấy danh sách chi tiết của từng cuốn sách
+    /// </summary>
+    /// <returns></returns>
+    public async Task<IEnumerable<BookSerialModel>> GetBookSerialsAsync()
+    {
+        IEnumerable<BookSerialModel> data;
+        try
+        {
+            await _context.Connect();
+            string querry = @$"select T0.*, T1.BookName 
+                                 from BookSerials as T0
+                                inner join Books as t1 on T0.BookId = T1.BookId
+                                where T0.[IsDelete] = 0 order by T0.Id desc";
+            Func<IDataRecord, BookSerialModel> readData = record =>
+            {
+                BookSerialModel model = new BookSerialModel();
+                if (!Convert.IsDBNull(record["Id"])) model.Id = Convert.ToInt32(record["Id"]);
+                if (!Convert.IsDBNull(record["BookID"])) model.BookID = Convert.ToInt32(record["BookID"]);
+                if (!Convert.IsDBNull(record["SerialNumber"])) model.SerialNumber = Convert.ToString(record["SerialNumber"]);
+                if (!Convert.IsDBNull(record["NoteForAll"])) model.NoteForAll = Convert.ToString(record["NoteForAll"]);
+                if (!Convert.IsDBNull(record["BookName"])) model.BookName = Convert.ToString(record["BookName"]);
+                if (!Convert.IsDBNull(record["IsActive"])) model.IsActive = Convert.ToBoolean(record["IsActive"]);
+                if (!Convert.IsDBNull(record["DateCreate"])) model.DateCreate = Convert.ToDateTime(record["DateCreate"]);
+                if (!Convert.IsDBNull(record["UserCreate"])) model.UserCreate = Convert.ToInt32(record["UserCreate"]);
+                return model;
+            };
+            data = await _context.GetDataAsync(querry, readData, commandType: CommandType.Text);
+        }
+        catch (Exception) { throw; }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return data;
+    }
+
+    /// <summary>
+    /// Thêm mới/Cập nhật thông tin loại sách
+    /// </summary>
+    /// <param name="pRequest"></param>
+    /// <returns></returns>
+    public async Task<ResponseModel> UpdateBookSerial(RequestModel pRequest)
+    {
+        ResponseModel response = new ResponseModel();
+        try
+        {
+            await _context.Connect();
+            string queryString = "";
+            BookSerialModel oItem = JsonConvert.DeserializeObject<BookSerialModel>(pRequest.Json + "")!;
+            SqlParameter[] sqlParameters;
+            if(pRequest.Type == nameof(EnumType.Add))
+            {
+                sqlParameters = new SqlParameter[1];
+                sqlParameters[0] = new SqlParameter("@SerialNumber", oItem.SerialNumber);
+                // kiểm tra tồn tại mã đã có sẵn rồi
+                if (await _context.ExecuteScalarAsync("select COUNT(*) from BookSerials with(nolock) where SerialNumber = @SerialNumber", sqlParameters) > 0)
+                {
+                    response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    response.Message = "Mã sách/Serial đã tồn tại!";
+                    return response;
+                }
+                queryString = @"INSERT INTO [dbo].[BookSerials] ([BookID],[SerialNumber], [NoteForAll], [IsActive],[DateCreate],[UserCreate],[IsDelete])
+                                                        values (@BookID , @SerialNumber, @NoteForAll, @IsActive , @DateTimeNow, @UserId, 0)";
+            } 
+            else
+            {
+                sqlParameters = new SqlParameter[2];
+                sqlParameters[0] = new SqlParameter("@SerialNumber", oItem.SerialNumber);
+                sqlParameters[1] = new SqlParameter("@Id", oItem.Id);
+                // kiểm tra tồn tại mã đã có sẵn rồi
+                if (await _context.ExecuteScalarAsync("select COUNT(*) from BookSerials with(nolock) where SerialNumber = @SerialNumber and [Id] != @Id", sqlParameters) > 0)
+                {
+                    response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    response.Message = "Mã sách/Serial đã tồn tại!";
+                    return response;
+                }
+                queryString = @"Update [dbo].[BookSerials] 
+                                   set [BookID] = @BookID
+                                       ,[SerialNumber] = @SerialNumber
+                                       ,[NoteForAll] = @NoteForAll
+                                       ,[IsActive] = @IsActive
+                                       ,[DateUpdate] = @DateTimeNow
+                                       ,[UserUpdate] = @UserId
+                                 where [Id] = @Id";
+            }
+
+            sqlParameters = new SqlParameter[7];
+            sqlParameters[0] = new SqlParameter("@BookID", oItem.BookID);
+            sqlParameters[1] = new SqlParameter("@SerialNumber", oItem.SerialNumber);
+            sqlParameters[2] = new SqlParameter("@NoteForAll", oItem.NoteForAll ?? (object)DBNull.Value);
+            sqlParameters[3] = new SqlParameter("@IsActive", oItem.IsActive);
+            sqlParameters[4] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+            sqlParameters[5] = new SqlParameter("@UserId", pRequest.UserId);
+            sqlParameters[6] = new SqlParameter("@Id", oItem.Id);
+            var data = await _context.AddOrUpdateAsync(queryString, sqlParameters, CommandType.Text);
+            if (data != null && data.Rows.Count > 0)
+            {
+                response.StatusCode = int.Parse(data.Rows[0]["StatusCode"]?.ToString() ?? "-1");
+                response.Message = data.Rows[0]["ErrorMessage"]?.ToString();
+            }
         }
         catch (Exception ex)
         {

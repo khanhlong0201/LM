@@ -64,4 +64,6 @@ public static class EndpointConstants
     public const string URL_MASTERDATA_UPLOAD_IMAGE = "MasterData/UploadImages";
 
     public const string URL_MASTERDATA_GET_STAFF = "MasterData/GetStaffs";
+    public const string URL_MASTERDATA_GET_BOOK_SERIAL = "MasterData/GetBookSerials";
+    public const string URL_MASTERDATA_UPDATE_BOOK_SERIAL = "MasterData/UpdateBookSerial";
 }

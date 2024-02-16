@@ -669,5 +669,52 @@ namespace LM.API.Controllers
             }
 
         }
+
+        [HttpGet]
+        [Route("GetBookSerials")]
+        public async Task<IActionResult> GetBookSerials()
+        {
+            try
+            {
+                var data = await _masterService.GetBookSerialsAsync();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "GetBookSerials");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+
+        }
+
+        [HttpPost]
+        [Route("UpdateBookSerial")]
+        public async Task<IActionResult> UpdateBookSerial([FromBody] RequestModel request)
+        {
+            try
+            {
+                var response = await _masterService.UpdateBookSerial(request);
+                if (response == null || response.StatusCode != 0) return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = response?.Message ?? "Vui lòng liên hệ IT để được hổ trợ."
+                });
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "UpdateBookSerial");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+
+            }
+        }
     }
 }

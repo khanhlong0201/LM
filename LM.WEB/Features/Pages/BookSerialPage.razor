@@ -1,0 +1,105 @@
+﻿@page "/bookserial"
+@inherits BookSerialController
+<TelerikToolBar Class="border-bottom-0">
+    <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/add-new-icon.png" OnClick="@(()=> OnOpenDialogHandler())">Thêm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/remove_grid.png">Xóa dòng</ToolBarButton>
+</TelerikToolBar>
+
+<div class="h-table-content" style=" height: calc(100vh - 170px);">
+    <TelerikLoaderContainer OverlayThemeColor="light"
+                            Visible="@(!IsInitialDataLoadComplete)"
+                            Text="@null" Class="grid-initial-data-loader">
+        <Template>
+            <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                           Size="@(ThemeConstants.Loader.Size.Medium)">
+            </TelerikLoader>
+        </Template>
+    </TelerikLoaderContainer>
+
+    <TelerikGrid Data="@ListBookSerials"
+                 Height="100%"
+                 Width="100%"
+                 RowHeight="25"
+                 Pageable="true"
+                 PageSize="@DefaultConstants.PAGE_SIZE"
+                 Sortable="true"
+                 Resizable="true"
+                 FilterMode="@GridFilterMode.FilterMenu"
+                 SelectionMode="@GridSelectionMode.Multiple"
+                 ScrollMode="@GridScrollMode.Scrollable"
+                 OnRowDoubleClick="@OnRowDoubleClickHandler"
+                 @bind-SelectedItems="@SelectedBookSerials">
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input" />
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(BookSerialModel.Id) Aggregate="@GridAggregateType.Count" />
+        </GridAggregates>
+        <GridColumns>
+            <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+            <GridColumn Field=@nameof(BookSerialModel.Id) Width="130px" MaxResizableWidth="150" Title="Mã">
+                <Template>
+                    @{
+                        var model = (context as BookSerialModel);
+                        <span class="h-link" title="Xem chi tiết" @onclick="@(() => OnOpenDialogHandler(EnumType.Update, model))">@model!.Id</span>
+                    }
+                </Template>
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(BookSerialModel.SerialNumber) Width="190px" Title="Mã sách (Seri)"></GridColumn>
+            <GridColumn Field=@nameof(BookSerialModel.BookName) Width="270px" Title="Tên sách"></GridColumn>
+            <GridColumn Field=@nameof(BookSerialModel.IsActive) Width="130px" Title="Hoạt động?">
+                <Template>
+                    @{
+                        var model = (context as BookSerialModel);
+                        <TelerikCheckBox @bind-Value="@model!.IsActive" Enabled="false" />
+                    }
+                </Template>
+            </GridColumn>
+            <GridColumn Field=@nameof(BookSerialModel.NoteForAll) Width="340px" Title="Ghi chú tình trạng"></GridColumn>
+        </GridColumns>
+    </TelerikGrid>
+</div>
+
+<HDialog @bind-IsVisible="@IsShowDialog"
+         SaveAndClosed="@(()=> SaveDataHandler())"
+         Title="@(IsCreate ? "Thêm mới mã sách/serial" : $"Cập nhật mã sách/serial {BookSerialUpdate!.SerialNumber}")">
+    <EditForm EditContext="@_EditContext">
+        <DataAnnotationsValidator />
+        <div>
+            <HLabel Value="Mã:" />
+            <TelerikNumericTextBox @bind-Value="@BookSerialUpdate!.Id" Class="h-link" Enabled="false" Arrows="false" />
+        </div>
+        <div class="mt-2">
+            <HLabel Value="Loại sách:" IsRequired="true" />
+            <TelerikComboBox Data="@ListBooks"
+                             Value="@BookSerialUpdate.BookID"
+                             ValueExpression="@(() => BookSerialUpdate.BookID)"
+                             ValueChanged="@((int value) => BookSerialUpdate.BookID = value)"
+                             Placeholder="Chọn loại sách..."
+                             TextField="@nameof(BookModel.BookName)"
+                             ValueField="@nameof(BookModel.BookId)"
+                             Filterable="true"
+                             ClearButton="false"
+                             Id="txtKindBookId" Width="100%">
+            </TelerikComboBox>
+            <HValidationTooltip ValidationFor="@(()=> BookSerialUpdate.BookID)" Id="txtKindBookId" />
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtSerialNumber" Value="Mã sách/Serial:" IsRequired="true" />
+            <TelerikTextBox @bind-Value="@BookSerialUpdate.SerialNumber" Id="txtSerialNumber" />
+            <HValidationTooltip ValidationFor="@(()=> BookSerialUpdate.SerialNumber)" Id="txtSerialNumber" />
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtDescription" Value="Ghi chú tình trạng:" />
+            <TelerikTextArea @bind-Value="@BookSerialUpdate.NoteForAll" AutoSize="true" Size="500" Id="txtDescription" />
+        </div>
+        <div class="mt-2">
+            <TelerikCheckBox @bind-Value="@BookSerialUpdate.IsActive" Id="ckbIsActive" />
+            <HLabel Value="Hoạt động?" For="ckbIsActive" />
+        </div>
+    </EditForm>
+</HDialog>
