@@ -1,0 +1,16 @@
+﻿@inject NavigationManager _nav;
+@code {
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var path = _nav.ToBaseRelativePath(_nav.Uri);
+                _nav.NavigateTo($"/admin/login?returnUrl={path}");
+            }
+            catch (Exception) { }
+
+        }
+    }
+}

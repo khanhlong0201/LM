@@ -27,7 +27,7 @@ namespace LM.WEB.Features.Pages
                 IsLoading = true;
                 var response = await _masterDataService!.LoginAsync(LoginRequest);
                 if (!string.IsNullOrWhiteSpace(response)) { ErrorMessage = response; return; }
-                _navigationManager!.NavigateTo("/", forceLoad: true); // để nó Authror 
+                _navigationManager!.NavigateTo("/index", forceLoad: true); // để nó Authror 
                 await Task.Delay(1000);
                 await Task.Yield();
             }

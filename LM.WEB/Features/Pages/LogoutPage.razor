@@ -11,7 +11,7 @@
             try
             {
                 await _masterDataService.LogoutAsync();
-                _navigationManager.NavigateTo($"login");
+                _navigationManager.NavigateTo($"admin/login");
             }
             catch (Exception) { }
 

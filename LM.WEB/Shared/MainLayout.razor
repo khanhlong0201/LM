@@ -1,8 +1,8 @@
 ﻿@inherits LayoutComponentBase
 
 <HLoader />
-@*<AuthorizeView>
-    <Authorized>*@
+<AuthorizeView>
+    <Authorized>
         <!-- Navbar -->
         <div class="sticky-top">
             <header class="navbar navbar-expand-md sticky-top d-print-none">
@@ -218,19 +218,19 @@
         </div>
         
        <div class="page-wrapper" style="margin: 4px 2px 2px 2px">
-                <TelerikRootComponent>
-                    <HBreadcrumb Breadcrumbs="@ListBreadcrumbs" />
-                    <CascadingValue Value="@BreadcrumbsHandler">
-                        @Body
-                    </CascadingValue>
-                    <HToast />
-                </TelerikRootComponent>
-    </div>
-   @* </Authorized>
+           <TelerikRootComponent>
+               <HBreadcrumb Breadcrumbs="@ListBreadcrumbs" />
+               <CascadingValue Value="@BreadcrumbsHandler">
+                   @Body
+               </CascadingValue>
+               <HToast />
+           </TelerikRootComponent>
+        </div>
+    </Authorized>
     <NotAuthorized>
         <LM.WEB.Features.Pages.RedirectToLogin />
     </NotAuthorized>
-</AuthorizeView>*@
+</AuthorizeView>
 
 @*Thay đổi thông tin cá nhân*@
 <HDialog @bind-IsVisible="@IsShowDialogProfile"
