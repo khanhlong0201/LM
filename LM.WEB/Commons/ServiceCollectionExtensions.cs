@@ -18,6 +18,7 @@ namespace LM.WEB.Commons
         {
             services.AddScoped<ICliMasterDataService, CliMasterDataService>();
             services.AddScoped<ICliDocumentService, CliDocumentService>();
+            services.AddScoped<LoginDialogService>();
             return services;
         }
 

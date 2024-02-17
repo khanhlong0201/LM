@@ -54,3 +54,9 @@ public class ToastService
     public void ClearAll() => OnClearAll?.Invoke();
 }
 
+public class LoginDialogService
+{
+    public event Action<bool>? OnShow;
+    public void ShowDialog(bool pIsShow = true) => OnShow!.Invoke(pIsShow);
+}    
+

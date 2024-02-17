@@ -1,0 +1,156 @@
+﻿@implements IDisposable
+@inject Services.LoginDialogService _dialogService;
+@inject ICliMasterDataService _masterDataService;
+
+@if (isShowPopup)
+{
+    @*<div class="bh-modal bh-modal-blur fade show">
+        <div class="modal-dialog modal-sm">
+            <EditForm Model="LoginRequest" OnValidSubmit="@(()=> LoginHandler())">
+                <div class="modal-content">
+                    <div class="modal-header bh-modal-header">
+                        <div style="margin: 0 auto;">
+                            <div class="d-flex align-items-center text-decoration-none">
+                                <img src="../assets/logo_1.png" width="110" height="32" alt="HSystem" class="navbar-brand-image">
+                                <span class="h-logo__title">Đăng nhập</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-body bh-modal-body">
+                        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+                        {
+                            <ul class="validation-errors">
+                                <li class="validation-message">
+                                    @ErrorMessage
+                                </li>
+                            </ul>
+                        }
+                        <div style="text-align: center;">
+                            <TelerikLoader Visible="@isLoading" Type="@LoaderType.Pulsing" Size="@(ThemeConstants.Loader.Size.Medium)"></TelerikLoader>
+                        </div>
+                        <div class="mt-2">
+                            <HLabel Value="Mật khẩu:" IsRequired="true" />
+                            <TelerikTextBox Id="txtPassword-token"
+                                        PlaceHolder="Mật khẩu*:" @bind-Value="@password" Password="true" />
+                        </div>
+                    </div>
+                    <div class="modal-footer bh-modal-footer">
+                        <TelerikButton ButtonType="@ButtonType.Submit" ImageUrl="../assets/key.png" Class="h-button--login"
+                                   ThemeColor="@(ThemeConstants.Button.ThemeColor.Primary)">
+                            Đăng nhập
+                        </TelerikButton>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    </div>*@
+    <EditForm Model="LoginRequest" OnValidSubmit="@(()=> LoginHandler())">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <div class="modal modal-blur fade show" id="modal-report" tabindex="-1" style="display: block;" aria-modal="true" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div style="margin: 0 auto;">
+                            <div class="d-flex align-items-center text-decoration-none">
+                                <img src="../assets/logo_1.png" width="110" height="32" alt="HSystem" class="navbar-brand-image">
+                                <span class="h-logo__title">Đăng nhập</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-body">
+                        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+                        {
+                            <ul class="validation-errors">
+                                <li class="validation-message">
+                                    @ErrorMessage
+                                </li>
+                            </ul>
+                        }
+                        <div style="text-align: center;">
+                            <TelerikLoader Visible="@isLoading" Type="@LoaderType.Pulsing" Size="@(ThemeConstants.Loader.Size.Medium)"></TelerikLoader>
+                        </div>
+                        <div class="mt-2">
+                            <TelerikTextBox PlaceHolder="Tài khoản*:" @bind-Value="@LoginRequest.UserName"
+                                        FillMode="@ThemeConstants.TextBox.FillMode.Flat" Id="txtUserName" />
+                            <HValidationTooltip ValidationFor="@(()=> LoginRequest.UserName)" Id="txtUserName" />
+                        </div>
+                        <div class="mt-2">
+                            <HLabel Value="Mật khẩu:" IsRequired="true" />
+                            <TelerikTextBox FillMode="@ThemeConstants.TextBox.FillMode.Flat" Id="txtPassword"
+                                        PlaceHolder="Mật khẩu*:" @bind-Value="@LoginRequest.Password" Password="@true" />
+                            <HValidationTooltip ValidationFor="@(()=> LoginRequest.Password)" Id="txtPassword" />
+                        </div>
+                    </div>
+                    <div class="modal-footer py-1">
+                        <div class="d-flex justify-content-end">
+                            <div>
+                                <TelerikButton OnClick="@LogOutAsync">Đóng</TelerikButton>
+                                <TelerikButton ButtonType="@ButtonType.Submit" ImageUrl="../assets/key.png" Class="h-button--login"
+                                           ThemeColor="@(ThemeConstants.Button.ThemeColor.Primary)">
+                                    Đăng nhập
+                                </TelerikButton>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </EditForm>
+}
+
+
+@code {
+    public LoginViewModel LoginRequest { get; set; } = new LoginViewModel();
+    private bool isShowPopup { get; set; } = false;
+    private bool isLoading { get; set; } = false;
+    private string password { get; set; } = "";
+
+
+    private string ErrorMessage = "";
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            _dialogService.OnShow += showDialog;
+        }
+        catch (Exception) { }
+
+    }
+
+    private void showDialog(bool isShow)
+    {
+        isShowPopup = isShow;
+        StateHasChanged();
+    }
+
+    protected async Task LoginHandler()
+    {
+        try
+        {
+            ErrorMessage = "";
+            isLoading = true;
+            var response = await _masterDataService!.LoginAsync(LoginRequest);
+            if (!string.IsNullOrWhiteSpace(response)) { ErrorMessage = response; return; }
+            await Task.Delay(1000);
+            await Task.Yield();
+            isShowPopup = false;
+        }
+        catch (Exception ex) { ErrorMessage = ex.Message; }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Đăng xuất
+    /// </summary>
+    private void LogOutAsync()
+    {
+        isShowPopup = false;
+    }
+
+    public void Dispose() => _dialogService.OnShow -= showDialog;
+}

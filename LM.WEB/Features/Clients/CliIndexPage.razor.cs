@@ -12,6 +12,7 @@ namespace LM.WEB.Features.Clients
         [Inject] private ICliMasterDataService? _masterDataService { get; init; }
         [Inject] public ToastService? _toastService { get; init; }
         [Inject] public LoaderService? _loaderService { get; init; }
+        [Inject] private LoginDialogService? _bhDialogService { get; init; }
         #endregion
         public List<KindBookModel>? ListKindBooks { get; set; }
         public List<PublisherModel>? ListPublishers { get; set; }
@@ -89,6 +90,14 @@ namespace LM.WEB.Features.Clients
             try
             {
                 if (oItem == null) return;
+                // kiểm tra đăng nhập
+                bool checkLogin = false;
+                if (!checkLogin)
+                {
+                    _bhDialogService!.ShowDialog();
+                    return;
+                }    
+
                 await NotifyBook.InvokeAsync(oItem);
             }
             catch (Exception ex)
