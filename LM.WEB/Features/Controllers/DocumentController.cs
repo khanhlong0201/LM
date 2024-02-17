@@ -26,6 +26,10 @@ namespace LM.WEB.Features.Controllers
         public TelerikGrid<BODetailModel>? RefListBODetails { get; set; }
         public bool IsShowDialog { get; set; }
 
+        public List<StaffModel>? ListStaffs { get; set; }
+        public IEnumerable<StaffModel> SelectedStaffs { get; set; } = new List<StaffModel>();
+        public bool IsShowDialogStaff { get; set; }
+
         public bool IsInitialDataLoadComplete { get; set; } = true;
         public List<BookSerialModel>? ListBookSerials { get; set; }
         public IEnumerable<BookSerialModel> SelectedBookSerials { get; set; } = new List<BookSerialModel>();
@@ -94,6 +98,13 @@ namespace LM.WEB.Features.Controllers
             ListBookSerials = await _masterDataService!.GetBookSerialsAsync();
         }
 
+        private async Task getStaffs()
+        {
+            ListStaffs = new List<StaffModel>();
+            SelectedStaffs = new List<StaffModel>();
+            ListStaffs = await _masterDataService!.GetStaffsAsync();
+        }
+
         private bool validateData(bool isCreate)
         {
             if (string.IsNullOrWhiteSpace(DocumentUpdate.StaffCode))
@@ -121,12 +132,13 @@ namespace LM.WEB.Features.Controllers
         #endregion
 
         #region Protected Functions
-        protected async void ReLoadDataHandler()
+        protected async void ReLoadDataHandler(bool isBook = true)
         {
             try
             {
                 IsInitialDataLoadComplete = false;
-                await getBookSerials();
+                if (isBook) await getBookSerials();
+                else await getStaffs();
             }
             catch (Exception ex)
             {
@@ -140,13 +152,25 @@ namespace LM.WEB.Features.Controllers
             }
         }
 
-        protected async void OnOpenDialogHandler()
+        protected async void OnOpenDialogHandler(bool isBook = true)
         {
             try
             {
                 await ShowLoader();
-                await getBookSerials();
-                IsShowDialog = true;
+                if(isBook)
+                {
+                    // tìm kiếm sách
+                    await getBookSerials();
+                    IsShowDialog = true;
+                }  
+                else
+                {
+                    // tìm kiếm nhân viên
+                    await getStaffs();
+                    IsShowDialogStaff = true;
+
+                }    
+                
 
             }
             catch (Exception ex)
@@ -229,6 +253,37 @@ namespace LM.WEB.Features.Controllers
                 ShowError(ex.Message);
             }
         }
+
+        protected void ChoseStaffHandler()
+        {
+            try
+            {
+                if (ListStaffs == null || !ListStaffs.Any())
+                {
+                    ShowWarning("không có dữ liệu người mượn!");
+                    return;
+                }
+                if (SelectedStaffs == null || !SelectedStaffs.Any())
+                {
+                    ShowWarning("Vui lòng chọn người cần mượn!");
+                    return;
+                }
+                var oItem = SelectedStaffs.First();
+                DocumentUpdate.StaffCode = oItem.StaffCode;
+                DocumentUpdate.FullName = oItem.FullName;
+                DocumentUpdate.Department = oItem.Department;
+                DocumentUpdate.PhoneNumber = oItem.PhoneNumber;
+                DocumentUpdate.StaffTypeName = oItem.StaffTypeName;
+                DocumentUpdate.Email = oItem.Email;
+                IsShowDialogStaff = false;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "DocumentController", "ChoseStaffHandler");
+                ShowError(ex.Message);
+            }
+        }    
 
         protected async void SaveDocHandler(EnumType pProcess = EnumType.Update)
         {

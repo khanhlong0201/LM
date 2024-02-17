@@ -43,18 +43,29 @@
                             <div class="mb-2">
                                 <div class="row row-gap-2">
                                     <div class="col-md-4 col-sm-12">
-                                        Mã thẻ/Mã số sinh viên:
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <TelerikTextBox @bind-Value="@DocumentUpdate!.StaffCode" Id="txtStatusBefore" />
-                                            <i class="fa-solid fa-magnifying-glass" style="font-size: 18px;margin-left: 7.5px;"></i>
-                                        </div>
+                                        Mã thẻ/Mã số sinh viên: 
+                                        <i class="fa-solid fa-magnifying-glass" style="font-size: 14px;margin-left: 5px;" 
+                                            title="Tìm kiếm" @onclick="@(()=> OnOpenDialogHandler(false))"></i> 
+                                        <strong>@($"{DocumentUpdate.StaffCode}")</strong>
                                     </div>
-                                    <div class="col-md-8 col-sm-12">
-                                        Tên cán bộ, giáo viên, sinh viên:
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <TelerikTextBox @bind-Value="@DocumentUpdate!.FullName" Id="txtFullName" />
-                                            <i class="fa-solid fa-magnifying-glass" style="font-size: 18px;margin-left: 7.5px;"></i>
-                                        </div>
+                                    <div class="col-md-4 col-sm-12">
+                                        Tên cán bộ, giáo viên, sinh viên: <strong>@($"{DocumentUpdate.FullName}")</strong>
+                                    </div>
+                                    <div class="col-md-4 col-sm-12">
+                                        Chức vụ: <strong>@($"{DocumentUpdate.StaffTypeName}")</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="row row-gap-2">
+                                    <div class="col-md-4 col-sm-12">
+                                        Số điện thoại: <strong>@($"{DocumentUpdate.PhoneNumber}")</strong>
+                                    </div>
+                                    <div class="col-md-4 col-sm-12">
+                                        Phòng ban: <strong>@($"{DocumentUpdate.Department}")</strong>
+                                    </div>
+                                    <div class="col-md-4 col-sm-12">
+                                        Email: <strong>@($"{DocumentUpdate.Email}")</strong>
                                     </div>
                                 </div>
                             </div>
@@ -103,8 +114,8 @@
                 </h4>
             </div>
             <TelerikToolBar Class="border-bottom-0">
-                <ToolBarButton ImageUrl="../assets/add-new-icon.png" Title="Thêm mới sách" OnClick="@OnOpenDialogHandler">Thêm</ToolBarButton>
-                <ToolBarButton ImageUrl="../assets/remove_grid.png" Title="Xóa dòng" OnClick="@RemoveBooksHandler">Xóa</ToolBarButton>
+                <ToolBarButton ImageUrl="../assets/add-new-icon.png" Title="Thêm mới sách" OnClick="@(()=> OnOpenDialogHandler())"></ToolBarButton>
+                <ToolBarButton ImageUrl="../assets/remove_grid.png" Title="Xóa dòng" OnClick="@RemoveBooksHandler"></ToolBarButton>
             </TelerikToolBar>
             <TelerikGrid Data="@ListBODetails" @ref="@RefListBODetails"
                          Height="250px"
@@ -157,7 +168,7 @@
         SaveAndClosed="@AddBooksHandler"
         Title="Tìm kiếm sách">
     <TelerikToolBar Class="border-bottom-0">
-        <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
+        <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@(()=> ReLoadDataHandler())">Làm mới</ToolBarButton>
     </TelerikToolBar>
     <div class="h-table-content" style=" height: 300px;">
         <TelerikLoaderContainer OverlayThemeColor="light"
@@ -201,6 +212,75 @@
                     </Template>
                 </GridColumn>
                 <GridColumn Field=@nameof(BookSerialModel.NoteForAll) Width="340px" Title="Ghi chú tình trạng"></GridColumn>
+            </GridColumns>
+        </TelerikGrid>
+    </div>
+</HDialog>
+
+<HDialog @bind-IsVisible="@IsShowDialogStaff"
+         Width="85%"
+         TitleBtnSaveAndClosed="Chọn người mượn"
+         SaveAndClosed="@ChoseStaffHandler"
+         Title="Tìm kiếm Cán bộ, giáo viên, sinh viên">
+    <TelerikToolBar Class="border-bottom-0">
+        <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@(()=> ReLoadDataHandler(false))">Làm mới</ToolBarButton>
+    </TelerikToolBar>
+    <div class="h-table-content" style=" height: 300px;">
+        <TelerikLoaderContainer OverlayThemeColor="light"
+                                Visible="@(!IsInitialDataLoadComplete)"
+                                Text="@null" Class="grid-initial-data-loader">
+            <Template>
+                <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                               Size="@(ThemeConstants.Loader.Size.Medium)">
+                </TelerikLoader>
+            </Template>
+        </TelerikLoaderContainer>
+
+        <TelerikGrid Data="@ListStaffs"
+                     Height="100%"
+                     Width="100%"
+                     RowHeight="25"
+                     Pageable="true"
+                     PageSize="@DefaultConstants.PAGE_SIZE"
+                     Sortable="true"
+                     Resizable="true"
+                     FilterMode="@GridFilterMode.FilterMenu"
+                     SelectionMode="@GridSelectionMode.Single"
+                     ScrollMode="@GridScrollMode.Scrollable"
+                     @bind-SelectedItems="@SelectedStaffs">
+            <GridSettings>
+                <GridPagerSettings InputType="PagerInputType.Input" />
+            </GridSettings>
+            <GridAggregates>
+                <GridAggregate Field=@nameof(StaffModel.StaffCode) Aggregate="@GridAggregateType.Count" />
+            </GridAggregates>
+            <GridColumns>
+                <GridColumn Field=@nameof(StaffModel.StaffCode) Width="130px" MaxResizableWidth="150" Title="Mã vị trí">
+                    <Template>
+                        @{
+                            var model = (context as StaffModel);
+                            <span class="h-link" title="Xem chi tiết">@model!.StaffCode</span>
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        Số dòng: @context.Count
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field=@nameof(StaffModel.FullName) Width="270px" Title="Họ & tên"></GridColumn>
+                <GridColumn Field=@nameof(StaffModel.StaffTypeName) Width="130px" Title="Loại"></GridColumn>
+                <GridColumn Field=@nameof(StaffModel.Department) Width="240px" Title="Phòng ban/Lớp học"></GridColumn>
+                <GridColumn Field=@nameof(StaffModel.PhoneNumber) Width="130px" Title="SĐT"></GridColumn>
+                <GridColumn Field=@nameof(StaffModel.Email) Width="240px" Title="Email"></GridColumn>
+                <GridColumn Field=@nameof(StaffModel.IsActive) Width="130px" Title="Hoạt động?" TextAlign="ColumnTextAlign.Center">
+                    <Template>
+                        @{
+                            var model = (context as StaffModel);
+                            <TelerikCheckBox @bind-Value="@model!.IsActive" Enabled="false" />
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field=@nameof(StaffModel.Address) Width="290px" Title="Địa chỉ"></GridColumn>
+                <GridColumn Field=@nameof(StaffModel.PlaceOfOrigin) Width="290px" Title="Quê quán"></GridColumn>
             </GridColumns>
         </TelerikGrid>
     </div>
