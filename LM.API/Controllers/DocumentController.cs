@@ -44,5 +44,26 @@ namespace LM.API.Controllers
 
             }
         }
+
+        [HttpPost]
+        [Route("GetBorrowOrders")]
+        public async Task<IActionResult> GetBorrowOrders([FromBody] SearchModel pSearchData)
+        {
+            try
+            {
+                var data = await _documentervice.GetBorrowOrdersAsync(pSearchData);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DocumentController", "GetBorrowOrders");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+
+        }
     }
 }

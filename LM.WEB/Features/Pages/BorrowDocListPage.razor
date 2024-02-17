@@ -1,2 +1,123 @@
 ﻿@page "/document-list"
 @page "/document-list-online"
+@inherits BorrowDocListController
+
+<div class="h-content-filter">
+    <div class="row">
+        <div class="col-lg-4 col-md-5 col-sm-12">
+            <div class="d-flex ">
+                <HLabel Value="Tình trạng:" IsRequired="true" Style="width: 130px" />
+                <div style="width: calc(100% - 130px)">
+                    <TelerikComboBox @bind-Value="@ItemFilter.StatusId"
+                                     Data="@ListStatus"
+                                     Placeholder="Chọn tình trạng..."
+                                     ClearButton="false"
+                                     TextField="@nameof(ComboboxModel.Name)"
+                                     ValueField="@nameof(ComboboxModel.Code)"
+                                     Filterable="true"
+                                     Class="btn-noborder-radius-left"
+                                     Id="txtStatusId" Width="100%">
+                    </TelerikComboBox>
+                </div>
+            </div>
+            <div class="d-flex mt-1">
+                <HLabel Value="Từ ngày/Đến ngày:" Style="width: 130px" />
+                <div style="width: calc(100% - 130px)">
+                    <div class="d-flex justify-content-between">
+                        <div style="width: 50%;">
+                            <TelerikDatePicker @bind-Value="@ItemFilter.FromDate"
+                                               Placeholder=""
+                                               Format="dd/MM/yyyy"
+                                               Class="btn-noborder-radius-left">
+                            </TelerikDatePicker>
+                        </div>
+                        <div style="width: 50%; margin-left: 2px;">
+                            <TelerikDatePicker @bind-Value="@ItemFilter.ToDate"
+                                               Placeholder=""
+                                               Format="dd/MM/yyyy"
+                                               Class="btn-noborder-radius-left">
+                            </TelerikDatePicker>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<TelerikToolBar Class="border-bottom-0">
+    <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/remove_grid.png"
+                   Enabled="@(ItemFilter.StatusId == nameof(DocStatus.Pending))">Hủy phiếu</ToolBarButton>
+</TelerikToolBar>
+
+<div class="h-table-content" style=" height: calc(100vh - 230px);">
+    <TelerikLoaderContainer OverlayThemeColor="light"
+                            Visible="@(!IsInitialDataLoadComplete)"
+                            Text="@null" Class="grid-initial-data-loader">
+        <Template>
+            <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                           Size="@(ThemeConstants.Loader.Size.Medium)">
+            </TelerikLoader>
+        </Template>
+    </TelerikLoaderContainer>
+
+    <TelerikGrid Data="@ListDocuments"
+                 Height="100%"
+                 Width="100%"
+                 RowHeight="25"
+                 Pageable="true"
+                 PageSize="@DefaultConstants.PAGE_SIZE"
+                 Sortable="true"
+                 Resizable="true"
+                 FilterMode="@GridFilterMode.FilterMenu"
+                 SelectionMode="@GridSelectionMode.Multiple"
+                 ScrollMode="@GridScrollMode.Scrollable"
+                 @bind-SelectedItems="@SelectedDocuments">
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input" />
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(BorrowOrderModel.VoucherNo) Aggregate="@GridAggregateType.Count" />
+        </GridAggregates>
+        <GridColumns>
+            <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.VoucherNo) Width="130px" MaxResizableWidth="150" Title="Mã phiếu">
+                <Template>
+                    @{
+                        var model = (context as BorrowOrderModel);
+                        <span class="h-link" title="Xem chi tiết">@model!.VoucherNo</span>
+                    }
+                </Template>
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.DateCreate) Width="150px" Title="Ngày tạo" DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE_TIME"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.StaffCode) Width="130px" Title="Mã thẻ"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.FullName) Width="170px" Title="Họ & tên"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.StatusName) Width="150px" Title="Tình trạng">
+                <Template>
+                    @{
+                        var model = (context as BorrowOrderModel);
+                        string color = "text-cyan";
+                        if (model!.StatusCode == nameof(DocStatus.Closed)) color = "text-green";
+                        else if (model!.StatusCode == nameof(DocStatus.Cancled)) color = "text-red";
+                        <span class="@(color)">@model!.StatusName</span>
+                    }
+                </Template>
+            </GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.DocDate) Width="150px" Title="Ngày mượn" DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.PromiseDate) Width="150px" Title="Ngày hẹn trả" DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.DueDate) Width="150px" Title="Ngày trả" DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.TypeBO) Width="170px" Title="Phương thức mượn"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.StaffTypeName) Width="150px" Title="Chức vụ"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.PhoneNumber) Width="150px" Title="SĐT"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.Email) Width="170px" Title="Email"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.Department) Width="170px" Title="Phòng ban"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.Description) Width="190px" Title="Ghi chú"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.DateUpdate) DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE_TIME" Width="165px" Title="Ngày giờ cập nhật"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.ReasonDelete) Width="170px" Title="Lý do hủy"></GridColumn>
+        </GridColumns>
+    </TelerikGrid>
+</div>

@@ -68,4 +68,5 @@ public static class EndpointConstants
     public const string URL_MASTERDATA_UPDATE_BOOK_SERIAL = "MasterData/UpdateBookSerial";
 
     public const string URL_DOCUMENT_UPDATE_BORROW_ORDER = "Document/UpdateBorrowOrder";
+    public const string URL_DOCUMENT_GET_BORROW_ORDER = "Document/GetBorrowOrders";
 }

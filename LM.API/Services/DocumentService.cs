@@ -12,6 +12,7 @@ namespace LM.API.Services
     public interface IDocumentService
     {
         Task<ResponseModel> UpdateBorrowOrderAsync(RequestModel pRequest);
+        Task<IEnumerable<BorrowOrderModel>> GetBorrowOrdersAsync(SearchModel pSearchData);
     }    
     public class DocumentService : IDocumentService
     {
@@ -108,6 +109,67 @@ namespace LM.API.Services
             return response;
         }
 
+        /// <summary>
+        /// lấy danh sách mượn
+        /// </summary>
+        /// <param name="pSearchData"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<BorrowOrderModel>> GetBorrowOrdersAsync(SearchModel pSearchData)
+        {
+            IEnumerable<BorrowOrderModel> data;
+            try
+            {
+                await _context.Connect();
+                if (pSearchData.FromDate == null) pSearchData.FromDate = new DateTime(2023, 01, 01);
+                if (pSearchData.ToDate == null) pSearchData.ToDate = _dateTimeService.GetCurrentVietnamTime();
+                string querry = @$"select T0.*
+                                          , case StaffType when N'SV' then N'Sinh viên' 
+                                            when N'GV' then N'Giáo viên' when N'CB' then N'Cán bộ'
+                                            else N'Sinh viên' end as StaffTypeName
+		                                  , case T0.[StatusCode]  when '{nameof(DocStatus.Closed)}' then N'Đã trả sách'
+                                            when '{nameof(DocStatus.Cancled)}' then N'Đã hủy phiếu'
+                                            else N'Chờ xử lý' end as [StatusName]
+		                                  , T1.FullName, T1.PhoneNumber, T1.Email, T1.Department
+                                       from BorrowOrders as T0 with(nolock)
+                                 inner join Staffs as T1 with(nolock) on T0.StaffCode = T1.StaffCode 
+                                      where cast(T0.[DocDate] as Date) between cast(@FromDate as Date) and cast(@ToDate as Date)
+                                   order by T0.DateCreate desc";
+                SqlParameter[] sqlParameters = new SqlParameter[5];
+                sqlParameters[0] = new SqlParameter("@StatusId", pSearchData.StatusId);
+                sqlParameters[1] = new SqlParameter("@FromDate", pSearchData.FromDate.Value);
+                sqlParameters[2] = new SqlParameter("@ToDate", pSearchData.ToDate.Value);
+                sqlParameters[3] = new SqlParameter("@IsAdmin", pSearchData.IsAdmin);
+                sqlParameters[4] = new SqlParameter("@UserId", pSearchData.UserId);
+                Func<IDataRecord, BorrowOrderModel> readData = record =>
+                {
+                    BorrowOrderModel model = new BorrowOrderModel();
+                    if (!Convert.IsDBNull(record["VoucherNo"])) model.VoucherNo = Convert.ToString(record["VoucherNo"]);
+                    if (!Convert.IsDBNull(record["StatusCode"])) model.StatusCode = Convert.ToString(record["StatusCode"]);
+                    if (!Convert.IsDBNull(record["StatusName"])) model.StatusName = Convert.ToString(record["StatusName"]);
+                    if (!Convert.IsDBNull(record["StaffCode"])) model.StaffCode = Convert.ToString(record["StaffCode"]);
+                    if (!Convert.IsDBNull(record["FullName"])) model.FullName = Convert.ToString(record["FullName"]);
+                    if (!Convert.IsDBNull(record["PhoneNumber"])) model.PhoneNumber = Convert.ToString(record["PhoneNumber"]);
+                    if (!Convert.IsDBNull(record["StaffTypeName"])) model.StaffTypeName = Convert.ToString(record["StaffTypeName"]);
+                    if (!Convert.IsDBNull(record["Description"])) model.Description = Convert.ToString(record["Description"]);
+                    if (!Convert.IsDBNull(record["DocDate"])) model.DocDate = Convert.ToDateTime(record["DocDate"]);
+                    if (!Convert.IsDBNull(record["DueDate"])) model.DueDate = Convert.ToDateTime(record["DueDate"]);
+                    if (!Convert.IsDBNull(record["PromiseDate"])) model.PromiseDate = Convert.ToDateTime(record["PromiseDate"]);
+                    if (!Convert.IsDBNull(record["TypeBO"])) model.TypeBO = Convert.ToString(record["TypeBO"]);
+                    if (!Convert.IsDBNull(record["Email"])) model.Email = Convert.ToString(record["Email"]);
+                    if (!Convert.IsDBNull(record["Department"])) model.Department = Convert.ToString(record["Department"]);
+                    if (!Convert.IsDBNull(record["DateCreate"])) model.DateCreate = Convert.ToDateTime(record["DateCreate"]);
+                    if (!Convert.IsDBNull(record["UserCreate"])) model.UserCreate = Convert.ToInt32(record["UserCreate"]);
+                    return model;
+                };
+                data = await _context.GetDataAsync(querry, readData, sqlParameters, commandType: CommandType.Text);
+            }
+            catch (Exception) { throw; }
+            finally
+            {
+                await _context.DisConnect();
+            }
+            return data;
+        }
         #region Private Functions
 
         /// <summary>

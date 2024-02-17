@@ -9,6 +9,7 @@ namespace LM.WEB.Services
     public interface ICliDocumentService
     {
         Task<bool> UpdateBorrowOrder(string pJson, string pJsonDetail, string pAction, int pUserId);
+        Task<List<BorrowOrderModel>?> GetBorrowOrdersAsync(SearchModel pSearch);
     }
     public class CliDocumentService : CliServiceBase, ICliDocumentService
     {
@@ -73,6 +74,38 @@ namespace LM.WEB.Services
                 _toastService.ShowError(ex.Message);
             }
             return false;
+        }
+
+        /// <summary>
+        /// Call API lấy danh sách Vị trí sách
+        /// </summary>
+        /// <returns></returns>
+        public async Task<List<BorrowOrderModel>?> GetBorrowOrdersAsync(SearchModel pSearch)
+        {
+            try
+            {
+                HttpResponseMessage httpResponse = await PostAsync(EndpointConstants.URL_DOCUMENT_GET_BORROW_ORDER, pSearch);
+                var checkContent = ValidateJsonContent(httpResponse.Content);
+                if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
+                else
+                {
+                    var content = await httpResponse.Content.ReadAsStringAsync();
+                    if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<List<BorrowOrderModel>>(content);
+                    if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    {
+                        _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
+                        return null;
+                    }
+                    var oMessage = JsonConvert.DeserializeObject<ResponseModel>(content);
+                    _toastService.ShowError($"{oMessage?.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetLocationsAsync");
+                _toastService.ShowError(ex.Message);
+            }
+            return default;
         }
     }
 }
