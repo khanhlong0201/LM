@@ -23,6 +23,8 @@ namespace LM.WEB.Shared
         public string UserName { get; set; } = "";
         public int UserId { get; set; } = -1;
 
+        public List<BookModel>? ListBooks { get; set; }
+
         protected override async Task OnInitializedAsync()
         {
             await base.OnInitializedAsync();
@@ -44,34 +46,15 @@ namespace LM.WEB.Shared
         }
 
         #region "Private Functions"
-        /// <summary>
-        /// loading
-        /// </summary>
-        /// <param name="isShow"></param>
-        /// <returns></returns>
-        public async Task ShowLoader(bool isShow = true)
+        EventCallback<BookModel> BooksHandler =>
+        EventCallback.Factory.Create(this, (Action<BookModel>)NotifyBooks);
+        private void NotifyBooks(BookModel _lstBooks)
         {
-            if (isShow)
-            {
-                _loaderService!.ShowLoader(isShow);
-                await Task.Yield();
-                return;
-            }
-            _loaderService!.ShowLoader(isShow);
+            if (ListBooks == null) ListBooks = new List<BookModel>();
+            ListBooks.Add(_lstBooks);
         }
-
 
         #endregion
-
-        protected void NavigatoEncrypt()
-        {
-            Dictionary<string, string> pParams = new Dictionary<string, string>
-            {
-                { "UserId", $"{UserId}" },
-            };
-            string key = EncryptHelper.Encrypt(JsonConvert.SerializeObject(pParams)); // mã hóa key phân quyền
-            _navigationManager!.NavigateTo($"/admin/info-user?key={key}");
-        }
     }
 
 

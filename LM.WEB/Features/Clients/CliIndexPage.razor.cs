@@ -20,6 +20,8 @@ namespace LM.WEB.Features.Clients
 
         public SearchModel ItemSearch = new SearchModel();
 
+        [CascadingParameter]
+        public EventCallback<BookModel> NotifyBook { get; set; }
         #region Private Functions
         private async Task getDataBooks()
         {
@@ -80,5 +82,25 @@ namespace LM.WEB.Features.Clients
             }
         }
         #endregion
+
+        #region Protected Functions
+        protected async Task AddToCartHandler(BookModel oItem)
+        {
+            try
+            {
+                if (oItem == null) return;
+                await NotifyBook.InvokeAsync(oItem);
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "OnAfterRenderAsync");
+                _toastService!.ShowError(ex.Message);
+            }
+            finally
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        #endregion 
     }
 }
