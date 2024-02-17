@@ -10,8 +10,12 @@ namespace LM.Models
     {
         public int Id { get; set; }
         public int BookSerialId { get; set; }
+        public int BookId { get; set; }
         public string? VoucherNo { get; set; }
         public string? StatusCode { get; set; }
         public string? NoteForAll { get; set; }
+        public string? BookName { get; set; }
+        public string? SerialNumber { get; set; }
+        public int Quantity { get; set; }
     }
 }

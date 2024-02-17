@@ -2,6 +2,206 @@
 @inherits DocumentController;
 
 <TelerikToolBar Class="border-bottom-0">
-    <ToolBarButton ImageUrl="../assets/save-folder.png">Lập phiếu</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/save-folder.png" OnClick="@(()=> SaveDocHandler())">Lưu phiếu</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/bill.png">Lưu & Đóng phiếu</ToolBarButton>
     <ToolBarButton ImageUrl="../assets/printer.png">In phiếu</ToolBarButton>
 </TelerikToolBar>
+<div class="h-content-filter" style="border-top: 1px solid var(--tblr-border-color)">
+    <div class="card card-lg mt-1" style="padding: 5px">
+        <div style="border-bottom: 1px solid var(--tblr-border-color)">
+            <div class="accordion" id="accordion-info">
+                <div class="accordion-item" style="border: none">
+                    <span class="accordion-header" id="heading-1">
+                        <button class="accordion-button " style="padding-top: 5px; padding-bottom: 5px;"
+                                type="button" data-bs-toggle="collapse" data-bs-target="#collapse-info" aria-expanded="true">
+                            <h4 class="mb-1">Thông tin mượn</h4>
+                        </button>
+                    </span>
+                    <div id="collapse-info" class="accordion-collapse collapse show" data-bs-parent="#accordion-info">
+                        <div class="accordion-body pt-0 px-2 pb-2">
+                            <div class="mb-2">
+                                <div class="row row-gap-2">
+                                    <div class="col-lg-4 col-md-4 col-sm-12">
+                                        Số phiếu: <strong>@($"{DocumentUpdate.VoucherNo}")</strong>
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-12">
+                                        Tình trạng phiếu:
+                                        @{
+                                            string color = "badge bg-cyan-lt";
+                                            if (DocumentUpdate!.StatusCode == nameof(DocStatus.Closed)) color = "badge bg-green-lt";
+                                            else if (DocumentUpdate!.StatusCode == nameof(DocStatus.Cancled)) color = "badge bg-red-lt";
+                                            <strong class="@(color)">
+                                                @($"{DocumentUpdate.StatusName}")
+                                            </strong>
+                                        }
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-12">
+                                        Ngày tạo: <strong>@DocumentUpdate.DateCreate?.ToString(DefaultConstants.FORMAT_DATE)</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="row row-gap-2">
+                                    <div class="col-md-4 col-sm-12">
+                                        Mã thẻ/Mã số sinh viên:
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <TelerikTextBox @bind-Value="@DocumentUpdate!.StaffCode" Id="txtStatusBefore" />
+                                            <i class="fa-solid fa-magnifying-glass" style="font-size: 18px;margin-left: 7.5px;"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8 col-sm-12">
+                                        Tên cán bộ, giáo viên, sinh viên:
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <TelerikTextBox @bind-Value="@DocumentUpdate!.FullName" Id="txtFullName" />
+                                            <i class="fa-solid fa-magnifying-glass" style="font-size: 18px;margin-left: 7.5px;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="row row-gap-2">
+                                    <div class="col-md-4 col-sm-12">
+                                        Ngày mượn:
+                                        <TelerikDatePicker @bind-Value="@DocumentUpdate.DocDate"
+                                                                Placeholder=""
+                                                                Format="@DefaultConstants.FORMAT_DATE"
+                                                                Class="btn-noborder-radius-left">
+                                        </TelerikDatePicker>
+                                    </div>
+                                    <div class="col-md-4 col-sm-12">
+                                        Ngày hẹn trả:
+                                        <TelerikDatePicker @bind-Value="@DocumentUpdate.PromiseDate"
+                                                               Placeholder=""
+                                                               Format="@DefaultConstants.FORMAT_DATE"
+                                                               Class="btn-noborder-radius-left">
+                                        </TelerikDatePicker>
+                                    </div>
+                                    <div class="col-md-4 col-sm-12">
+                                        Ngày trả:
+                                        <TelerikDatePicker @bind-Value="@DocumentUpdate.DueDate"
+                                                               Placeholder=""
+                                                           Format="@DefaultConstants.FORMAT_DATE"
+                                                               Class="btn-noborder-radius-left">
+                                        </TelerikDatePicker>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                Ghi chú:
+                                <TelerikTextBox @bind-Value="@DocumentUpdate!.Description" Id="txtNoteForAll" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-2">
+            <div class="d-flex justify-content-start align-items-stretch">
+                <h4 class="mb-1" style="padding-left: 20px;padding-right: 20px;">
+                    Số sách mượn
+                </h4>
+            </div>
+            <TelerikToolBar Class="border-bottom-0">
+                <ToolBarButton ImageUrl="../assets/add-new-icon.png" Title="Thêm mới sách" OnClick="@OnOpenDialogHandler">Thêm</ToolBarButton>
+                <ToolBarButton ImageUrl="../assets/remove_grid.png" Title="Xóa dòng" OnClick="@RemoveBooksHandler">Xóa</ToolBarButton>
+            </TelerikToolBar>
+            <TelerikGrid Data="@ListBODetails" @ref="@RefListBODetails"
+                         Height="250px"
+                         Width="100%"
+                         RowHeight="25"
+                         Pageable="false"
+                         PageSize="@DefaultConstants.PAGE_SIZE"
+                         Sortable="true"
+                         Resizable="true"
+                         FilterMode="@GridFilterMode.None"
+                         SelectionMode="@GridSelectionMode.Multiple"
+                         @bind-SelectedItems="@SelectedBODetails"
+                         ScrollMode="@GridScrollMode.Scrollable">
+                <GridSettings>
+                    <GridPagerSettings InputType="PagerInputType.Input" />
+                </GridSettings>
+                <GridAggregates>
+                    <GridAggregate Field=@nameof(BODetailModel.Id) Aggregate="@GridAggregateType.Count" />
+                </GridAggregates>
+                <GridColumns>
+                    <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+                    <GridColumn Field=@nameof(BODetailModel.BookId) Width="100px" Title="Mã sách"></GridColumn>
+                    <GridColumn Field=@nameof(BODetailModel.BookName) Width="290px" Title="Tên sách"></GridColumn>
+                    <GridColumn Field=@nameof(BODetailModel.SerialNumber) Width="130px" Title="Số serial"></GridColumn>
+                    <GridColumn Field=@nameof(BODetailModel.BookName) Width="130px" Title="Số lượng">
+                        <Template>
+                            @{
+                                var model = (context as BODetailModel);
+                                <TelerikNumericTextBox Min="1" Step="1" @bind-Value="@model!.Quantity" Id="txtQty" />
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(BODetailModel.NoteForAll) Width="290px" Title="Tình trạng sách">
+                        <Template>
+                            @{
+                                var model = (context as BODetailModel);
+                                <TelerikTextBox @bind-Value="@model!.NoteForAll" Id="txtNoteForAll" />
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </TelerikGrid>
+        </div>
+    </div>
+</div>
+
+<HDialog @bind-IsVisible="@IsShowDialog"
+        Width="85%"
+        TitleBtnSaveAndClosed="Chọn sách"
+        SaveAndClosed="@AddBooksHandler"
+        Title="Tìm kiếm sách">
+    <TelerikToolBar Class="border-bottom-0">
+        <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
+    </TelerikToolBar>
+    <div class="h-table-content" style=" height: 300px;">
+        <TelerikLoaderContainer OverlayThemeColor="light"
+                                Visible="@(!IsInitialDataLoadComplete)"
+                                Text="@null" Class="grid-initial-data-loader">
+            <Template>
+                <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                               Size="@(ThemeConstants.Loader.Size.Medium)">
+                </TelerikLoader>
+            </Template>
+        </TelerikLoaderContainer>
+
+        <TelerikGrid Data="@ListBookSerials"
+                     Height="100%"
+                     Width="100%"
+                     RowHeight="25"
+                     Pageable="true"
+                     PageSize="@DefaultConstants.PAGE_SIZE"
+                     Sortable="true"
+                     Resizable="true"
+                     FilterMode="@GridFilterMode.FilterMenu"
+                     SelectionMode="@GridSelectionMode.Multiple"
+                     ScrollMode="@GridScrollMode.Scrollable"
+                     @bind-SelectedItems="@SelectedBookSerials">
+            <GridSettings>
+                <GridPagerSettings InputType="PagerInputType.Input" />
+            </GridSettings>
+            <GridAggregates>
+                <GridAggregate Field=@nameof(BookSerialModel.Id) Aggregate="@GridAggregateType.Count" />
+            </GridAggregates>
+            <GridColumns>
+                <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+                <GridColumn Field=@nameof(BookSerialModel.SerialNumber) Width="190px" Title="Mã sách (Seri)"></GridColumn>
+                <GridColumn Field=@nameof(BookSerialModel.BookName) Width="270px" Title="Tên sách"></GridColumn>
+                <GridColumn Field=@nameof(BookSerialModel.IsActive) Width="130px" Title="Hoạt động?">
+                    <Template>
+                        @{
+                            var model = (context as BookSerialModel);
+                            <TelerikCheckBox @bind-Value="@model!.IsActive" Enabled="false" />
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field=@nameof(BookSerialModel.NoteForAll) Width="340px" Title="Ghi chú tình trạng"></GridColumn>
+            </GridColumns>
+        </TelerikGrid>
+    </div>
+</HDialog>

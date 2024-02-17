@@ -17,6 +17,7 @@ namespace LM.WEB.Commons
         public static IServiceCollection AddClientScopeService(this IServiceCollection services)
         {
             services.AddScoped<ICliMasterDataService, CliMasterDataService>();
+            services.AddScoped<ICliDocumentService, CliDocumentService>();
             return services;
         }
 

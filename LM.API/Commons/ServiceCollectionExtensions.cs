@@ -6,6 +6,7 @@ namespace LM.API.Commons
         public static IServiceCollection AddRegisterServices(this IServiceCollection services)
         {
             services.AddScoped<IMasterDataService, MasterDataService>();
+            services.AddScoped<IDocumentService, DocumentService>();
             return services;
         }
     }
