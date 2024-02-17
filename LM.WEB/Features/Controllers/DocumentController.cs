@@ -33,6 +33,9 @@ namespace LM.WEB.Features.Controllers
         public bool IsInitialDataLoadComplete { get; set; } = true;
         public List<BookSerialModel>? ListBookSerials { get; set; }
         public IEnumerable<BookSerialModel> SelectedBookSerials { get; set; } = new List<BookSerialModel>();
+        public List<BookModel>? ListBooks { get; set; }
+        public IEnumerable<BookModel>? SelectedBooks { get; set; } = new List<BookModel>();
+
         public const string DATA_EMPTY = "Chưa cập nhật";
         public const string TYPE_BO = "Offline";
         public bool pIsLockPage { get; set; } = false;
@@ -91,11 +94,25 @@ namespace LM.WEB.Features.Controllers
         #endregion
 
         #region Private Functions
-        private async Task getBookSerials()
+        private async Task getBooks()
+        {
+            ListBooks = new List<BookModel>();
+            SelectedBooks = new List<BookModel>();
+            SearchModel ItemFilter = new SearchModel();
+            ListBooks = await _masterDataService!.GetDataBooksAsync(ItemFilter);
+        }
+        private async Task getBookSerials(int pBookId, string pBookName)
         {
             ListBookSerials = new List<BookSerialModel>();
             SelectedBookSerials = new List<BookSerialModel>();
-            ListBookSerials = await _masterDataService!.GetBookSerialsAsync();
+            var lstData = await _masterDataService!.GetBookSerialsAsync();
+            if(lstData != null && lstData.Any())
+            {
+                ListBookSerials = lstData.Where(m=>m.BookID == pBookId).ToList();
+                return;
+            }
+            ShowInfo($"Không tìm thấy danh sách Serial của sách {pBookName}");
+
         }
 
         private async Task getStaffs()
@@ -137,7 +154,7 @@ namespace LM.WEB.Features.Controllers
             try
             {
                 IsInitialDataLoadComplete = false;
-                if (isBook) await getBookSerials();
+                if (isBook) await getBooks();
                 else await getStaffs();
             }
             catch (Exception ex)
@@ -160,7 +177,9 @@ namespace LM.WEB.Features.Controllers
                 if(isBook)
                 {
                     // tìm kiếm sách
-                    await getBookSerials();
+                    ListBookSerials = new List<BookSerialModel>();
+                    SelectedBookSerials = new List<BookSerialModel>();
+                    await getBooks();
                     IsShowDialog = true;
                 }  
                 else
@@ -203,6 +222,8 @@ namespace LM.WEB.Features.Controllers
                     ShowWarning("Vui lòng chọn dòng để xóa");
                     return;
                 }
+                ListBODetails = ListBODetails.Where(m => !SelectedBODetails.Select(m => m.SerialNumber).Contains(m.SerialNumber)).ToList();
+                SelectedBODetails = new List<BODetailModel>();
                 RefListBODetails?.Rebind();
                 StateHasChanged();
             }
@@ -232,6 +253,13 @@ namespace LM.WEB.Features.Controllers
                 }
                 if (ListBODetails == null) ListBODetails = new List<BODetailModel>();
 
+                // kiểm tra trùng
+                var checkDub = ListBODetails.FirstOrDefault(m=> SelectedBookSerials.Select(m => m.Id).Contains(m.BookSerialId));
+                if(checkDub != null)
+                {
+                    ShowWarning($"Trùng số Serial [{checkDub.SerialNumber}] của sách [{checkDub.BookName}]");
+                    return;
+                }    
                 var lstData = SelectedBookSerials.Select(m => new BODetailModel()
                 {
                     BookSerialId = m.Id,
@@ -252,8 +280,11 @@ namespace LM.WEB.Features.Controllers
                 _logger!.LogError(ex, "DocumentController", "RemoveBooksHandler");
                 ShowError(ex.Message);
             }
-        }
+        }   
 
+        /// <summary>
+        /// chọn nhân viên
+        /// </summary>
         protected void ChoseStaffHandler()
         {
             try
@@ -282,6 +313,33 @@ namespace LM.WEB.Features.Controllers
             {
                 _logger!.LogError(ex, "DocumentController", "ChoseStaffHandler");
                 ShowError(ex.Message);
+            }
+        }    
+
+        /// <summary>
+        /// click vào dòng chọn sách -> hiển thị danh sách serial
+        /// </summary>
+        /// <param name="args"></param>
+        protected async void OnRowClickBookHandler(GridRowClickEventArgs args)
+        {
+            try
+            {
+                var data = args.Item as BookModel;
+                if (data == null) return;
+                await ShowLoader();
+                await getBookSerials(data.BookId, $"{data.BookName}");
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "DocumentController", "OnRowClickBookHandler");
+                ShowError(ex.Message);
+            }
+            finally
+            {
+                await Task.Delay(100);
+                await ShowLoader(false);
+                await InvokeAsync(StateHasChanged);
             }
         }    
 

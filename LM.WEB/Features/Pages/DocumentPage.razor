@@ -140,14 +140,7 @@
                     <GridColumn Field=@nameof(BODetailModel.BookId) Width="100px" Title="Mã sách"></GridColumn>
                     <GridColumn Field=@nameof(BODetailModel.BookName) Width="290px" Title="Tên sách"></GridColumn>
                     <GridColumn Field=@nameof(BODetailModel.SerialNumber) Width="130px" Title="Số serial"></GridColumn>
-                    <GridColumn Field=@nameof(BODetailModel.BookName) Width="130px" Title="Số lượng">
-                        <Template>
-                            @{
-                                var model = (context as BODetailModel);
-                                <TelerikNumericTextBox Min="1" Step="1" @bind-Value="@model!.Quantity" Id="txtQty" />
-                            }
-                        </Template>
-                    </GridColumn>
+                    <GridColumn Field=@nameof(BODetailModel.Quantity) Width="130px" Title="Số lượng"></GridColumn>
                     <GridColumn Field=@nameof(BODetailModel.NoteForAll) Width="290px" Title="Tình trạng sách">
                         <Template>
                             @{
@@ -164,56 +157,92 @@
 
 <HDialog @bind-IsVisible="@IsShowDialog"
         Width="85%"
-        TitleBtnSaveAndClosed="Chọn sách"
+        TitleBtnSaveAndClosed="Chọn serial sách"
         SaveAndClosed="@AddBooksHandler"
         Title="Tìm kiếm sách">
-    <TelerikToolBar Class="border-bottom-0">
-        <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@(()=> ReLoadDataHandler())">Làm mới</ToolBarButton>
-    </TelerikToolBar>
-    <div class="h-table-content" style=" height: 300px;">
-        <TelerikLoaderContainer OverlayThemeColor="light"
-                                Visible="@(!IsInitialDataLoadComplete)"
-                                Text="@null" Class="grid-initial-data-loader">
-            <Template>
-                <TelerikLoader Type="@LoaderType.InfiniteSpinner"
-                               Size="@(ThemeConstants.Loader.Size.Medium)">
-                </TelerikLoader>
-            </Template>
-        </TelerikLoaderContainer>
-
-        <TelerikGrid Data="@ListBookSerials"
-                     Height="100%"
-                     Width="100%"
-                     RowHeight="25"
-                     Pageable="true"
-                     PageSize="@DefaultConstants.PAGE_SIZE"
-                     Sortable="true"
-                     Resizable="true"
-                     FilterMode="@GridFilterMode.FilterMenu"
-                     SelectionMode="@GridSelectionMode.Multiple"
-                     ScrollMode="@GridScrollMode.Scrollable"
-                     @bind-SelectedItems="@SelectedBookSerials">
-            <GridSettings>
-                <GridPagerSettings InputType="PagerInputType.Input" />
-            </GridSettings>
-            <GridAggregates>
-                <GridAggregate Field=@nameof(BookSerialModel.Id) Aggregate="@GridAggregateType.Count" />
-            </GridAggregates>
-            <GridColumns>
-                <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
-                <GridColumn Field=@nameof(BookSerialModel.SerialNumber) Width="190px" Title="Mã sách (Seri)"></GridColumn>
-                <GridColumn Field=@nameof(BookSerialModel.BookName) Width="270px" Title="Tên sách"></GridColumn>
-                <GridColumn Field=@nameof(BookSerialModel.IsActive) Width="130px" Title="Hoạt động?">
+    <div class="row row-gap-2">
+        <div class="col-md-8 col-sm-12">
+            <TelerikToolBar Class="border-bottom-0">
+                <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@(()=> ReLoadDataHandler())">Làm mới</ToolBarButton>
+            </TelerikToolBar>
+            <div class="h-table-content" style=" height: 350px;">
+                <TelerikLoaderContainer OverlayThemeColor="light"
+                                        Visible="@(!IsInitialDataLoadComplete)"
+                                        Text="@null" Class="grid-initial-data-loader">
                     <Template>
-                        @{
-                            var model = (context as BookSerialModel);
-                            <TelerikCheckBox @bind-Value="@model!.IsActive" Enabled="false" />
-                        }
+                        <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                                       Size="@(ThemeConstants.Loader.Size.Medium)">
+                        </TelerikLoader>
                     </Template>
-                </GridColumn>
-                <GridColumn Field=@nameof(BookSerialModel.NoteForAll) Width="340px" Title="Ghi chú tình trạng"></GridColumn>
-            </GridColumns>
-        </TelerikGrid>
+                </TelerikLoaderContainer>
+                <TelerikGrid Data="@ListBooks"
+                             Height="100%"
+                             Width="100%"
+                             RowHeight="25"
+                             Pageable="true"
+                             PageSize="@DefaultConstants.PAGE_SIZE"
+                             Sortable="true"
+                             Resizable="true"
+                             FilterMode="@GridFilterMode.FilterRow"
+                             SelectionMode="@GridSelectionMode.Single"
+                             ScrollMode="@GridScrollMode.Scrollable"
+                             @bind-SelectedItems="@SelectedBooks"
+                             OnRowClick="@OnRowClickBookHandler">
+                    <GridSettings>
+                        <GridPagerSettings InputType="PagerInputType.Input" />
+                    </GridSettings>
+                    <GridAggregates>
+                        <GridAggregate Field=@nameof(BookModel.BookId) Aggregate="@GridAggregateType.Count" />
+                    </GridAggregates>
+                    <GridColumns>
+                        <GridColumn Field=@nameof(BookModel.BookId) Width="130px" MaxResizableWidth="150" Title="Mã sách" ShowFilterCellButtons="false"></GridColumn>
+                        <GridColumn Field=@nameof(BookModel.BookName) Width="150px" Title="Tên sách" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"></GridColumn>
+                        <GridColumn Field=@nameof(BookModel.Qty) Width="150px" Title="Số lượng" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY" ShowFilterCellButtons="false"></GridColumn>
+                        <GridColumn Field=@nameof(BookModel.AuthorName) Width="150px" Title="Tác giả" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"></GridColumn>
+                        <GridColumn Field=@nameof(BookModel.PublisherName) Width="150px" Title="Nhà xuất bản" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"></GridColumn>
+                        <GridColumn Field=@nameof(BookModel.KindBookName) Width="150px" Title="Loại sách" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"></GridColumn>
+                        <GridColumn Field=@nameof(BookModel.PublishingYear) Width="150px" Title="Năm xuất bản" ShowFilterCellButtons="false"></GridColumn>
+                        
+                    </GridColumns>
+                </TelerikGrid>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-12">
+            <div class="h-table-content" style=" height: 385px;">
+                <TelerikGrid Data="@ListBookSerials"
+                             Height="100%"
+                             Width="100%"
+                             RowHeight="25"
+                             Pageable="false"
+                             PageSize="@DefaultConstants.PAGE_SIZE"
+                             Sortable="true"
+                             Resizable="true"
+                             FilterMode="@GridFilterMode.None"
+                             SelectionMode="@GridSelectionMode.Multiple"
+                             ScrollMode="@GridScrollMode.Scrollable"
+                             @bind-SelectedItems="@SelectedBookSerials">
+                    <GridSettings>
+                        <GridPagerSettings InputType="PagerInputType.Input" />
+                    </GridSettings>
+                    <GridAggregates>
+                        <GridAggregate Field=@nameof(BookSerialModel.Id) Aggregate="@GridAggregateType.Count" />
+                    </GridAggregates>
+                    <GridColumns>
+                        <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+                        <GridColumn Field=@nameof(BookSerialModel.SerialNumber) Width="170px" Title="Mã sách (Seri)"></GridColumn>
+                        <GridColumn Field=@nameof(BookSerialModel.IsActive) Width="130px" Title="Hoạt động?">
+                            <Template>
+                                @{
+                                    var model = (context as BookSerialModel);
+                                    <TelerikCheckBox @bind-Value="@model!.IsActive" Enabled="false" />
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field=@nameof(BookSerialModel.NoteForAll) Width="270px" Title="Ghi chú tình trạng"></GridColumn>
+                    </GridColumns>
+                </TelerikGrid>
+            </div>
+        </div>
     </div>
 </HDialog>
 
