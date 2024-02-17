@@ -1,0 +1,123 @@
+﻿@page "/"
+@page "/trang-chu"
+@layout ClientLayout
+@using LM.WEB.Components.Clients;
+
+<!-- Page header -->
+<div class="page-header d-print-none text-white">
+    <div class="container-xl">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <!-- Page pre-title -->
+                <div class="page-pretitle">
+                    Trang chủ
+                </div>
+                <h2 class="page-title">
+                    Thông tin tìm kiếm
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Page body -->
+<div class="page-body">
+    <div class="container-xl">
+        <div class="row row-deck row-cards">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="row row-gap-2">
+                                <div class="col-md-6 col-sm-12">
+                                    <label class="form-label">Loại sách</label>
+                                    <TelerikComboBox Data="@ListKindBooks"
+                                                     @bind-Value="@ItemSearch.KindBookId"
+                                                     Placeholder="Chọn loại sách..."
+                                                     TextField="@nameof(KindBookModel.KindBookName)"
+                                                     ValueField="@nameof(KindBookModel.KindBookId)"
+                                                     Filterable="true"
+                                                     ClearButton="true"
+                                                     FilterOperator="@StringFilterOperator.Contains"
+                                                     Id="txtKindBookId" Width="100%">
+                                    </TelerikComboBox>
+                                </div>
+                                <div class="col-md-6 col-sm-12">
+                                    <label class="form-label">Nhà xuất bản</label>
+                                    <TelerikComboBox Data="@ListPublishers"
+                                                     @bind-Value="@ItemSearch.PublisherId"
+                                                     Placeholder="Chọn loại sách..."
+                                                     TextField="@nameof(PublisherModel.PublisherName)"
+                                                     ValueField="@nameof(PublisherModel.PublisherId)"
+                                                     Filterable="true"
+                                                     ClearButton="true"
+                                                     FilterOperator="@StringFilterOperator.Contains"
+                                                     Id="txtPublisherId" Width="100%">
+                                    </TelerikComboBox>
+                                </div>
+                                <div class="col-md-6 col-sm-12">
+                                    <label class="form-label">Tác giả</label>
+                                    <TelerikComboBox Data="@ListAuthors"
+                                                     @bind-Value="@ItemSearch.AuthorId"
+                                                     Placeholder="Chọn loại sách..."
+                                                     TextField="@nameof(AuthorModel.AuthorName)"
+                                                     ValueField="@nameof(AuthorModel.Id)"
+                                                     Filterable="true"
+                                                     ClearButton="true"
+                                                     FilterOperator="@StringFilterOperator.Contains"
+                                                     Id="txtAuthorId" Width="100%">
+                                    </TelerikComboBox>
+                                </div>
+                                <div class="col-md-6 col-sm-12">
+                                    <label class="form-label">Sách</label>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <TelerikTextBox @bind-Value="@ItemSearch!.TextSearch" Id="txtNoteForAll" PlaceHolder="Nhập thông tin tìm kiếm" />
+                                        <i class="fa-solid fa-magnifying-glass" style="font-size: 17px; margin-left: 7.5px; cursor: pointer;" title="Tìm kiếm"></i>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                        <div class="progress progress-sm">
+                            <div class="progress-bar bg-primary" style="width: 100%" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="100% Complete">
+                                <span class="visually-hidden">75% Complete</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <div class="row row-cards">
+                @if (ListBooks != null && ListBooks.Any())
+                {
+                    foreach (var oItem in ListBooks)
+                    {
+                        <div class="col-sm-6 col-md-4 col-lg-3">
+                            <ItemBook BookName ="@oItem.BookName" PublisherName ="@oItem.PublisherName"
+                                AuthorName="@oItem.AuthorName" KindBookName="@oItem.KindBookName"
+                                Description="@oItem.Description" ImageUrl="@oItem.ImageUrlView"/>
+                        </div>
+                    }
+                }
+                <div class="col-12">
+                    <div class="card card-md">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h2 class="h3">Enterprise-ready. Reach out for a custom quote.</h2>
+                                    <p class="m-0 text-secondary">Tabler is designed to work great for large enterprises. Take a look at our feature comparison.</p>
+                                </div>
+                                <div class="col-auto">
+                                    <a href="#" class="btn">
+                                        Book a demo
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

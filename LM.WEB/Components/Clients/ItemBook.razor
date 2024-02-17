@@ -1,0 +1,42 @@
+﻿<div class="card card-md">
+    <div class="ribbon ribbon-top ribbon-bookmark bg-green">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-filled" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"></path></svg>
+    </div>
+    <div class="card-header" style="overflow: hidden; padding: 0">
+        <img src="@ImageUrl"
+             style="width: 100%; height: 270px;object-fit: cover;" />
+    </div>
+    <div class="card-body text-start" style="padding: 5px">
+        <div class="px-2">
+            <div class="h3 mb-1">
+                @BookName
+            </div>
+            <ul class="list-unstyled lh-lg mb-1">
+                <li><strong>3</strong> Cuốn</li>
+                <li>
+                    Thể loại: @KindBookName
+                </li>
+                <li>
+                    Tác giả: @AuthorName
+                </li>
+                <li>
+                    NXB: Private @PublisherName
+                </li>
+            </ul>
+        </div>
+        <div class="text-center mt-1">
+            <a class="btn w-100" @onclick="@AddToCart">Thêm vào giỏ hàng</a>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter] public string BookName { get; set; } = "Code dạo kí sự";
+    [Parameter] public string PublisherName { get; set; } = "Kim Đồng";
+    [Parameter] public string AuthorName { get; set; } = "Kim Đồng";
+    [Parameter] public string KindBookName { get; set; } = "Lập trình";
+    [Parameter] public string? Description { get; set; } // mô tả về sách
+    [Parameter] public string? ImageUrl { get; set; } = "https://thuviensach.vn/img/news/2023/10/thumb/14692-thien-linh-co-thuat-1.jpg?v=2890";
+    [Parameter] public EventCallback AddToCart { get; set; }
+}

@@ -77,6 +77,7 @@ public class SearchModel
     public string? Type { get; set; }
     public int KindBookId { get; set; }
     public int PublisherId { get; set; }
+    public int AuthorId { get; set; }
     public int BookId { get; set; }
     public int BatchId { get; set; }
     public int? PublishingYear { get; set; } // năm xuất bản
@@ -84,6 +85,7 @@ public class SearchModel
     public string? KeyAcreage { get; set; }
     public int Page { get; set; }
     public int Limit { get; set; }
+    public string? TextSearch { get; set; }
 }
 
 public enum EnumType
