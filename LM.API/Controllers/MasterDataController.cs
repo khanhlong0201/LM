@@ -158,7 +158,7 @@ namespace LM.API.Controllers
                 {
                     new Claim("StaffCode", oUser.StaffCode + ""),
                     new Claim("FullName", oUser.FullName + ""),
-                    new Claim("StaffType", oUser.Department + ""),
+                    new Claim("Department", oUser.Department + ""),
                 }; // thông tin mã hóa (payload)
                 // JWT: json web token: Header - Payload - SIGNATURE (base64UrlEncode(header) + "." + base64UrlEncode(payload), your - 256 - bit - secret)
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("Jwt:JwtSecurityKey").Value + "")); // key mã hóa
@@ -178,7 +178,9 @@ namespace LM.API.Controllers
                     Message = "Success",
                     oUser.StaffCode,
                     oUser.FullName,
-                    StaffType = oUser.Department,
+                    oUser.Department,
+                    oUser.PhoneNumber,
+                    oUser.Email,
                     Token = new JwtSecurityTokenHandler().WriteToken(token) // token user
                 });
 

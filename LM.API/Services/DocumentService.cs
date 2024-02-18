@@ -69,8 +69,8 @@ namespace LM.API.Services
                         if(isUpdated)
                         {
                             // cập nhật thông tin chi tiết sách
-                            queryString = @"INSERT INTO [dbo].[BODetails] ([VoucherNo], [BookSerialId], [StatusCode], [NoteForAll], [Quantity])
-                                                            values (@VoucherNo, @BookSerialId, @StatusCode, @NoteForAll, @Quantity)";
+                            queryString = @"INSERT INTO [dbo].[BODetails] ([VoucherNo], [BookSerialId], [StatusCode], [NoteForAll], [Quantity], [BookId])
+                                                            values (@VoucherNo, @BookSerialId, @StatusCode, @NoteForAll, @Quantity, @BookId)";
                             foreach(var oItem in lstDraftDetails)
                             {
                                 oItem.VoucherNo = oDraft.VoucherNo;
@@ -196,7 +196,7 @@ namespace LM.API.Services
 
         private SqlParameter[] getBODetailsParameters(BODetailModel oDraft)
         {
-            SqlParameter[] sqlParameters = new SqlParameter[7];
+            SqlParameter[] sqlParameters = new SqlParameter[8];
             sqlParameters[0] = new SqlParameter("@VoucherNo", oDraft.VoucherNo);
             sqlParameters[1] = new SqlParameter("@BookSerialId", oDraft.BookSerialId);
             sqlParameters[2] = new SqlParameter("@StatusCode", oDraft.StatusCode);
@@ -204,6 +204,7 @@ namespace LM.API.Services
             sqlParameters[4] = new SqlParameter("@Quantity", oDraft.Quantity);
             sqlParameters[5] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
             sqlParameters[6] = new SqlParameter("@Id", oDraft.Id);
+            sqlParameters[7] = new SqlParameter("@BookId", oDraft.BookId);
             return sqlParameters;
         }
 

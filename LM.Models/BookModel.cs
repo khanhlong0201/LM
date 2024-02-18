@@ -34,6 +34,7 @@ public class BookModel : Auditable
     public int AuthorId { get; set; }
     public string? ImageUrl { get; set; }
     public string? ImageUrlView { get; set; }
+    public int QtyBO { get; set; }
 }
 
 public class CliBookModel : Auditable

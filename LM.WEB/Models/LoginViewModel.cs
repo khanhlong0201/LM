@@ -22,7 +22,9 @@ public class LoginResponseViewModel
     public int UserId { get; set; }
     public string? FullName { get; set; }
     public string? StaffCode { get; set; }
-    public string? StaffTypeName { get; set; }
+    public string? Department { get; set; }
+    public string? PhoneNumber { get; set; }
+    public string? Email { get; set; }
 
     public LoginResponseViewModel() { }
     public LoginResponseViewModel(int StatusCode, string Message)

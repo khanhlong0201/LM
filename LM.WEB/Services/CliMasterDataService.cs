@@ -1105,7 +1105,9 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
                 response.Token,
                 response.StaffCode,
                 response.FullName,
-                response.StaffTypeName
+                response.Department,
+                response.PhoneNumber,
+                response.Email,
             };
             await _localStorage.SetItemAsync("authCliToken", authCliToken);
             return "";

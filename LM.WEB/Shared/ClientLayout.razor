@@ -25,7 +25,7 @@
                                 <path d="M6 5l14 1l-1 7h-13" />
                             </svg>
                             <span class="badge bg-red text-red-fg badge-notification badge-pill" style="top: 10px !important;">
-                                @(ListBooks?.Count ?? 0)
+                                @(QtyBO)
                             </span>
                         </a>
                     </div>
@@ -45,7 +45,7 @@
                             <span class="avatar avatar-sm" style="background-image: url(../assets/user.png)"></span>
                             <div class="d-none d-xl-block ps-2">
                                 <div>@FullName</div>
-                                <div class="mt-1 small text-muted text-truncate">@($"{StaffCode} - {StaffType}")</div>
+                                <div class="mt-1 small text-muted text-truncate">@($"{StaffCode} - {Department}")</div>
                             </div>
                         </a>
                         <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
@@ -126,3 +126,93 @@
     </div>
 </div>
 
+<HDialog @bind-IsVisible="@IsShowDialog"
+    SaveAndClosed="@SaveDocHandler"
+    Title="Mượn sách Online" Width="85%">
+    <div class="accordion" id="accordion-info">
+        <div class="accordion-item" style="border: none">
+            <span class="accordion-header" id="heading-1">
+                <button class="accordion-button " style="padding-top: 5px; padding-bottom: 5px;"
+                        type="button" data-bs-toggle="collapse" data-bs-target="#collapse-info" aria-expanded="true">
+                    <h4 class="mb-1">Thông tin mượn</h4>
+                </button>
+            </span>
+            <div id="collapse-info" class="accordion-collapse collapse show" data-bs-parent="#accordion-info">
+                <div class="accordion-body pt-0 px-2 pb-2">
+                    <div class="mb-2">
+                        <div class="row row-gap-2">
+                            <div class="col-md-4 col-sm-12">
+                                Mã thẻ/Mã số sinh viên:  <strong>@($"{StaffCode}")</strong>
+                            </div>
+                            <div class="col-md-4 col-sm-12">
+                                Tên cán bộ, giáo viên, sinh viên: <strong>@($"{FullName}")</strong>
+                            </div>
+                            <div class="col-md-4 col-sm-12">
+                                Phòng ban: <strong>@($"{Department}")</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <div class="row row-gap-2">
+                            <div class="col-md-4 col-sm-12">
+                                Số điện thoại: <strong>@($"{PhoneNumber}")</strong>
+                            </div>
+                            <div class="col-md-4 col-sm-12">
+                                Email: <strong>@($"{Email}")</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="mt-2">
+        <div class="d-flex justify-content-start align-items-stretch">
+            <h4 class="mb-1" style="padding-left: 20px;padding-right: 20px;">
+                Số sách mượn
+            </h4>
+        </div>
+        <TelerikGrid Data="@ListBooks" @ref="@RefListBooks"
+                     Height="250px"
+                     Width="100%"
+                     RowHeight="25"
+                     Pageable="false"
+                     PageSize="@DefaultConstants.PAGE_SIZE"
+                     Sortable="true"
+                     Resizable="true"
+                     FilterMode="@GridFilterMode.None"
+                     SelectionMode="@GridSelectionMode.Single"
+                     ScrollMode="@GridScrollMode.Scrollable">
+            <GridSettings>
+                <GridPagerSettings InputType="PagerInputType.Input" />
+            </GridSettings>
+            <GridAggregates>
+                <GridAggregate Field=@nameof(BookModel.QtyBO) Aggregate="@GridAggregateType.Sum" />
+            </GridAggregates>
+            <GridColumns>
+                <GridColumn Width="30px" MaxResizableWidth="40" TextAlign="ColumnTextAlign.Center">
+                    <Template>
+                        <img src="./assets/delete-red.png" title="Xóa dòng" @onclick="@(()=> RemoveBook((context as BookModel)))" />
+                    </Template>
+                </GridColumn>
+                <GridColumn Field=@nameof(BookModel.BookId) Width="130px" MaxResizableWidth="150" Title="Mã sách" ShowFilterCellButtons="false"></GridColumn>
+                <GridColumn Field=@nameof(BookModel.BookName) Width="150px" Title="Tên sách" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"></GridColumn>
+                <GridColumn Field=@nameof(BookModel.QtyBO) Width="150px" Title="Số lượng" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY" ShowFilterCellButtons="false">
+                    <Template>
+                        @{
+                            <TelerikNumericTextBox Value="@((context as BookModel)!.QtyBO)" 
+                                ValueChanged="@((int i) => {(context as BookModel)!.QtyBO = i; QtyBO = ListBooks!.Sum(m=>m.QtyBO);})" Min="1" Class="h-link" Enabled="true" Arrows="true" Step="1" />
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        Tổng: @context.Sum cuốn
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field=@nameof(BookModel.AuthorName) Width="150px" Title="Tác giả" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"></GridColumn>
+                <GridColumn Field=@nameof(BookModel.PublisherName) Width="150px" Title="Nhà xuất bản" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"></GridColumn>
+                <GridColumn Field=@nameof(BookModel.KindBookName) Width="150px" Title="Loại sách" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"></GridColumn>
+                <GridColumn Field=@nameof(BookModel.PublishingYear) Width="150px" Title="Năm xuất bản" ShowFilterCellButtons="false"></GridColumn>
+            </GridColumns>
+        </TelerikGrid>
+    </div>
+</HDialog>

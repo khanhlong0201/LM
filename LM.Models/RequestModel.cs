@@ -112,6 +112,7 @@ public enum EnumTable
 public enum DocStatus
 {
     @Pending,
+    @ApprovalPending,
     @Closed,
     @All,
     @Cancled
