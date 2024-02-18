@@ -1,1 +1,250 @@
 ﻿@page "/index"
+@page "/admin"
+@inherits IndexController
+
+<div class="h-content-filter">
+    <div class="row row-cards">
+        <div class="col-sm-4 col-lg-2">
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-primary text-white avatar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                    <path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                    <path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                    <path d="M17 17h-11v-14h-2"></path>
+                                    <path d="M6 5l14 1l-1 7h-13"></path>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium">
+                                Tổng phiếu
+                            </div>
+                            <div class="text-secondary">
+                                @intTotal phiếu
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4 col-lg-2">
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-primary text-white avatar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                    <path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                    <path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                    <path d="M17 17h-11v-14h-2"></path>
+                                    <path d="M6 5l14 1l-1 7h-13"></path>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium">
+                                Chờ xử lý
+                            </div>
+                            <div class="text-secondary">
+                                @intPending phiếu
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4 col-lg-2">
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-yellow  text-white avatar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                    <path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                    <path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                    <path d="M17 17h-11v-14h-2"></path>
+                                    <path d="M6 5l14 1l-1 7h-13"></path>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium">
+                                Đến hạng
+                            </div>
+                            <div class="text-secondary">
+                                @intToday phiếu
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4 col-lg-2">
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-yellow  text-white avatar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                    <path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                    <path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                    <path d="M17 17h-11v-14h-2"></path>
+                                    <path d="M6 5l14 1l-1 7h-13"></path>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium">
+                                Đang mượn
+                            </div>
+                            <div class="text-secondary">
+                                @intBorrowing phiếu
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4 col-lg-2">
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-cyan text-white avatar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                    <path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                    <path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                    <path d="M17 17h-11v-14h-2"></path>
+                                    <path d="M6 5l14 1l-1 7h-13"></path>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium">
+                                Đã trả
+                            </div>
+                            <div class="text-secondary">
+                                @intClosed phiếu
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4 col-lg-2">
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-red text-white avatar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                    <path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                    <path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                    <path d="M17 17h-11v-14h-2"></path>
+                                    <path d="M6 5l14 1l-1 7h-13"></path>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium">
+                                Trễ hạng
+                            </div>
+                            <div class="text-secondary">
+                                @intDemurrage phiếu
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<TelerikToolBar Class="border-bottom-0">
+    <ToolBarButton ImageUrl="../assets/refresh.png">Làm mới</ToolBarButton>
+</TelerikToolBar>
+<div class="h-table-content" style=" height: calc(100vh - 245px);">
+    <TelerikLoaderContainer OverlayThemeColor="light"
+                            Visible="@(!IsInitialDataLoadComplete)"
+                            Text="@null" Class="grid-initial-data-loader">
+        <Template>
+            <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                           Size="@(ThemeConstants.Loader.Size.Medium)">
+            </TelerikLoader>
+        </Template>
+    </TelerikLoaderContainer>
+
+    <TelerikGrid Data="@ListDocuments"
+                 Height="100%"
+                 Width="100%"
+                 RowHeight="25"
+                 Pageable="true"
+                 PageSize="@DefaultConstants.PAGE_SIZE"
+                 Sortable="true"
+                 Resizable="true"
+                 FilterMode="@GridFilterMode.FilterMenu"
+                 SelectionMode="@GridSelectionMode.Multiple"
+                 ScrollMode="@GridScrollMode.Scrollable"
+                 @bind-SelectedItems="@SelectedDocuments">
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input" />
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(BorrowOrderModel.VoucherNo) Aggregate="@GridAggregateType.Count" />
+        </GridAggregates>
+        <GridColumns>
+            <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.VoucherNo) Width="130px" MaxResizableWidth="150" Title="Mã phiếu">
+                <Template>
+                    @{
+                        var model = (context as BorrowOrderModel);
+                        <span class="h-link" title="Xem chi tiết">@model!.VoucherNo</span>
+                    }
+                </Template>
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.DateCreate) Width="150px" Title="Ngày tạo" DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE_TIME"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.StaffCode) Width="130px" Title="Mã thẻ"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.FullName) Width="170px" Title="Họ & tên"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.StatusName) Width="150px" Title="Tình trạng">
+                <Template>
+                    @{
+                        var model = (context as BorrowOrderModel);
+                        string color = "text-cyan";
+                        if (model!.StatusCode == nameof(DocStatus.Closed)) color = "text-green";
+                        else if (model!.StatusCode == nameof(DocStatus.Cancled)) color = "text-red";
+                        else if (model!.StatusCode == nameof(DocStatus.Borrowing)) color = "text-yellow";
+                        <span class="@(color)">@model!.StatusName</span>
+                    }
+                </Template>
+            </GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.DocDate) Width="150px" Title="Ngày mượn" DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.PromiseDate) Width="150px" Title="Ngày hẹn trả" DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.DueDate) Width="150px" Title="Ngày trả" DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.TypeBO) Width="170px" Title="Phương thức mượn">
+                <Template>
+                    @{
+                        var model = (context as BorrowOrderModel);
+                        string color = "bg-azure text-azure-fg";
+                        if (model!.TypeBO == "Online") color = "bg-yellow text-yellow-fg";
+                    }
+                    <span class="badge @color">@model!.TypeBO</span>
+                </Template>
+            </GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.StaffTypeName) Width="150px" Title="Chức vụ"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.PhoneNumber) Width="150px" Title="SĐT"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.Description) Width="190px" Title="Ghi chú"></GridColumn>
+        </GridColumns>
+    </TelerikGrid>
+</div>

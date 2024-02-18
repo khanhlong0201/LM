@@ -2,6 +2,7 @@
 using LM.Models;
 using LM.Models.Shared;
 using Newtonsoft.Json;
+using NPOI.POIFS.Crypt.Dsig;
 using NPOI.POIFS.FileSystem;
 using NPOI.SS.Formula.Functions;
 using System.Data;
@@ -16,6 +17,7 @@ namespace LM.API.Services
         Task<IEnumerable<BorrowOrderModel>> GetBorrowOrdersAsync(SearchModel pSearchData);
         Task<Dictionary<string, string>?> GetDocumentById(string pVoucherNo);
         Task<ResponseModel> ReturnBooksAsync(RequestModel pRequest);
+        Task<Dictionary<string, int>?> GetReportIndexAsync();
     }    
     public class DocumentService : IDocumentService
     {
@@ -393,6 +395,45 @@ namespace LM.API.Services
                 await _context.DisConnect();
             }
             return response;
+        }
+        
+        /// <summary>
+        /// lấy tính số lượng trên cái trang Index
+        /// </summary>
+        /// <returns></returns>
+        public async Task<Dictionary<string, int>?> GetReportIndexAsync()
+        {
+            Dictionary<string, int>? data = null;
+            try
+            {
+                string queryString = string.Empty;
+                await _context.Connect();
+                int intTotal = await _context.ExecuteScalarAsync($"select count(*) from BorrowOrders where StatusCode <> '{nameof(DocStatus.Cancled)}'");
+                int intBorrowing = await _context.ExecuteScalarAsync($"select count(*) from BorrowOrders where StatusCode = '{nameof(DocStatus.Borrowing)}'");
+                int intClosed = await _context.ExecuteScalarAsync($"select count(*) from BorrowOrders where StatusCode = '{nameof(DocStatus.Closed)}'");
+                int intPending = await _context.ExecuteScalarAsync($"select count(*) from BorrowOrders where StatusCode = '{nameof(DocStatus.Pending)}'");
+                int intDemurrage = await _context.ExecuteScalarAsync(@$"select count(*) from BorrowOrders where StatusCode = '{nameof(DocStatus.Borrowing)}' 
+                                   and DueDate is null and cast(PromiseDate as date) < cast(getdate() as date)"); // Trễ hạn
+
+                int intToday = await _context.ExecuteScalarAsync(@$"select count(*) from BorrowOrders where StatusCode = '{nameof(DocStatus.Borrowing)}' 
+                                   and DueDate is null and cast(PromiseDate as date) = cast(getdate() as date)"); // Trễ hạn
+
+                data = new Dictionary<string, int>()
+                {
+                    {"intTotal", intTotal},
+                    {"intBorrowing", intBorrowing},
+                    {"intClosed", intClosed},
+                    {"intDemurrage", intDemurrage},
+                    {"intToday", intToday},
+                    {"intPending", intPending},
+                };
+            }
+            catch (Exception) { throw; }
+            finally
+            {
+                await _context.DisConnect();
+            }
+            return data;
         }
         #region Private Functions
 

@@ -113,5 +113,26 @@ namespace LM.API.Controllers
 
             }
         }
+
+        [HttpGet]
+        [Route("GetReportIndex")]
+        public async Task<IActionResult> GetReportIndex()
+        {
+            try
+            {
+                var data = await _documentervice.GetReportIndexAsync();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DocumentController", "GetReportIndex");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+
+        }
     }
 }
