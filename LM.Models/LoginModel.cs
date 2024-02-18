@@ -4,8 +4,7 @@ namespace LM.Models;
 
 public class LoginRequestModel
 {
-    [Required(ErrorMessage = "Vui lòng điền Tên đăng nhập")]
-    public string UserName { get; set; }
-    [Required(ErrorMessage = "Vui lòng điền mật khẩu")]
+    public string? UserName { get; set; }
     public string? Password { get; set; }
+    public bool IsLogin { get; set; }
 }

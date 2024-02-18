@@ -21,6 +21,8 @@ public class LoginResponseViewModel
     public string? Token { get; set; }
     public int UserId { get; set; }
     public string? FullName { get; set; }
+    public string? StaffCode { get; set; }
+    public string? StaffTypeName { get; set; }
 
     public LoginResponseViewModel() { }
     public LoginResponseViewModel(int StatusCode, string Message)

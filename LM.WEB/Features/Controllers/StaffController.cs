@@ -64,7 +64,9 @@ namespace LM.WEB.Features.Controllers
         private async Task getLocations()
         {
             ListStaffs = new List<StaffModel>();
-            ListStaffs = await _masterDataService!.GetStaffsAsync();
+            LoginRequestModel loginRequestModel = new LoginRequestModel();
+            loginRequestModel.IsLogin = false;
+            ListStaffs = await _masterDataService!.GetStaffsAsync(loginRequestModel);
         }
         #endregion
 

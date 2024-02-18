@@ -1,11 +1,14 @@
-﻿using LM.Models;
+﻿using Blazored.LocalStorage;
+using LM.Models;
 using LM.Models.Shared;
+using LM.WEB.Models;
 using LM.WEB.Services;
 using LM.WEB.Shared;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Newtonsoft.Json;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 
 namespace LM.WEB.Shared
 {
@@ -17,11 +20,14 @@ namespace LM.WEB.Shared
         [Inject] private IConfiguration? _configuration { get; set; }
         [Inject] NavigationManager? _navigationManager { get; set; }
         [Inject] public LoaderService? _loaderService { get; init; }
-        public string breadcumb { get; set; } = "";
-        public DateTime dt { get; set; } = DateTime.Now;
+        [Inject] private ToastService? _toastService { get; init; }
+        [Inject] private ILocalStorageService? _localStorage{ get; init; }
+        [Inject] private LoginDialogService? _bhDialogService { get; init; }
+
         public string FullName { get; set; } = "";
-        public string UserName { get; set; } = "";
-        public int UserId { get; set; } = -1;
+        public string StaffCode { get; set; } = "";
+        public string StaffType { get; set; } = "";
+        public bool IsLogin { get; set; }
 
         public List<BookModel>? ListBooks { get; set; }
 
@@ -30,19 +36,16 @@ namespace LM.WEB.Shared
             await base.OnInitializedAsync();
             try
             {
-                var oUser = await ((WEB.Providers.ApiAuthenticationStateProvider)_authenticationStateProvider!).GetAuthenticationStateAsync();
-                if (oUser != null)
+                var oData = await _localStorage!.GetItemAsync<LoginResponseViewModel>("authCliToken");
+                if (oData != null)
                 {
-                    UserName = oUser.User.Claims.FirstOrDefault(m => m.Type == "UserName")?.Value + "";
-                    FullName = oUser.User.Claims.FirstOrDefault(m => m.Type == "FullName")?.Value + "";
-                    UserId = int.Parse(oUser.User.Claims.FirstOrDefault(m => m.Type == "UserId")?.Value + "");
-                    //await showLoading(true);
+                    IsLogin = true;
+                    FullName = oData.FullName + "";
+                    StaffCode = oData.StaffCode + "";
+                    StaffType = oData.StaffTypeName + "";
                 }
             }
-            catch(Exception)
-            {
-
-            }
+            catch (Exception) { }
         }
 
         #region "Private Functions"
@@ -54,6 +57,51 @@ namespace LM.WEB.Shared
             ListBooks.Add(_lstBooks);
         }
 
+        #endregion
+
+        #region
+        protected async void CliLogoutAsync()
+        {
+            try
+            {
+                IsLogin = false;
+                await _localStorage!.RemoveItemAsync("authCliToken");
+                _navigationManager!.NavigateTo("trang-chu", true);
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                _toastService!.ShowError(ex.Message);
+            }
+        }    
+
+        protected void LoginAsync()
+        {
+            try
+            {
+                _bhDialogService!.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                _toastService!.ShowError(ex.Message);
+            }
+        }
+
+        protected void GoToCart()
+        {
+            try
+            {
+                if(IsLogin) _navigationManager!.NavigateTo("cart");
+                else
+                {
+                    _toastService!.ShowInfo("Vui lòng đăng nhập");
+                }    
+            }
+            catch (Exception ex)
+            {
+                _toastService!.ShowError(ex.Message);
+            }
+        }    
         #endregion
     }
 

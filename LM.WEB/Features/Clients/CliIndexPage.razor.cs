@@ -1,5 +1,7 @@
-﻿using LM.Models;
+﻿using Blazored.LocalStorage;
+using LM.Models;
 using LM.WEB.Features.Controllers;
+using LM.WEB.Models;
 using LM.WEB.Services;
 using Microsoft.AspNetCore.Components;
 
@@ -13,6 +15,7 @@ namespace LM.WEB.Features.Clients
         [Inject] public ToastService? _toastService { get; init; }
         [Inject] public LoaderService? _loaderService { get; init; }
         [Inject] private LoginDialogService? _bhDialogService { get; init; }
+        [Inject] private ILocalStorageService? _localStorage { get; init; }
         #endregion
         public List<KindBookModel>? ListKindBooks { get; set; }
         public List<PublisherModel>? ListPublishers { get; set; }
@@ -90,14 +93,14 @@ namespace LM.WEB.Features.Clients
             try
             {
                 if (oItem == null) return;
-                // kiểm tra đăng nhập
-                bool checkLogin = false;
-                if (!checkLogin)
+                // kiểm tra đăng nhập -> bắt đăng nhập
+                var oData = await _localStorage!.GetItemAsync<LoginResponseViewModel>("authCliToken");
+                if (oData == null)
                 {
                     _bhDialogService!.ShowDialog();
                     return;
-                }    
-
+                }
+                // thêm vào giỏ hàng
                 await NotifyBook.InvokeAsync(oItem);
             }
             catch (Exception ex)

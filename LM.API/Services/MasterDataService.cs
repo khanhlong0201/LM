@@ -11,6 +11,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Net;
+using System.Security.Policy;
 
 namespace LM.API.Services;
 public interface IMasterDataService
@@ -34,7 +35,7 @@ public interface IMasterDataService
     Task<ResponseModel> UpdateLocationAsync(RequestModel pRequest);
     Task<IEnumerable<AuthorModel>> GetAuthorsAsync();
     Task<ResponseModel> UpdateAuthorAsync(RequestModel pRequest);
-    Task<IEnumerable<StaffModel>> GetStaffsAsync();
+    Task<IEnumerable<StaffModel>> GetStaffsAsync(LoginRequestModel pRequest);
     Task<ResponseModel> UpdateBookSerial(RequestModel pRequest);
     Task<IEnumerable<BookSerialModel>> GetBookSerialsAsync();
 }
@@ -1231,17 +1232,27 @@ public class MasterDataService : IMasterDataService
     /// lấy danh sách cán bộ, sinh viên
     /// </summary>
     /// <returns></returns>
-    public async Task<IEnumerable<StaffModel>> GetStaffsAsync()
+    public async Task<IEnumerable<StaffModel>> GetStaffsAsync(LoginRequestModel pRequest)
     {
         IEnumerable<StaffModel> data;
         try
         {
+            string strCondition = "";
+            SqlParameter[] sqlParameters = new SqlParameter[2];
+            sqlParameters[0] = new SqlParameter("@StaffCode", "");
+            sqlParameters[1] = new SqlParameter("@Password", "");
+            if (pRequest.IsLogin)
+            {
+                strCondition = @" and T0.[StaffCode] = @StaffCode and T0.[Password] = @Password";
+                sqlParameters[0].Value = pRequest.UserName;
+                sqlParameters[1].Value = pRequest.Password;
+            }    
             await _context.Connect();
             string querry = @$"Select *, case StaffType when N'SV' then N'Sinh viên' 
                                       when N'GV' then N'Giáo viên' when N'CB' then N'Cán bộ'
                                       else N'Sinh viên' end as StaffTypeName
                                  from [dbo].[Staffs] as T0 with(nolock)
-                                where T0.[IsDelete] = 0";
+                                where T0.[IsDelete] = 0 {strCondition}";
             Func<IDataRecord, StaffModel> readData = record =>
             {
                 StaffModel model = new StaffModel();
@@ -1257,7 +1268,7 @@ public class MasterDataService : IMasterDataService
                 if (!Convert.IsDBNull(record["IsActive"])) model.IsActive = Convert.ToBoolean(record["IsActive"]);
                 return model;
             };
-            data = await _context.GetDataAsync(querry, readData, commandType: CommandType.Text);
+            data = await _context.GetDataAsync(querry, readData, sqlParameters, commandType: CommandType.Text);
         }
         catch (Exception) { throw; }
         finally

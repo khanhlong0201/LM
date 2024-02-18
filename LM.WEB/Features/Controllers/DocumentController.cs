@@ -119,7 +119,9 @@ namespace LM.WEB.Features.Controllers
         {
             ListStaffs = new List<StaffModel>();
             SelectedStaffs = new List<StaffModel>();
-            ListStaffs = await _masterDataService!.GetStaffsAsync();
+            LoginRequestModel loginRequestModel = new LoginRequestModel();
+            loginRequestModel.IsLogin = false;
+            ListStaffs = await _masterDataService!.GetStaffsAsync(loginRequestModel);
         }
 
         private bool validateData(bool isCreate)

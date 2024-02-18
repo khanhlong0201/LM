@@ -141,6 +141,61 @@ namespace LM.API.Controllers
         }
 
         [HttpPost]
+        [Route("CliLogin")]
+        public async Task<IActionResult> CliLogin([FromBody] LoginRequestModel loginRequest)
+        {
+            try
+            {
+                var result = await _masterService.GetStaffsAsync(loginRequest);
+                if (result == null || !result.Any())
+                    return BadRequest(new
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Message = "Tên đăng nhập hoặc mật khẩu không hợp lệ"
+                    });
+                StaffModel oUser = result.First();
+                var claims = new[]
+                {
+                    new Claim("StaffCode", oUser.StaffCode + ""),
+                    new Claim("FullName", oUser.FullName + ""),
+                    new Claim("StaffType", oUser.Department + ""),
+                }; // thông tin mã hóa (payload)
+                // JWT: json web token: Header - Payload - SIGNATURE (base64UrlEncode(header) + "." + base64UrlEncode(payload), your - 256 - bit - secret)
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("Jwt:JwtSecurityKey").Value + "")); // key mã hóa
+                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // loại mã hóa (Header)
+                var expiry = DateTime.Now.AddDays(Convert.ToInt32(_configuration.GetSection("Jwt:JwtExpiryInDays").Value)); // hết hạn token
+                //var expiry = DateTime.Now.AddMinutes(Convert.ToInt32(_configuration.GetSection("Jwt:JwtExpiryInDays").Value)); // hết hạn token test 1 phút hết tonken
+                var token = new JwtSecurityToken(
+                    _configuration.GetSection("Jwt:JwtIssuer").Value,
+                    _configuration.GetSection("Jwt:JwtAudience").Value,
+                    claims,
+                    expires: expiry,
+                    signingCredentials: creds
+                );
+                return Ok(new
+                {
+                    StatusCode = StatusCodes.Status200OK,
+                    Message = "Success",
+                    oUser.StaffCode,
+                    oUser.FullName,
+                    StaffType = oUser.Department,
+                    Token = new JwtSecurityTokenHandler().WriteToken(token) // token user
+                });
+
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "CliLogin");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+        }
+
+        [HttpPost]
         [Route("DeleteData")]
         public async Task<IActionResult> DeleteData([FromBody] RequestModel request)
         {
@@ -489,13 +544,13 @@ namespace LM.API.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("GetStaffs")]
-        public async Task<IActionResult> GetStaffs()
+        public async Task<IActionResult> GetStaffs(LoginRequestModel pRequest)
         {
             try
             {
-                var data = await _masterService.GetStaffsAsync();
+                var data = await _masterService.GetStaffsAsync(pRequest);
                 return Ok(data);
             }
             catch (Exception ex)

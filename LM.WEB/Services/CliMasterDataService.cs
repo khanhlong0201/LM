@@ -11,6 +11,7 @@ using static System.Net.Mime.MediaTypeNames;
 using System.Text;
 using Microsoft.AspNetCore.Components.Forms;
 using System.Text.Json;
+using Org.BouncyCastle.Asn1.Ocsp;
 
 namespace LM.WEB.Services;
 
@@ -39,9 +40,10 @@ public interface ICliMasterDataService
     Task<bool> UpdateAuthorAsync(string pJson, string pAction, int pUserId);
 
     Task<List<ImageModel>?> UploadImagesAsync(List<ImageModel> pListImgs);
-    Task<List<StaffModel>?> GetStaffsAsync();
+    Task<List<StaffModel>?> GetStaffsAsync(LoginRequestModel loginRequest);
     Task<List<BookSerialModel>?> GetBookSerialsAsync();
     Task<bool> UpdateBookSerialAsync(string pJson, string pAction, int pUserId);
+    Task<string> CliLoginAsync(LoginViewModel request);
 }
 public class CliMasterDataService : CliServiceBase, ICliMasterDataService 
 {
@@ -968,11 +970,11 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
     /// Call API lấy danh sách giá viên, cán bộ, sinh viên
     /// </summary>
     /// <returns></returns>
-    public async Task<List<StaffModel>?> GetStaffsAsync()
+    public async Task<List<StaffModel>?> GetStaffsAsync(LoginRequestModel loginRequest)
     {
         try
         {
-            HttpResponseMessage httpResponse = await GetAsync(EndpointConstants.URL_MASTERDATA_GET_STAFF);
+            HttpResponseMessage httpResponse = await PostAsync(EndpointConstants.URL_MASTERDATA_GET_STAFF, loginRequest);
             var checkContent = ValidateJsonContent(httpResponse.Content);
             if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
             else
@@ -1075,5 +1077,43 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
             _toastService.ShowError(ex.Message);
         }
         return false;
+    }
+
+    /// <summary>
+    /// đăng nhập cho client
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    public async Task<string> CliLoginAsync(LoginViewModel request)
+    {
+        try
+        {
+            var loginRequest = new LoginRequestModel();
+            loginRequest.UserName = request.UserName;
+            loginRequest.Password = LM.Models.Shared.EncryptHelper.Encrypt(request.Password + "");
+            loginRequest.IsLogin = true;
+            string jsonBody = JsonConvert.SerializeObject(loginRequest);
+            HttpResponseMessage httpResponse = await _httpClient.PostAsync($"api/MasterData/CliLogin", new StringContent(jsonBody, UnicodeEncoding.UTF8, "application/json"));
+            Debug.Print(jsonBody);
+            var content = await httpResponse.Content.ReadAsStringAsync();
+            LoginResponseViewModel response = JsonConvert.DeserializeObject<LoginResponseViewModel>(content)!;
+            if (!httpResponse.IsSuccessStatusCode) return response.Message + "";
+            // save token
+            if (await _localStorage.ContainKeyAsync("authCliToken")) await _localStorage.RemoveItemAsync("authCliToken");
+            var authCliToken = new
+            {
+                response.Token,
+                response.StaffCode,
+                response.FullName,
+                response.StaffTypeName
+            };
+            await _localStorage.SetItemAsync("authCliToken", authCliToken);
+            return "";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Login");
+            return ex.Message;
+        }
     }
 }

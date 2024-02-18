@@ -1,6 +1,7 @@
 ﻿@implements IDisposable
 @inject Services.LoginDialogService _dialogService;
 @inject ICliMasterDataService _masterDataService;
+@inject NavigationManager _navigationManager
 
 @if (isShowPopup)
 {
@@ -70,12 +71,11 @@
                             <TelerikLoader Visible="@isLoading" Type="@LoaderType.Pulsing" Size="@(ThemeConstants.Loader.Size.Medium)"></TelerikLoader>
                         </div>
                         <div class="mt-2">
-                            <TelerikTextBox PlaceHolder="Tài khoản*:" @bind-Value="@LoginRequest.UserName"
+                            <TelerikTextBox PlaceHolder="Mã thẻ/Mã số sinh viên*:" @bind-Value="@LoginRequest.UserName"
                                         FillMode="@ThemeConstants.TextBox.FillMode.Flat" Id="txtUserName" />
                             <HValidationTooltip ValidationFor="@(()=> LoginRequest.UserName)" Id="txtUserName" />
                         </div>
                         <div class="mt-2">
-                            <HLabel Value="Mật khẩu:" IsRequired="true" />
                             <TelerikTextBox FillMode="@ThemeConstants.TextBox.FillMode.Flat" Id="txtPassword"
                                         PlaceHolder="Mật khẩu*:" @bind-Value="@LoginRequest.Password" Password="@true" />
                             <HValidationTooltip ValidationFor="@(()=> LoginRequest.Password)" Id="txtPassword" />
@@ -131,11 +131,11 @@
         {
             ErrorMessage = "";
             isLoading = true;
-            var response = await _masterDataService!.LoginAsync(LoginRequest);
-            if (!string.IsNullOrWhiteSpace(response)) { ErrorMessage = response; return; }
+            var response = await _masterDataService!.CliLoginAsync(LoginRequest);
             await Task.Delay(1000);
-            await Task.Yield();
+            if (!string.IsNullOrWhiteSpace(response)) { ErrorMessage = response; return; }
             isShowPopup = false;
+            _navigationManager.NavigateTo("/trang-chu", true);
         }
         catch (Exception ex) { ErrorMessage = ex.Message; }
         finally
