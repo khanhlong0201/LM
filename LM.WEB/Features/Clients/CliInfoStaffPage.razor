@@ -1,0 +1,90 @@
+﻿@page "/info-staff"
+@layout ClientLayout
+
+<!-- Page header -->
+<div class="page-header d-print-none text-white">
+    <div class="container-xl">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <!-- Page pre-title -->
+                <div class="page-pretitle">
+                    Chi tiết
+                </div>
+                <h2 class="page-title">
+                    Thông tin người mượn
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page body -->
+<div class="page-body">
+    <div class="container-xl">
+        <div class="row row-deck row-cards">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="row row-gap-2">
+                                <div class="col-md-4 col-sm-12">
+                                    Mã thẻ/Mssv: <strong>@($"")</strong>
+                                </div>
+                                <div class="col-md-4 col-sm-12">
+                                    Họ & Tên: <strong>@($"")</strong>
+                                </div>
+                                <div class="col-md-4 col-sm-12">
+                                    Phòng ban: <strong>@($"")</strong>
+                                </div>
+                                <div class="col-md-4 col-sm-12">
+                                    Loại: <strong>@($"")</strong>
+                                </div>
+                                <div class="col-md-4 col-sm-12">
+                                    Số đt: <strong>@($"")</strong>
+                                </div>
+                                <div class="col-md-4 col-sm-12">
+                                    Email: <strong>@($"")</strong>
+                                </div>
+                                <div class="col-md-12 col-sm-12">
+                                    Địa chỉ: <strong>@($"")</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="progress progress-sm">
+                            <div class="progress-bar bg-primary" style="width: 100%" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="100% Complete">
+                                <span class="visually-hidden">75% Complete</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <div class="card">
+                    <div class="card-header" style="padding: 10px">
+                        <h4 class="mb-0">Lịch sử mượn sách</h4>
+                    </div>
+                    <div class="card-body" style="padding: 10px">
+                         <ul class="timeline">
+                             <li class="timeline-event">
+                                <div class="timeline-event-icon bg-twitter-lt" style="border-radius: 50%">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M5 12l5 5l10 -10"></path></svg>
+                                </div>
+                                <div class="card timeline-event-card">
+                                    <div class="card-body" style="padding: 10px">
+                                        @*<div class="text-secondary float-end">@(oItem.DateCreate == null ? DATA_CUSTOMER_EMPTY : oItem.DateCreate.Value.ToString(DefaultConstants.FORMAT_DATE))</div>*@
+                                        @*<h4 class="mb-1 h-link" @onclick="@(()=> OnViewDerailsHandler(oItem.DocEntry, pLinkPage: "create-ticket"))">@(oItem.VoucherNo)</h4>*@
+                                        @*<p class="text-secondary mb-1">
+                                            @(oItem.DateCreate == null ? "" : oItem.DateCreate.Value.ToString(DefaultConstants.FORMAT_TIME)) - @oItem.UserNameCreate
+                                        </p>*@
+                                    </div>
+                                </div>
+                             </li>
+                         </ul>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>

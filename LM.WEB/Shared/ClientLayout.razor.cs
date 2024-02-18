@@ -224,7 +224,26 @@ namespace LM.WEB.Shared
                 await ShowLoader(false);
                 await InvokeAsync(StateHasChanged);
             }
-        }    
+        }
+
+        protected void GoToInfoStaff()
+        {
+            try
+            {
+                if (IsLogin)
+                {
+                    _navigationManager!.NavigateTo("/info-staff");
+                }
+                else
+                {
+                    _toastService!.ShowInfo("Vui lòng đăng nhập");
+                }
+            }
+            catch (Exception ex)
+            {
+                _toastService!.ShowError(ex.Message);
+            }
+        }
         #endregion
     }
 
