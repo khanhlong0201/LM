@@ -1,6 +1,7 @@
 ﻿using Blazored.LocalStorage;
 using LM.Models;
 using LM.Models.Shared;
+using LM.WEB.Components;
 using LM.WEB.Models;
 using LM.WEB.Services;
 using LM.WEB.Shared;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Newtonsoft.Json;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using Telerik.Blazor;
 using Telerik.Blazor.Components;
 
 namespace LM.WEB.Shared
@@ -36,6 +38,9 @@ namespace LM.WEB.Shared
         int QtyBO = 0;
         public List<BookModel>? ListBooks { get; set; }
         public TelerikGrid<BookModel>? RefListBooks { get; set; }
+
+        [CascadingParameter]
+        public DialogFactory? _rDialogs { get; set; }
 
         protected override async Task OnInitializedAsync()
         {
@@ -173,21 +178,24 @@ namespace LM.WEB.Shared
                 if (!IsLogin) return;
 
                 // Kiểm tra đơn hàng chờ duyệt -> không cho đặt tiếp
-
+                bool isConfirm = await _rDialogs!.ConfirmAsync($"Bạn có chắc muốn Lưu thông tin phiếu mượn này ?", "Thông báo");
+                if (!isConfirm) return;
                 // thêm 
+                await ShowLoader();
                 BorrowOrderModel oHeader = new BorrowOrderModel();
                 oHeader.StaffCode = StaffCode;
                 oHeader.StatusCode = nameof(DocStatus.ApprovalPending);
                 oHeader.DocDate = DateTime.Now;
                 oHeader.TypeBO = "Online";
+                oHeader.Description = "Qui trình mượn sách Online";
 
                 List<BODetailModel> lstBODetails = new List<BODetailModel>();
                 foreach (var book in ListBooks)
                 {
                     BODetailModel oItem = new BODetailModel();
                     oItem.BookSerialId = -1; // default một số Serial không xác định
-                    oItem.StatusCode = nameof(DocStatus.ApprovalPending);
-                    oItem.NoteForAll = "Qui trình mượn sách Online";
+                    oItem.StatusCode = nameof(DocStatus.Pending);
+                    oItem.NoteForAll = "";
                     oItem.Quantity = book.QtyBO;
                     oItem.BookId = book.BookId;
                     lstBODetails.Add(oItem);

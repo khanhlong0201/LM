@@ -14,7 +14,7 @@
                     <span class="accordion-header" id="heading-1">
                         <button class="accordion-button " style="padding-top: 5px; padding-bottom: 5px;"
                                 type="button" data-bs-toggle="collapse" data-bs-target="#collapse-info" aria-expanded="true">
-                            <h4 class="mb-1">Thông tin mượn</h4>
+                            <h4 class="mb-1">Thông tin phiếu mượn - Mượn sách @DocumentUpdate.TypeBO</h4>
                         </button>
                     </span>
                     <div id="collapse-info" class="accordion-collapse collapse show" data-bs-parent="#accordion-info">
@@ -115,7 +115,6 @@
             </div>
             <TelerikToolBar Class="border-bottom-0">
                 <ToolBarButton ImageUrl="../assets/add-new-icon.png" Title="Thêm mới sách" OnClick="@(()=> OnOpenDialogHandler())"></ToolBarButton>
-                <ToolBarButton ImageUrl="../assets/remove_grid.png" Title="Xóa dòng" OnClick="@RemoveBooksHandler"></ToolBarButton>
             </TelerikToolBar>
             <TelerikGrid Data="@ListBODetails" @ref="@RefListBODetails"
                          Height="250px"
@@ -126,21 +125,38 @@
                          Sortable="true"
                          Resizable="true"
                          FilterMode="@GridFilterMode.None"
-                         SelectionMode="@GridSelectionMode.Multiple"
-                         @bind-SelectedItems="@SelectedBODetails"
+                         SelectionMode="@GridSelectionMode.Single"
+
                          ScrollMode="@GridScrollMode.Scrollable">
                 <GridSettings>
                     <GridPagerSettings InputType="PagerInputType.Input" />
                 </GridSettings>
                 <GridAggregates>
-                    <GridAggregate Field=@nameof(BODetailModel.Id) Aggregate="@GridAggregateType.Count" />
+                    <GridAggregate Field=@nameof(BODetailModel.Quantity) Aggregate="@GridAggregateType.Sum" />
                 </GridAggregates>
                 <GridColumns>
-                    <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+                    <GridColumn Width="30px" MaxResizableWidth="40" TextAlign="ColumnTextAlign.Center">
+                        <Template>
+                            <img src="./assets/delete-red.png" title="Xóa dòng" @onclick="@(()=> RemoveBooksHandler((context as BODetailModel)))" />
+                        </Template>
+                    </GridColumn>
                     <GridColumn Field=@nameof(BODetailModel.BookId) Width="100px" Title="Mã sách"></GridColumn>
                     <GridColumn Field=@nameof(BODetailModel.BookName) Width="290px" Title="Tên sách"></GridColumn>
-                    <GridColumn Field=@nameof(BODetailModel.SerialNumber) Width="130px" Title="Số serial"></GridColumn>
-                    <GridColumn Field=@nameof(BODetailModel.Quantity) Width="130px" Title="Số lượng"></GridColumn>
+                    <GridColumn Field=@nameof(BODetailModel.SerialNumber) Width="130px" Title="Số serial">
+                        <Template>
+                            @{
+                                var model = (context as BODetailModel)!;
+                                <i class="fa-regular fa-pen-to-square h-link" title="Chọn lại serial"
+                               style="font-size: 14px; margin-right: 2px" @onclick="@(()=> OnOpenDialogHandler(true, model.BookId))"></i>
+                            }
+                            <span>@model.SerialNumber</span>
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(BODetailModel.Quantity) Width="130px" Title="Số lượng">
+                        <FooterTemplate>
+                            Tổng: @context.Sum cuốn
+                        </FooterTemplate>
+                    </GridColumn>
                     <GridColumn Field=@nameof(BODetailModel.NoteForAll) Width="290px" Title="Tình trạng sách">
                         <Template>
                             @{

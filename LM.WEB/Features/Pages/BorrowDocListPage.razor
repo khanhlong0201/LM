@@ -3,8 +3,25 @@
 @inherits BorrowDocListController
 
 <div class="h-content-filter">
-    <div class="row">
-        <div class="col-lg-4 col-md-5 col-sm-12">
+    <div class="row row-gap-1">
+        <div class="col-md-4 col-sm-12">
+            <div class="d-flex ">
+                <HLabel Value="Phương thức mượn:" IsRequired="true" Style="width: 130px" />
+                <div style="width: calc(100% - 130px)">
+                    <TelerikComboBox @bind-Value="@ItemFilter.TypeBO"
+                                     Data="@ListTypeBO"
+                                     Placeholder="Chọn phương thức mượn..."
+                                     ClearButton="false"
+                                     TextField="@nameof(ComboboxModel.Name)"
+                                     ValueField="@nameof(ComboboxModel.Code)"
+                                     Filterable="true"
+                                     Class="btn-noborder-radius-left"
+                                     Id="txtStatusId" Width="100%">
+                    </TelerikComboBox>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-12">
             <div class="d-flex ">
                 <HLabel Value="Tình trạng:" IsRequired="true" Style="width: 130px" />
                 <div style="width: calc(100% - 130px)">
@@ -20,7 +37,9 @@
                     </TelerikComboBox>
                 </div>
             </div>
-            <div class="d-flex mt-1">
+        </div>
+        <div class="col-md-4 col-sm-12">
+            <div class="d-flex">
                 <HLabel Value="Từ ngày/Đến ngày:" Style="width: 130px" />
                 <div style="width: calc(100% - 130px)">
                     <div class="d-flex justify-content-between">
@@ -42,6 +61,7 @@
                 </div>
             </div>
         </div>
+        
     </div>
 </div>
 
@@ -51,7 +71,7 @@
                    Enabled="@(ItemFilter.StatusId == nameof(DocStatus.Pending))">Hủy phiếu</ToolBarButton>
 </TelerikToolBar>
 
-<div class="h-table-content" style=" height: calc(100vh - 230px);">
+<div class="h-table-content" style=" height: calc(100vh - 195px);">
     <TelerikLoaderContainer OverlayThemeColor="light"
                             Visible="@(!IsInitialDataLoadComplete)"
                             Text="@null" Class="grid-initial-data-loader">
@@ -73,6 +93,7 @@
                  FilterMode="@GridFilterMode.FilterMenu"
                  SelectionMode="@GridSelectionMode.Multiple"
                  ScrollMode="@GridScrollMode.Scrollable"
+                 OnRowDoubleClick="@OnRowDoubleClickHandler"
                  @bind-SelectedItems="@SelectedDocuments">
         <GridSettings>
             <GridPagerSettings InputType="PagerInputType.Input" />
@@ -110,7 +131,16 @@
             <GridColumn Field=@nameof(BorrowOrderModel.DocDate) Width="150px" Title="Ngày mượn" DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE"></GridColumn>
             <GridColumn Field=@nameof(BorrowOrderModel.PromiseDate) Width="150px" Title="Ngày hẹn trả" DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE"></GridColumn>
             <GridColumn Field=@nameof(BorrowOrderModel.DueDate) Width="150px" Title="Ngày trả" DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE"></GridColumn>
-            <GridColumn Field=@nameof(BorrowOrderModel.TypeBO) Width="170px" Title="Phương thức mượn"></GridColumn>
+            <GridColumn Field=@nameof(BorrowOrderModel.TypeBO) Width="170px" Title="Phương thức mượn">
+                <Template>
+                    @{
+                        var model = (context as BorrowOrderModel);
+                        string color = "bg-azure text-azure-fg";
+                        if (model!.TypeBO == "Online") color = "bg-yellow text-yellow-fg";
+                    }
+                    <span class="badge @color">@model!.TypeBO</span>
+                </Template>
+            </GridColumn>
             <GridColumn Field=@nameof(BorrowOrderModel.StaffTypeName) Width="150px" Title="Chức vụ"></GridColumn>
             <GridColumn Field=@nameof(BorrowOrderModel.PhoneNumber) Width="150px" Title="SĐT"></GridColumn>
             <GridColumn Field=@nameof(BorrowOrderModel.Email) Width="170px" Title="Email"></GridColumn>

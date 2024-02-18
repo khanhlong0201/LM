@@ -86,6 +86,7 @@ public class SearchModel
     public int Page { get; set; }
     public int Limit { get; set; }
     public string? TextSearch { get; set; }
+    public string? TypeBO { get; set; }
 }
 
 public enum EnumType
@@ -115,7 +116,8 @@ public enum DocStatus
     @ApprovalPending,
     @Closed,
     @All,
-    @Cancled
+    @Cancled,
+    @Borrowing
 }
 
 public enum TypeTime

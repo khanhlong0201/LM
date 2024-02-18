@@ -10,6 +10,8 @@ namespace LM.WEB.Services
     {
         Task<bool> UpdateBorrowOrder(string pJson, string pJsonDetail, string pAction, int pUserId);
         Task<List<BorrowOrderModel>?> GetBorrowOrdersAsync(SearchModel pSearch);
+
+        Task<Dictionary<string, string>?> GetDocByIdAsync(string pVoucherNo);
     }
     public class CliDocumentService : CliServiceBase, ICliDocumentService
     {
@@ -103,6 +105,48 @@ namespace LM.WEB.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "GetLocationsAsync");
+                _toastService.ShowError(ex.Message);
+            }
+            return default;
+        }
+
+        /// <summary>
+        /// Call API lấy danh sách phiếu mượn
+        /// </summary>
+        /// <returns></returns>
+        public async Task<Dictionary<string, string>?> GetDocByIdAsync(string pVoucherNo)
+        {
+            try
+            {
+                Dictionary<string, object?> pParams = new Dictionary<string, object?>()
+            {
+                {"pVoucherNo", $"{pVoucherNo}"}
+            };
+                HttpResponseMessage httpResponse = await GetAsync(EndpointConstants.URL_DOCUMENT_GET_DOC_BY_ID, pParams);
+                var checkContent = ValidateJsonContent(httpResponse.Content);
+                if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
+                else
+                {
+                    var content = await httpResponse.Content.ReadAsStringAsync();
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        var dt = JsonConvert.DeserializeObject<Dictionary<string, string>>(content);
+                        if (dt == null || dt.Keys.Count < 1) _toastService.ShowWarning(DefaultConstants.MESSAGE_NO_DATA);
+                        return dt;
+
+                    }
+                    if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    {
+                        _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
+                        return null;
+                    }
+                    var oMessage = JsonConvert.DeserializeObject<ResponseModel>(content);
+                    _toastService.ShowError($"{oMessage?.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetDocByIdAsync");
                 _toastService.ShowError(ex.Message);
             }
             return default;

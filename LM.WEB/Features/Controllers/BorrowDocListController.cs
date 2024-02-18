@@ -6,7 +6,9 @@ using LM.WEB.Shared;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
+using NPOI.POIFS.FileSystem;
 using Telerik.Blazor;
+using Telerik.Blazor.Components;
 
 namespace LM.WEB.Features.Controllers
 {
@@ -23,6 +25,7 @@ namespace LM.WEB.Features.Controllers
         public List<BorrowOrderModel>? ListDocuments { get; set; }
         public IEnumerable<BorrowOrderModel>? SelectedDocuments { get; set; } = new List<BorrowOrderModel>();
         public List<ComboboxModel>? ListStatus { get; set; }
+        public List<ComboboxModel>? ListTypeBO { get; set; }
         public SearchModel ItemFilter = new SearchModel();
         public string? ReasonDeny { get; set; } // lý do hủy
         public bool IsShowDialogDelete { get; set; }
@@ -51,6 +54,12 @@ namespace LM.WEB.Features.Controllers
                     new ComboboxModel() {Code = nameof(DocStatus.Cancled), Name = "Đã hủy phiếu"},
                     new ComboboxModel() {Code = nameof(DocStatus.All), Name = "Tất cả"},
                 };
+                ListTypeBO = new List<ComboboxModel>()
+                {
+                    new ComboboxModel() {Code = nameof(DocStatus.All), Name = "Tất cả"},
+                    new ComboboxModel() {Code = "Online", Name = "Online"},
+                    new ComboboxModel() {Code = "Offline", Name = "Offline"},
+                };
             }
             catch (Exception ex)
             {
@@ -66,6 +75,7 @@ namespace LM.WEB.Features.Controllers
                 try
                 {
                     ItemFilter.StatusId = nameof(DocStatus.All);
+                    ItemFilter.TypeBO = nameof(DocStatus.All);
                     ItemFilter.FromDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
                     ItemFilter.ToDate = _dateTimeService!.GetCurrentVietnamTime();
                     // đọc giá tri câu query
@@ -129,6 +139,35 @@ namespace LM.WEB.Features.Controllers
             finally
             {
                 await ShowLoader(false);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+
+        /// <summary>
+        /// double click vào xem chi tiết
+        /// </summary>
+        /// <param name="args"></param>
+        protected async void OnRowDoubleClickHandler(GridRowClickEventArgs args)
+        {
+            try
+            {
+                BorrowOrderModel? oItem = (args.Item as BorrowOrderModel);
+                if (oItem == null) return;
+                Dictionary<string, string> pParams = new Dictionary<string, string>
+                {
+                    { "pVoucherNo", $"{oItem.VoucherNo}"},
+                    { "pIsCreate", $"{false}" },
+                };
+                string key = EncryptHelper.Encrypt(JsonConvert.SerializeObject(pParams)); // mã hóa key
+                _navManager!.NavigateTo($"/document-create?key={key}");
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "BorrowDocListController", "OnRowDoubleClickHandler");
+                ShowError(ex.Message);
+            }
+            finally
+            {
                 await InvokeAsync(StateHasChanged);
             }
         }

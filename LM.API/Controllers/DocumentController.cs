@@ -2,6 +2,7 @@
 using LM.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace LM.API.Controllers
 {
@@ -57,6 +58,26 @@ namespace LM.API.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "DocumentController", "GetBorrowOrders");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+        }
+
+        [HttpGet]
+        [Route("GetDocById")]
+        public async Task<IActionResult> GetDocById(string pVoucherNo)
+        {
+            try
+            {
+                var data = await _documentervice.GetDocumentById(pVoucherNo);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DocumentController", "GetDocById");
                 return StatusCode(StatusCodes.Status400BadRequest, new
                 {
                     StatusCode = StatusCodes.Status400BadRequest,

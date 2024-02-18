@@ -13,6 +13,7 @@ namespace LM.API.Services
     {
         Task<ResponseModel> UpdateBorrowOrderAsync(RequestModel pRequest);
         Task<IEnumerable<BorrowOrderModel>> GetBorrowOrdersAsync(SearchModel pSearchData);
+        Task<Dictionary<string, string>?> GetDocumentById(string pVoucherNo);
     }    
     public class DocumentService : IDocumentService
     {
@@ -89,6 +90,38 @@ namespace LM.API.Services
 
                         break;
                     case nameof(EnumType.Update):
+                        queryString = @"Update BorrowOrders set [StaffCode] = @StaffCode, [Description] = @Description
+                                             , [DocDate] = @DocDate, [DueDate] = @DueDate, [PromiseDate] = @PromiseDate, [StatusCode] = @StatusCode
+                                             , [DateCreate] = @DateTimeNow, [UserCreate] = @UserId 
+                                         where VoucherNo = @VoucherNo";
+                        sqlParameters = getBOParameters(oDraft, pRequest.UserId);
+                        await _context.BeginTranAsync();
+                        isUpdated = await ExecQuery();
+                        if (isUpdated)
+                        {
+                            // xóa đi -> thêm vô lại
+                            queryString = @"Delete from BODetails where VoucherNo = @VoucherNo";
+                            sqlParameters = new SqlParameter[1];
+                            sqlParameters[0] = new SqlParameter("@VoucherNo", oDraft.VoucherNo);
+                            await ExecQuery();
+                            // cập nhật thông tin chi tiết sách
+                            queryString = @"INSERT INTO [dbo].[BODetails] ([VoucherNo], [BookSerialId], [StatusCode], [NoteForAll], [Quantity], [BookId])
+                                                            values (@VoucherNo, @BookSerialId, @StatusCode, @NoteForAll, @Quantity, @BookId)";
+                            foreach (var oItem in lstDraftDetails)
+                            {
+                                oItem.VoucherNo = oDraft.VoucherNo;
+                                oItem.StatusCode = nameof(DocStatus.Pending);
+                                sqlParameters = getBODetailsParameters(oItem);
+                                isUpdated = await ExecQuery();
+                                if (!isUpdated)
+                                {
+                                    await _context.RollbackAsync();
+                                    return response;
+                                }
+                            }
+                        }
+                        if (isUpdated) await _context.CommitTranAsync();
+                        else await _context.RollbackAsync();
                         break;
                     default:
                         response.StatusCode = (int)HttpStatusCode.BadRequest;
@@ -133,13 +166,13 @@ namespace LM.API.Services
                                        from BorrowOrders as T0 with(nolock)
                                  inner join Staffs as T1 with(nolock) on T0.StaffCode = T1.StaffCode 
                                       where cast(T0.[DocDate] as Date) between cast(@FromDate as Date) and cast(@ToDate as Date)
+                                            and (@StatusId = 'All' or (@StatusId <> 'All' and T0.[StatusCode] = @StatusId))
                                    order by T0.DateCreate desc";
-                SqlParameter[] sqlParameters = new SqlParameter[5];
+                SqlParameter[] sqlParameters = new SqlParameter[4];
                 sqlParameters[0] = new SqlParameter("@StatusId", pSearchData.StatusId);
                 sqlParameters[1] = new SqlParameter("@FromDate", pSearchData.FromDate.Value);
                 sqlParameters[2] = new SqlParameter("@ToDate", pSearchData.ToDate.Value);
-                sqlParameters[3] = new SqlParameter("@IsAdmin", pSearchData.IsAdmin);
-                sqlParameters[4] = new SqlParameter("@UserId", pSearchData.UserId);
+                sqlParameters[3] = new SqlParameter("@TypeBO", pSearchData.TypeBO);
                 Func<IDataRecord, BorrowOrderModel> readData = record =>
                 {
                     BorrowOrderModel model = new BorrowOrderModel();
@@ -162,6 +195,87 @@ namespace LM.API.Services
                     return model;
                 };
                 data = await _context.GetDataAsync(querry, readData, sqlParameters, commandType: CommandType.Text);
+            }
+            catch (Exception) { throw; }
+            finally
+            {
+                await _context.DisConnect();
+            }
+            return data;
+        }
+
+        public async Task<Dictionary<string, string>?> GetDocumentById(string pVoucherNo)
+        {
+            Dictionary<string, string>? data = null;
+            try
+            {
+                await _context.Connect();
+                SqlParameter[] sqlParameters = new SqlParameter[1];
+                sqlParameters[0] = new SqlParameter("@VoucherNo", pVoucherNo);
+
+                string queryString = @"select T0.*
+					        		        , case StaffType when N'SV' then N'Sinh viên' 
+                                              when N'GV' then N'Giáo viên' when N'CB' then N'Cán bộ'
+                                              else N'Sinh viên' end as StaffTypeName
+		                                    , case T0.[StatusCode]  when '{nameof(DocStatus.Closed)}' then N'Đã trả sách'
+                                              when '{nameof(DocStatus.Cancled)}' then N'Đã hủy phiếu'
+                                              else N'Chờ xử lý' end as [StatusName]
+                                            , T2.FullName, T2.PhoneNumber, T2.Email, T2.Department
+									        , T3.BookId, T3.BookName, T1.StatusCode, T1.NoteForAll, T1.[Id], T1.[Quantity]
+									        , T1.BookSerialId, T4.SerialNumber
+                            from BorrowOrders as T0 with(nolock)
+                                   inner join BODetails as T1 with(nolock) on T0.VoucherNo = T1.VoucherNo
+                                   inner join Staffs as T2 with(nolock) on T0.StaffCode = T2.StaffCode 
+                                   inner join Books as T3 with(nolock) on T1.BookId = T3.BookId
+						           inner join BookSerials as T4 with(nolock) on T1.BookSerialId = T4.Id
+                                        where T0.VoucherNo = @VoucherNo";
+                var ds = await _context.GetDataSetAsync(queryString, sqlParameters, CommandType.Text);
+                data = new Dictionary<string, string>();
+                if (ds != null && ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0)
+                {
+                    string DATA_CUSTOMER_EMPTY = "Chưa cập nhật";
+                    DataTable dt = ds.Tables[0];
+                    DataRow dr = dt.Rows[0];
+                    BorrowOrderModel oHeader = new BorrowOrderModel();
+                    oHeader.VoucherNo = Convert.ToString(dr["VoucherNo"]);
+                    oHeader.StaffCode = Convert.ToString(dr["StaffCode"]);
+                    oHeader.FullName = Convert.ToString(dr["FullName"]);
+                    oHeader.Description = Convert.ToString(dr["Description"]);
+                    oHeader.StatusCode = Convert.ToString(dr["StatusCode"]);
+                    oHeader.StatusName = Convert.ToString(dr["StatusName"]);
+                    oHeader.DocDate = Convert.ToDateTime(dr["DocDate"]);
+                    if (!Convert.IsDBNull(dr["DueDate"])) oHeader.DueDate = Convert.ToDateTime(dr["DueDate"]);
+                    if (!Convert.IsDBNull(dr["PromiseDate"])) oHeader.PromiseDate = Convert.ToDateTime(dr["PromiseDate"]);
+                    oHeader.TypeBO = Convert.ToString(dr["TypeBO"]);
+                    oHeader.StaffTypeName = Convert.ToString(dr["StaffTypeName"]);
+                    oHeader.Department = Convert.ToString(dr["Department"]) ?? DATA_CUSTOMER_EMPTY;
+                    oHeader.PhoneNumber = Convert.ToString(dr["PhoneNumber"]) ?? DATA_CUSTOMER_EMPTY;
+                    oHeader.Email = Convert.ToString(dr["Email"]) ?? DATA_CUSTOMER_EMPTY;
+                    if (!Convert.IsDBNull(dr["DateCreate"])) oHeader.DateCreate = Convert.ToDateTime(dr["DateCreate"]);
+                    if (!Convert.IsDBNull(dr["UserCreate"])) oHeader.UserCreate = Convert.ToInt32(dr["UserCreate"]);
+                    if (!Convert.IsDBNull(dr["DateUpdate"])) oHeader.DateUpdate = Convert.ToDateTime(dr["DateUpdate"]);
+                    if (!Convert.IsDBNull(dr["UserUpdate"])) oHeader.UserUpdate = Convert.ToInt32(dr["UserUpdate"]);
+                    oHeader.ReasonDelete = Convert.ToString(dr["ReasonDelete"]);
+                    List<BODetailModel> lstDetails = new List<BODetailModel>();
+                    foreach (DataRow item in dt.Rows)
+                    {
+                        BODetailModel oLine = new BODetailModel();
+                        oLine.BookSerialId = Convert.ToInt32(dr["BookSerialId"]);
+                        oLine.BookId = Convert.ToInt32(dr["BookId"]);
+                        oLine.BookName = Convert.ToString(dr["BookName"]);
+                        oLine.SerialNumber = Convert.ToString(dr["SerialNumber"]);
+                        oLine.StatusCode = Convert.ToString(dr["StatusCode"]);
+                        oLine.NoteForAll = Convert.ToString(dr["NoteForAll"]);
+                        oLine.Id = Convert.ToInt32(dr["Id"]);
+                        oLine.Quantity = Convert.ToInt32(dr["Quantity"]);
+                        lstDetails.Add(oLine);
+                    }
+                    data = new Dictionary<string, string>()
+                    {
+                        {"oHeader", JsonConvert.SerializeObject(oHeader)},
+                        {"oLine", JsonConvert.SerializeObject(lstDetails)}
+                    };
+                }    
             }
             catch (Exception) { throw; }
             finally

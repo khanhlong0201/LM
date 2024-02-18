@@ -1,10 +1,13 @@
 ﻿using LM.Models;
+using LM.Models.Shared;
 using LM.WEB.Models;
 using LM.WEB.Services;
 using LM.WEB.Shared;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
+using NPOI.POIFS.FileSystem;
 using System.Net;
 using Telerik.Blazor;
 using Telerik.Blazor.Components;
@@ -17,6 +20,7 @@ namespace LM.WEB.Features.Controllers
         [Inject] private ILogger<DocumentController>? _logger { get; init; }
         [Inject] private ICliMasterDataService? _masterDataService { get; init; }
         [Inject] private ICliDocumentService? _documentService { get; init; }
+        [Inject] private NavigationManager? _navigationManager { get; init; }
         #endregion
 
         #region Properties
@@ -37,9 +41,10 @@ namespace LM.WEB.Features.Controllers
         public IEnumerable<BookModel>? SelectedBooks { get; set; } = new List<BookModel>();
 
         public const string DATA_EMPTY = "Chưa cập nhật";
-        public const string TYPE_BO = "Offline";
         public bool pIsLockPage { get; set; } = false;
-        public int pDocEntry { get; set; } = 0;
+        public string pVoucherNo { get; set; } = string.Empty;
+        public string pTypeBO { get; set; } = "Offline";
+        public bool pIsCreate { get; set; } = true;
 
         [CascadingParameter]
         public DialogFactory? _rDialogs { get; set; }
@@ -62,7 +67,7 @@ namespace LM.WEB.Features.Controllers
                 DocumentUpdate.StatusName = DATA_EMPTY;
                 DocumentUpdate.DateCreate = DateTime.Now;
                 DocumentUpdate.DocDate = DateTime.Now;
-                DocumentUpdate.TypeBO = TYPE_BO;
+                DocumentUpdate.TypeBO = pTypeBO;
             }
             catch (Exception ex)
             {
@@ -78,6 +83,23 @@ namespace LM.WEB.Features.Controllers
                 try
                 {
                     await _progressService!.SetPercent(0.4);
+                    // đọc giá tri câu query
+                    var uri = _navigationManager?.ToAbsoluteUri(_navigationManager.Uri);
+                    if (uri != null && QueryHelpers.ParseQuery(uri.Query).Count > 0)
+                    {
+                        string key = uri.Query.Substring(5); // để tránh parse lỗi;    
+                        Dictionary<string, string> pParams = JsonConvert.DeserializeObject<Dictionary<string, string>>(EncryptHelper.Decrypt(key));
+                        if (pParams != null && pParams.Any())
+                        {
+                            if (pParams.ContainsKey("pIsCreate")) pIsCreate = Convert.ToBoolean(pParams["pIsCreate"]);
+                            if (pParams.ContainsKey("pVoucherNo")) pVoucherNo = Convert.ToString(pParams["pVoucherNo"]);
+                        }
+                    }
+                    if (!pIsCreate)
+                    {
+                        // Vô từ page theo dõi
+                        await showVoucher();
+                    }    
                 }
                 catch (Exception ex)
                 {
@@ -94,6 +116,28 @@ namespace LM.WEB.Features.Controllers
         #endregion
 
         #region Private Functions
+
+        private async Task showVoucher()
+        {
+            if (string.IsNullOrEmpty(pVoucherNo))
+            {
+                ShowWarning("Vui lòng tải lại trang hoặc liên hệ IT để được hổ trợ");
+                return;
+            }
+
+            Dictionary<string, string>? keyValues = await _documentService!.GetDocByIdAsync(pVoucherNo);
+            if (keyValues == null) return;
+            if (keyValues.ContainsKey("oHeader"))
+            {
+                DocumentUpdate = JsonConvert.DeserializeObject<BorrowOrderModel>(keyValues["oHeader"]);
+                //pIsLockPage = DocumentUpdate.StatusId != nameof(DocStatus.Pending); // lock page
+            }
+            if (keyValues.ContainsKey("oLine"))
+            {
+                ListBODetails = JsonConvert.DeserializeObject<List<BODetailModel>>(keyValues["oLine"]);
+            }    
+        }    
+
         private async Task getBooks()
         {
             ListBooks = new List<BookModel>();
@@ -146,6 +190,24 @@ namespace LM.WEB.Features.Controllers
                 ShowWarning("Ngày hẹn trả >= ngày hiện tại!");
                 return false;
             }
+
+            if(ListBODetails == null || !ListBODetails.Any())
+            {
+                ShowWarning("Vui lòng chọn sách cần mượn!");
+                return false;
+            }    
+            
+            if(!isCreate && DocumentUpdate.TypeBO == "Online")
+            {
+                // đối với Qty trình mượn sách OnLine
+                // Bắt buộc phải chọn lại Serial nếu chưa chọn
+                var oCheckSerial = ListBODetails.FirstOrDefault(m => m.SerialNumber == "KHONGXACDINH");
+                if(oCheckSerial != null)
+                {
+                    ShowWarning($"Vui lòng điền lại số Serial cho sách [{oCheckSerial.BookName}]!");
+                    return false;
+                }    
+            }
             return true;
         }    
         #endregion
@@ -171,7 +233,12 @@ namespace LM.WEB.Features.Controllers
             }
         }
 
-        protected async void OnOpenDialogHandler(bool isBook = true)
+        /// <summary>
+        /// Mở popup
+        /// </summary>
+        /// <param name="isBook"> Nếu true: mở sách, ngược lại mở Sinh viên</param>
+        /// <param name="isSerial">Tìm kiếm theo serial</param>
+        protected async void OnOpenDialogHandler(bool isBook = true, int bookId = -1)
         {
             try
             {
@@ -182,6 +249,11 @@ namespace LM.WEB.Features.Controllers
                     ListBookSerials = new List<BookSerialModel>();
                     SelectedBookSerials = new List<BookSerialModel>();
                     await getBooks();
+                    if(bookId > 0)
+                    {
+                        SelectedBooks = ListBooks?.Where(m => m.BookId == bookId);
+                        await getBookSerials(bookId, "");
+                    }    
                     IsShowDialog = true;
                 }  
                 else
@@ -210,22 +282,17 @@ namespace LM.WEB.Features.Controllers
         /// <summary>
         /// xóa dữ liệu trên lưới
         /// </summary>
-        protected void RemoveBooksHandler()
+        protected void RemoveBooksHandler(BODetailModel? oItem)
         {
             try
             {
+                if (oItem == null) return;
                 if(ListBODetails == null || !ListBODetails.Any())
                 {
                     ShowWarning("không có dữ liệu sách mượn");
                     return;
                 }    
-                if (SelectedBODetails == null || !SelectedBODetails.Any())
-                {
-                    ShowWarning("Vui lòng chọn dòng để xóa");
-                    return;
-                }
-                ListBODetails = ListBODetails.Where(m => !SelectedBODetails.Select(m => m.SerialNumber).Contains(m.SerialNumber)).ToList();
-                SelectedBODetails = new List<BODetailModel>();
+                ListBODetails.Remove(oItem);
                 RefListBODetails?.Rebind();
                 StateHasChanged();
             }
@@ -349,29 +416,42 @@ namespace LM.WEB.Features.Controllers
         {
             try
             {
-                bool isCreate = true;
                 string strAction = nameof(EnumType.Add);
-                if (pDocEntry > 0)
-                {
-                    isCreate = false;
-                    strAction = nameof(EnumType.Update);
-                }    
-                if (!validateData(isCreate)) return;
+                string message = string.Empty;
 
+                // Lưu thông tin
+                if (pIsCreate)
+                {
+                    message = "Bạn có chắc muốn Thêm mới thông tin phiếu mượn ?";
+                }
+                else if (pProcess == EnumType.SaveAndClose)
+                {
+                    // Lưu và đóng lệnh này
+                    message = "Bạn có chắc muốn Lưu và đóng phiếu mượn. [Tình trạng Đang mượn] ?";
+                    strAction = nameof(EnumType.Update);
+                    DocumentUpdate.StaffCode = nameof(DocStatus.Borrowing);
+                }
+                else
+                {
+                    strAction = nameof(EnumType.Update);
+                    message = "Bạn có chắc muốn Cập nhật thông tin phiếu mượn này ?";
+                }
+
+                if (!validateData(pIsCreate)) return;
+                bool isConfirm = await _rDialogs!.ConfirmAsync($"{message}", "Thông báo");
+                if (!isConfirm) return;
+                await ShowLoader();
                 DocumentUpdate.StatusCode = nameof(DocStatus.Pending);
                 bool isSuccess = await _documentService!.UpdateBorrowOrder(JsonConvert.SerializeObject(DocumentUpdate)
                     , JsonConvert.SerializeObject(ListBODetails), strAction, pUserId);
 
                 if (isSuccess)
                 {
-                    if(isCreate)
+                    if(pIsCreate)
                     {
                         return;
-                    }   
-                    else
-                    {
-
-                    }    
+                    }
+                    await showVoucher();
                 }    
             }
             catch (Exception ex)
@@ -381,7 +461,7 @@ namespace LM.WEB.Features.Controllers
             }
             finally
             {
-                await Task.Delay(75);
+                await Task.Delay(100);
                 await ShowLoader(false);
                 await InvokeAsync(StateHasChanged);
             }
