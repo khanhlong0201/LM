@@ -178,13 +178,13 @@ namespace LM.WEB.Shared
                 if (!IsLogin) return;
 
                 // Kiểm tra đơn hàng chờ duyệt -> không cho đặt tiếp
-                bool isConfirm = await _rDialogs!.ConfirmAsync($"Bạn có chắc muốn Lưu thông tin phiếu mượn này ?", "Thông báo");
-                if (!isConfirm) return;
+                //bool isConfirm = await _rDialogs!.ConfirmAsync($"Bạn có chắc muốn Lưu thông tin phiếu mượn này ?", "Thông báo");
+                //if (!isConfirm) return;
                 // thêm 
                 await ShowLoader();
                 BorrowOrderModel oHeader = new BorrowOrderModel();
                 oHeader.StaffCode = StaffCode;
-                oHeader.StatusCode = nameof(DocStatus.ApprovalPending);
+                oHeader.StatusCode = nameof(DocStatus.Pending);
                 oHeader.DocDate = DateTime.Now;
                 oHeader.TypeBO = "Online";
                 oHeader.Description = "Qui trình mượn sách Online";

@@ -12,6 +12,7 @@ namespace LM.WEB.Services
         Task<List<BorrowOrderModel>?> GetBorrowOrdersAsync(SearchModel pSearch);
 
         Task<Dictionary<string, string>?> GetDocByIdAsync(string pVoucherNo);
+        Task<bool> ReturnBooksAsync(string pJson, string pJsonDetail, string pAction, int pUserId);
     }
     public class CliDocumentService : CliServiceBase, ICliDocumentService
     {
@@ -150,6 +151,54 @@ namespace LM.WEB.Services
                 _toastService.ShowError(ex.Message);
             }
             return default;
+        }
+
+        /// <summary>
+        /// cập nhật thông tin SalesOrder
+        /// </summary>
+        /// <param name="pJson"></param>
+        /// <param name="pAction"></param>
+        /// <param name="pUserId"></param>
+        /// <returns></returns>
+        public async Task<bool> ReturnBooksAsync(string pJson, string pJsonDetail, string pAction, int pUserId)
+        {
+            try
+            {
+                RequestModel request = new RequestModel
+                {
+                    Json = pJson,
+                    JsonDetail = pJsonDetail,
+                    Type = pAction,
+                    UserId = pUserId
+                };
+                //var savedToken = await _localStorage.GetItemAsync<string>("authToken");
+                //_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", savedToken);
+                HttpResponseMessage httpResponse = await PostAsync(EndpointConstants.URL_DOCUMENT_GET_DOC_RETURN_BOOK, request);
+                if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
+                    return false;
+                }
+                var checkContent = ValidateJsonContent(httpResponse.Content);
+                if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
+                else
+                {
+                    var content = await httpResponse.Content.ReadAsStringAsync();
+                    ResponseModel oResponse = JsonConvert.DeserializeObject<ResponseModel>(content)!;
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        _toastService.ShowSuccess($"Đã trả sách thành công!");
+                        return true;
+                    }
+                    _toastService.ShowError($"{oResponse.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "UpdateSalesOrder");
+                _toastService.ShowError(ex.Message);
+            }
+            return false;
         }
     }
 }

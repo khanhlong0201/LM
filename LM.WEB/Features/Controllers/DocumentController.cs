@@ -29,6 +29,7 @@ namespace LM.WEB.Features.Controllers
         public IEnumerable<BODetailModel> SelectedBODetails { get; set; } = new List<BODetailModel>();
         public TelerikGrid<BODetailModel>? RefListBODetails { get; set; }
         public bool IsShowDialog { get; set; }
+        public bool IsChoseSerial { get; set; } // nếu được chọn ở Nút serial
 
         public List<StaffModel>? ListStaffs { get; set; }
         public IEnumerable<StaffModel> SelectedStaffs { get; set; } = new List<StaffModel>();
@@ -130,6 +131,7 @@ namespace LM.WEB.Features.Controllers
             if (keyValues.ContainsKey("oHeader"))
             {
                 DocumentUpdate = JsonConvert.DeserializeObject<BorrowOrderModel>(keyValues["oHeader"]);
+                pIsLockPage = DocumentUpdate.StatusCode != nameof(DocStatus.Pending); // lock page
                 //pIsLockPage = DocumentUpdate.StatusId != nameof(DocStatus.Pending); // lock page
             }
             if (keyValues.ContainsKey("oLine"))
@@ -243,7 +245,8 @@ namespace LM.WEB.Features.Controllers
             try
             {
                 await ShowLoader();
-                if(isBook)
+                IsChoseSerial = false;
+                if (isBook)
                 {
                     // tìm kiếm sách
                     ListBookSerials = new List<BookSerialModel>();
@@ -251,6 +254,7 @@ namespace LM.WEB.Features.Controllers
                     await getBooks();
                     if(bookId > 0)
                     {
+                        IsChoseSerial = true;
                         SelectedBooks = ListBooks?.Where(m => m.BookId == bookId);
                         await getBookSerials(bookId, "");
                     }    
@@ -329,6 +333,8 @@ namespace LM.WEB.Features.Controllers
                     ShowWarning($"Trùng số Serial [{checkDub.SerialNumber}] của sách [{checkDub.BookName}]");
                     return;
                 }    
+
+                   
                 var lstData = SelectedBookSerials.Select(m => new BODetailModel()
                 {
                     BookSerialId = m.Id,
@@ -336,8 +342,14 @@ namespace LM.WEB.Features.Controllers
                     BookName = m.BookName,
                     NoteForAll = m.NoteForAll,
                     SerialNumber = m.SerialNumber,
-                    Quantity = 1
+                    Quantity = 1,
+                    StatusCode = nameof(DocStatus.Pending)
                 });
+                // nếu chọn lại từ serial -> xóa đi add lại
+                if (IsChoseSerial && SelectedBODetails != null && SelectedBODetails.Any())
+                {
+                    ListBODetails.Remove(SelectedBODetails.First());
+                }
                 ListBODetails.AddRange(lstData);
                 RefListBODetails?.Rebind();
                 IsShowDialog = false;
@@ -418,10 +430,11 @@ namespace LM.WEB.Features.Controllers
             {
                 string strAction = nameof(EnumType.Add);
                 string message = string.Empty;
-
+                DocumentUpdate.StatusCode = nameof(DocStatus.Pending);
                 // Lưu thông tin
                 if (pIsCreate)
                 {
+                    
                     message = "Bạn có chắc muốn Thêm mới thông tin phiếu mượn ?";
                 }
                 else if (pProcess == EnumType.SaveAndClose)
@@ -429,7 +442,7 @@ namespace LM.WEB.Features.Controllers
                     // Lưu và đóng lệnh này
                     message = "Bạn có chắc muốn Lưu và đóng phiếu mượn. [Tình trạng Đang mượn] ?";
                     strAction = nameof(EnumType.Update);
-                    DocumentUpdate.StaffCode = nameof(DocStatus.Borrowing);
+                    DocumentUpdate.StatusCode = nameof(DocStatus.Borrowing);
                 }
                 else
                 {
@@ -441,7 +454,7 @@ namespace LM.WEB.Features.Controllers
                 bool isConfirm = await _rDialogs!.ConfirmAsync($"{message}", "Thông báo");
                 if (!isConfirm) return;
                 await ShowLoader();
-                DocumentUpdate.StatusCode = nameof(DocStatus.Pending);
+                
                 bool isSuccess = await _documentService!.UpdateBorrowOrder(JsonConvert.SerializeObject(DocumentUpdate)
                     , JsonConvert.SerializeObject(ListBODetails), strAction, pUserId);
 
@@ -449,6 +462,14 @@ namespace LM.WEB.Features.Controllers
                 {
                     if(pIsCreate)
                     {
+                        // chuyển sang tab theo dõi
+                        // back sang link theo dõi đơn hàng
+                        Dictionary<string, string> pParams = new Dictionary<string, string>
+                        {
+                            { "pStatusId", $"{nameof(DocStatus.Pending)}"},
+                        };
+                        string key = EncryptHelper.Encrypt(JsonConvert.SerializeObject(pParams)); // mã hóa key
+                        _navigationManager!.NavigateTo($"/document-list?key={key}");
                         return;
                     }
                     await showVoucher();
@@ -466,6 +487,63 @@ namespace LM.WEB.Features.Controllers
                 await InvokeAsync(StateHasChanged);
             }
         }
+        
+        /// <summary>
+        /// Trả sách
+        /// </summary>
+        /// <param name="isAll">1 cuốn hay tất cả</param>
+        protected async void ReturnBooksHandler(bool isAll = true, BODetailModel? pItem = null)
+        {
+            try
+            {
+                if(isAll)
+                {
+                    bool isConfirm = await _rDialogs!.ConfirmAsync($"Bạn có chắc muốn trả lại tất cả sách không ?", "Thông báo");
+                    if (!isConfirm) return;
+                    await ShowLoader();
+                    bool isSuccess = await _documentService!.ReturnBooksAsync(JsonConvert.SerializeObject(DocumentUpdate)
+                        , JsonConvert.SerializeObject(ListBODetails), nameof(DocStatus.All), pUserId);
+                    if (isSuccess)
+                    {
+                        await showVoucher();
+                    }
+                }  
+                else
+                {
+                    // neeus trả 1 cuốn
+                    if(pItem!.StatusCode == nameof(DocStatus.Closed))
+                    {
+                        // Sách này đã được trả
+                        ShowWarning("Sách đã được trả!!!");
+                        return;
+                    }
+                    bool isConfirm = await _rDialogs!.ConfirmAsync($"Bạn có chắc muốn trả lại sách [{pItem.BookName}] không ?", "Thông báo");
+                    if (!isConfirm) return;
+                    await ShowLoader();
+                    var lst = new List<BODetailModel>();
+                    lst.Add(pItem);
+                    bool isSuccess = await _documentService!.ReturnBooksAsync(JsonConvert.SerializeObject(DocumentUpdate)
+                        , JsonConvert.SerializeObject(lst), "Single", pUserId);
+                    if (isSuccess)
+                    {
+                        await showVoucher();
+                    }
+
+                }    
+                
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "DocumentController", "ReturnBooksHandler");
+                ShowError(ex.Message);
+            }
+            finally
+            {
+                await Task.Delay(100);
+                await ShowLoader(false);
+                await InvokeAsync(StateHasChanged);
+            }
+        }    
         #endregion
     }
 }

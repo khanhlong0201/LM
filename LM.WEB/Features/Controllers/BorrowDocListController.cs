@@ -50,6 +50,7 @@ namespace LM.WEB.Features.Controllers
                 ListStatus = new List<ComboboxModel>()
                 {
                     new ComboboxModel() {Code = nameof(DocStatus.Pending), Name = "Chờ xử lý"},
+                    new ComboboxModel() {Code = nameof(DocStatus.Borrowing), Name = "Đang mượn"},
                     new ComboboxModel() {Code = nameof(DocStatus.Closed), Name = "Hoàn thành"},
                     new ComboboxModel() {Code = nameof(DocStatus.Cancled), Name = "Đã hủy phiếu"},
                     new ComboboxModel() {Code = nameof(DocStatus.All), Name = "Tất cả"},

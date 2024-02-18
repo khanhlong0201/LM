@@ -124,6 +124,7 @@
                         string color = "text-cyan";
                         if (model!.StatusCode == nameof(DocStatus.Closed)) color = "text-green";
                         else if (model!.StatusCode == nameof(DocStatus.Cancled)) color = "text-red";
+                        else if (model!.StatusCode == nameof(DocStatus.Borrowing)) color = "text-yellow";
                         <span class="@(color)">@model!.StatusName</span>
                     }
                 </Template>

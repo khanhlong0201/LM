@@ -70,4 +70,5 @@ public static class EndpointConstants
     public const string URL_DOCUMENT_UPDATE_BORROW_ORDER = "Document/UpdateBorrowOrder";
     public const string URL_DOCUMENT_GET_BORROW_ORDER = "Document/GetBorrowOrders";
     public const string URL_DOCUMENT_GET_DOC_BY_ID = "Document/GetDocById";
+    public const string URL_DOCUMENT_GET_DOC_RETURN_BOOK = "Document/ReturnBooks";
 }

@@ -2,8 +2,10 @@
 @inherits DocumentController;
 
 <TelerikToolBar Class="border-bottom-0">
-    <ToolBarButton ImageUrl="../assets/save-folder.png" OnClick="@(()=> SaveDocHandler())">Lưu phiếu</ToolBarButton>
-    <ToolBarButton ImageUrl="../assets/bill.png">Lưu & Đóng phiếu</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/bill.png" OnClick="@(()=> ReturnBooksHandler())"
+                   Visible="@(pIsLockPage && DocumentUpdate.StatusCode == nameof(DocStatus.Borrowing))">Trả sách</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/save-folder.png" OnClick="@(()=> SaveDocHandler())" Visible="@(!pIsLockPage)">Lưu phiếu</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/bill.png" OnClick="@(()=> SaveDocHandler(EnumType.SaveAndClose))" Visible="@(!pIsLockPage)">Lưu & Đóng phiếu</ToolBarButton>
     <ToolBarButton ImageUrl="../assets/printer.png">In phiếu</ToolBarButton>
 </TelerikToolBar>
 <div class="h-content-filter" style="border-top: 1px solid var(--tblr-border-color)">
@@ -30,6 +32,7 @@
                                             string color = "badge bg-cyan-lt";
                                             if (DocumentUpdate!.StatusCode == nameof(DocStatus.Closed)) color = "badge bg-green-lt";
                                             else if (DocumentUpdate!.StatusCode == nameof(DocStatus.Cancled)) color = "badge bg-red-lt";
+                                            else if (DocumentUpdate!.StatusCode == nameof(DocStatus.Borrowing)) color = "badge bg-yellow-lt";
                                             <strong class="@(color)">
                                                 @($"{DocumentUpdate.StatusName}")
                                             </strong>
@@ -75,6 +78,7 @@
                                         Ngày mượn:
                                         <TelerikDatePicker @bind-Value="@DocumentUpdate.DocDate"
                                                                 Placeholder=""
+                                                                Enabled="@(!pIsLockPage)"
                                                                 Format="@DefaultConstants.FORMAT_DATE"
                                                                 Class="btn-noborder-radius-left">
                                         </TelerikDatePicker>
@@ -83,6 +87,7 @@
                                         Ngày hẹn trả:
                                         <TelerikDatePicker @bind-Value="@DocumentUpdate.PromiseDate"
                                                                Placeholder=""
+                                                               Enabled="@(!pIsLockPage)"
                                                                Format="@DefaultConstants.FORMAT_DATE"
                                                                Class="btn-noborder-radius-left">
                                         </TelerikDatePicker>
@@ -90,9 +95,10 @@
                                     <div class="col-md-4 col-sm-12">
                                         Ngày trả:
                                         <TelerikDatePicker @bind-Value="@DocumentUpdate.DueDate"
-                                                               Placeholder=""
+                                                           Placeholder=""
+                                                           Enabled="false"
                                                            Format="@DefaultConstants.FORMAT_DATE"
-                                                               Class="btn-noborder-radius-left">
+                                                           Class="btn-noborder-radius-left">
                                         </TelerikDatePicker>
                                     </div>
                                 </div>
@@ -114,7 +120,7 @@
                 </h4>
             </div>
             <TelerikToolBar Class="border-bottom-0">
-                <ToolBarButton ImageUrl="../assets/add-new-icon.png" Title="Thêm mới sách" OnClick="@(()=> OnOpenDialogHandler())"></ToolBarButton>
+                <ToolBarButton ImageUrl="../assets/add-new-icon.png" Title="Thêm mới sách" Visible="@(!pIsLockPage)" OnClick="@(()=> OnOpenDialogHandler())"></ToolBarButton>
             </TelerikToolBar>
             <TelerikGrid Data="@ListBODetails" @ref="@RefListBODetails"
                          Height="250px"
@@ -126,7 +132,7 @@
                          Resizable="true"
                          FilterMode="@GridFilterMode.None"
                          SelectionMode="@GridSelectionMode.Single"
-
+                         @bind-SelectedItems="@SelectedBODetails"
                          ScrollMode="@GridScrollMode.Scrollable">
                 <GridSettings>
                     <GridPagerSettings InputType="PagerInputType.Input" />
@@ -137,7 +143,15 @@
                 <GridColumns>
                     <GridColumn Width="30px" MaxResizableWidth="40" TextAlign="ColumnTextAlign.Center">
                         <Template>
-                            <img src="./assets/delete-red.png" title="Xóa dòng" @onclick="@(()=> RemoveBooksHandler((context as BODetailModel)))" />
+                            @if (!pIsLockPage)
+                            {
+                                <img class="cursor-pointer" src="./assets/delete-red.png" title="Xóa dòng" @onclick="@(()=> RemoveBooksHandler((context as BODetailModel)))" />
+                            }
+                            else
+                            {
+                                <i class="fa-regular fa-pen-to-square h-link" title="Trả sách"
+                                   style="font-size: 14px; margin-right: 2px" @onclick="@(()=> ReturnBooksHandler(false, (context as BODetailModel)))"></i>
+                            }
                         </Template>
                     </GridColumn>
                     <GridColumn Field=@nameof(BODetailModel.BookId) Width="100px" Title="Mã sách"></GridColumn>
@@ -146,8 +160,12 @@
                         <Template>
                             @{
                                 var model = (context as BODetailModel)!;
-                                <i class="fa-regular fa-pen-to-square h-link" title="Chọn lại serial"
-                               style="font-size: 14px; margin-right: 2px" @onclick="@(()=> OnOpenDialogHandler(true, model.BookId))"></i>
+                                @if(!pIsLockPage)
+                                {
+                                    <i class="fa-regular fa-pen-to-square h-link" title="Chọn lại serial"
+                                        style="font-size: 14px; margin-right: 2px" @onclick="@(()=> OnOpenDialogHandler(true, model.BookId))"></i>
+                                }
+                                
                             }
                             <span>@model.SerialNumber</span>
                         </Template>
@@ -157,6 +175,7 @@
                             Tổng: @context.Sum cuốn
                         </FooterTemplate>
                     </GridColumn>
+                    <GridColumn Field=@nameof(BODetailModel.StatusCode) Width="170px" Title="Tình trạng mượn"></GridColumn>
                     <GridColumn Field=@nameof(BODetailModel.NoteForAll) Width="290px" Title="Tình trạng sách">
                         <Template>
                             @{

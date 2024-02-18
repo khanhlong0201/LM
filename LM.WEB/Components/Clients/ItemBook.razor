@@ -12,7 +12,7 @@
                 @BookName
             </div>
             <ul class="list-unstyled lh-lg mb-1">
-                <li class="text-truncate"><strong>3</strong> Cuốn</li>
+                <li class="text-truncate"><strong>@Qty</strong> Cuốn</li>
                 <li class="text-truncate">
                     Thể loại: @KindBookName
                 </li>
@@ -31,7 +31,8 @@
 </div>
 
 @code {
-
+    [Parameter] public int Qty { get; set; } = 0;
+    [Parameter] public int OnHand { get; set; } = 0;
     [Parameter] public string BookName { get; set; } = "Code dạo kí sự";
     [Parameter] public string PublisherName { get; set; } = "Kim Đồng";
     [Parameter] public string AuthorName { get; set; } = "Kim Đồng";

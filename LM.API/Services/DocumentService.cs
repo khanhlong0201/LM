@@ -3,6 +3,7 @@ using LM.Models;
 using LM.Models.Shared;
 using Newtonsoft.Json;
 using NPOI.POIFS.FileSystem;
+using NPOI.SS.Formula.Functions;
 using System.Data;
 using System.Data.SqlClient;
 using System.Net;
@@ -14,6 +15,7 @@ namespace LM.API.Services
         Task<ResponseModel> UpdateBorrowOrderAsync(RequestModel pRequest);
         Task<IEnumerable<BorrowOrderModel>> GetBorrowOrdersAsync(SearchModel pSearchData);
         Task<Dictionary<string, string>?> GetDocumentById(string pVoucherNo);
+        Task<ResponseModel> ReturnBooksAsync(RequestModel pRequest);
     }    
     public class DocumentService : IDocumentService
     {
@@ -92,7 +94,7 @@ namespace LM.API.Services
                     case nameof(EnumType.Update):
                         queryString = @"Update BorrowOrders set [StaffCode] = @StaffCode, [Description] = @Description
                                              , [DocDate] = @DocDate, [DueDate] = @DueDate, [PromiseDate] = @PromiseDate, [StatusCode] = @StatusCode
-                                             , [DateCreate] = @DateTimeNow, [UserCreate] = @UserId 
+                                             , [DateUpdate] = @DateTimeNow, [UserUpdate] = @UserId 
                                          where VoucherNo = @VoucherNo";
                         sqlParameters = getBOParameters(oDraft, pRequest.UserId);
                         await _context.BeginTranAsync();
@@ -161,12 +163,14 @@ namespace LM.API.Services
                                             else N'Sinh viên' end as StaffTypeName
 		                                  , case T0.[StatusCode]  when '{nameof(DocStatus.Closed)}' then N'Đã trả sách'
                                             when '{nameof(DocStatus.Cancled)}' then N'Đã hủy phiếu'
+                                            when '{nameof(DocStatus.Borrowing)}' then N'Đang mượn'
                                             else N'Chờ xử lý' end as [StatusName]
 		                                  , T1.FullName, T1.PhoneNumber, T1.Email, T1.Department
                                        from BorrowOrders as T0 with(nolock)
                                  inner join Staffs as T1 with(nolock) on T0.StaffCode = T1.StaffCode 
                                       where cast(T0.[DocDate] as Date) between cast(@FromDate as Date) and cast(@ToDate as Date)
                                             and (@StatusId = 'All' or (@StatusId <> 'All' and T0.[StatusCode] = @StatusId))
+                                            and (@TypeBO = 'All' or (@TypeBO <> 'All' and T0.[TypeBO] = @TypeBO))
                                    order by T0.DateCreate desc";
                 SqlParameter[] sqlParameters = new SqlParameter[4];
                 sqlParameters[0] = new SqlParameter("@StatusId", pSearchData.StatusId);
@@ -213,15 +217,16 @@ namespace LM.API.Services
                 SqlParameter[] sqlParameters = new SqlParameter[1];
                 sqlParameters[0] = new SqlParameter("@VoucherNo", pVoucherNo);
 
-                string queryString = @"select T0.*
+                string queryString = @$"select T0.*
 					        		        , case StaffType when N'SV' then N'Sinh viên' 
                                               when N'GV' then N'Giáo viên' when N'CB' then N'Cán bộ'
                                               else N'Sinh viên' end as StaffTypeName
 		                                    , case T0.[StatusCode]  when '{nameof(DocStatus.Closed)}' then N'Đã trả sách'
                                               when '{nameof(DocStatus.Cancled)}' then N'Đã hủy phiếu'
+                                              when '{nameof(DocStatus.Borrowing)}' then N'Đang mượn'
                                               else N'Chờ xử lý' end as [StatusName]
                                             , T2.FullName, T2.PhoneNumber, T2.Email, T2.Department
-									        , T3.BookId, T3.BookName, T1.StatusCode, T1.NoteForAll, T1.[Id], T1.[Quantity]
+									        , T3.BookId, T3.BookName, T1.StatusCode as DetailStatusCode, T1.NoteForAll, T1.[Id], T1.[Quantity]
 									        , T1.BookSerialId, T4.SerialNumber
                             from BorrowOrders as T0 with(nolock)
                                    inner join BODetails as T1 with(nolock) on T0.VoucherNo = T1.VoucherNo
@@ -260,14 +265,14 @@ namespace LM.API.Services
                     foreach (DataRow item in dt.Rows)
                     {
                         BODetailModel oLine = new BODetailModel();
-                        oLine.BookSerialId = Convert.ToInt32(dr["BookSerialId"]);
-                        oLine.BookId = Convert.ToInt32(dr["BookId"]);
-                        oLine.BookName = Convert.ToString(dr["BookName"]);
-                        oLine.SerialNumber = Convert.ToString(dr["SerialNumber"]);
-                        oLine.StatusCode = Convert.ToString(dr["StatusCode"]);
-                        oLine.NoteForAll = Convert.ToString(dr["NoteForAll"]);
-                        oLine.Id = Convert.ToInt32(dr["Id"]);
-                        oLine.Quantity = Convert.ToInt32(dr["Quantity"]);
+                        oLine.BookSerialId = Convert.ToInt32(item["BookSerialId"]);
+                        oLine.BookId = Convert.ToInt32(item["BookId"]);
+                        oLine.BookName = Convert.ToString(item["BookName"]);
+                        oLine.SerialNumber = Convert.ToString(item["SerialNumber"]);
+                        oLine.StatusCode = Convert.ToString(item["DetailStatusCode"]);
+                        oLine.NoteForAll = Convert.ToString(item["NoteForAll"]);
+                        oLine.Id = Convert.ToInt32(item["Id"]);
+                        oLine.Quantity = Convert.ToInt32(item["Quantity"]);
                         lstDetails.Add(oLine);
                     }
                     data = new Dictionary<string, string>()
@@ -283,6 +288,111 @@ namespace LM.API.Services
                 await _context.DisConnect();
             }
             return data;
+        }
+
+        public async Task<ResponseModel> ReturnBooksAsync(RequestModel pRequest)
+        {
+            ResponseModel response = new ResponseModel();
+            try
+            {
+                await _context.Connect();
+                string queryString = "";
+                bool isUpdated = false;
+                string status = nameof(DocStatus.Closed);
+                BorrowOrderModel oDraft = JsonConvert.DeserializeObject<BorrowOrderModel>(pRequest.Json + "")!;
+                List<BODetailModel> lstDraftDetails = JsonConvert.DeserializeObject<List<BODetailModel>>(pRequest.JsonDetail + "");
+                SqlParameter[] sqlParameters = new SqlParameter[1];
+                async Task<bool> ExecQuery()
+                {
+                    var data = await _context.AddOrUpdateAsync(queryString, sqlParameters, CommandType.Text);
+                    if (data != null && data.Rows.Count > 0)
+                    {
+                        response.StatusCode = int.Parse(data.Rows[0]["StatusCode"]?.ToString() ?? "-1");
+                        response.Message = data.Rows[0]["ErrorMessage"]?.ToString();
+                        return response.StatusCode == 0;
+                    }
+                    return false;
+                }
+                if (pRequest.Type == nameof(DocStatus.All))
+                {
+
+                    // nếu trả hết
+                    queryString = @$"Update BorrowOrders 
+                                        set Description = @Description, StatusCode = @StatusCode, [DueDate] = @DateTimeNow
+                                          , [DateUpdate] = @DateTimeNow, [UserUpdate] = @UserId where VoucherNo = @VoucherNo";
+                    oDraft.StatusCode = status;
+                    sqlParameters = getBOParameters(oDraft, pRequest.UserId);
+                    await _context.BeginTranAsync();
+                    isUpdated = await ExecQuery();
+                    if (isUpdated)
+                    {
+                        // cập nhật thông tin chi tiết sách
+                        queryString = @$"Update BODetails 
+                                            set NoteForAll = @NoteForAll, StatusCode = @StatusCode
+                                          where Id = @Id";
+                        foreach (var oItem in lstDraftDetails)
+                        {
+                            oItem.VoucherNo = oDraft.VoucherNo;
+                            oItem.StatusCode = status;
+                            sqlParameters = getBODetailsParameters(oItem);
+                            isUpdated = await ExecQuery();
+                            if (!isUpdated)
+                            {
+                                await _context.RollbackAsync();
+                                return response;
+                            }
+                        }
+                    }
+                    if (isUpdated) await _context.CommitTranAsync();
+                    else await _context.RollbackAsync();
+                }  
+                else
+                {
+                    // Trả 1 cuốn sách
+                    queryString = @$"Update BODetails 
+                                            set NoteForAll = @NoteForAll, StatusCode = @StatusCode
+                                          where Id = @Id";
+                    await _context.BeginTranAsync();
+                    var oItem = lstDraftDetails.First();
+                    oItem.VoucherNo = oDraft.VoucherNo;
+                    oItem.StatusCode = status;
+                    sqlParameters = getBODetailsParameters(oItem);
+                    isUpdated = await ExecQuery();
+                    if(isUpdated)
+                    {
+                        // Kiểm tra đã hết sách chưa
+                        sqlParameters = new SqlParameter[1];
+                        sqlParameters[0] = new SqlParameter("@VoucherNo", oDraft.VoucherNo);
+                        int count = await _context.ExecuteScalarAsync($"select count(*) from [dbo].[BODetails] where VoucherNo = @VoucherNo and StatusCode != '{DocStatus.Closed}'", sqlParameters);
+                        if(count == 0)
+                        {
+                            // Đóng luôn phiếu
+                            // nếu trả hết
+                            queryString = @$"Update BorrowOrders 
+                                        set Description = @Description, StatusCode = @StatusCode, [DueDate] = @DateTimeNow
+                                          , [DateUpdate] = @DateTimeNow, [UserUpdate] = @UserId where VoucherNo = @VoucherNo";
+                            oDraft.StatusCode = status;
+                            sqlParameters = getBOParameters(oDraft, pRequest.UserId);
+                            isUpdated = await ExecQuery();
+                        }    
+                    }
+
+                    if (isUpdated) await _context.CommitTranAsync();
+                    else await _context.RollbackAsync();
+                }
+                
+            }
+            catch (Exception ex)
+            {
+                response.StatusCode = (int)HttpStatusCode.BadRequest;
+                response.Message = ex.Message;
+                await _context.RollbackAsync();
+            }
+            finally
+            {
+                await _context.DisConnect();
+            }
+            return response;
         }
         #region Private Functions
 

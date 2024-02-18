@@ -12,8 +12,7 @@ public class RequestModel
     public string? Json { get; set; }
     public string? Type { get; set; }
     public string? JsonDetail { get; set; }
-    public int BaseEntry { get; set; }
-    public int BaseLine { get; set; }
+    public string? VoucherNo { get; set; }
 }
 
 public class ResponseModel
@@ -95,7 +94,8 @@ public enum EnumType
     @Update,
     @Delete,
     @SaveAndClose,
-    @ChangePassWord
+    @ChangePassWord,
+    @Borrowed
 }
 
 public enum EnumTable
