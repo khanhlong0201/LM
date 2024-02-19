@@ -18,6 +18,7 @@ namespace LM.API.Services
         Task<Dictionary<string, string>?> GetDocumentById(string pVoucherNo);
         Task<ResponseModel> ReturnBooksAsync(RequestModel pRequest);
         Task<Dictionary<string, int>?> GetReportIndexAsync();
+        Task<ResponseModel> CancleDocList(RequestModel pRequest);
     }    
     public class DocumentService : IDocumentService
     {
@@ -434,6 +435,45 @@ namespace LM.API.Services
                 await _context.DisConnect();
             }
             return data;
+        }
+
+        public async Task<ResponseModel> CancleDocList(RequestModel pRequest)
+        {
+            ResponseModel response = new ResponseModel();
+            try
+            {
+                //pRequest.Type: Chưa table Name
+                await _context.Connect();
+                SqlParameter[] sqlParameters;
+                string queryString = @$"UPDATE [dbo].[{pRequest.Type}] 
+                                      set [StatusCode] = '{nameof(DocStatus.Cancled)}', [ReasonDelete] = @ReasonDelete, [DateUpdate] = @DateTimeNow, [UserUpdate] = @UserId
+                                    where [VoucherNo] in ( select value from STRING_SPLIT(@ListIds, ',') ) and [IsDelete] = 0";
+                sqlParameters = new SqlParameter[4];
+                sqlParameters[0] = new SqlParameter("@ReasonDelete", pRequest.JsonDetail ?? (object)DBNull.Value);
+                sqlParameters[1] = new SqlParameter("@ListIds", pRequest.Json); // "1,2,3,4"
+                sqlParameters[2] = new SqlParameter("@UserId", pRequest.UserId);
+                sqlParameters[3] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+                var data = await _context.AddOrUpdateAsync(queryString, sqlParameters, CommandType.Text);
+                if (data != null && data.Rows.Count > 0)
+                {
+                    response.StatusCode = int.Parse(data.Rows[0]["StatusCode"]?.ToString() ?? "-1");
+                    response.Message = data.Rows[0]["ErrorMessage"]?.ToString();
+                }
+
+                if (response.StatusCode == 0) await _context.CommitTranAsync();
+                else await _context.RollbackAsync();
+            }
+            catch (Exception ex)
+            {
+                response.StatusCode = (int)HttpStatusCode.BadRequest;
+                response.Message = ex.Message;
+                await _context.RollbackAsync();
+            }
+            finally
+            {
+                await _context.DisConnect();
+            }
+            return response;
         }
         #region Private Functions
 

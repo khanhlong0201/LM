@@ -331,6 +331,57 @@ public class MasterDataService : IMasterDataService
                     sqlParameters[3] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
                     response = await deleteDataAsync(nameof(EnumTable.Series), queryString, sqlParameters);
                     break;
+                case nameof(EnumTable.BookSerials):
+                    queryString = "[SeriesId] in ( select value from STRING_SPLIT(@ListIds, ',') ) and [IsDelete] = 0";
+                    sqlParameters = new SqlParameter[4];
+                    sqlParameters[0] = new SqlParameter("@ReasonDelete", pRequest.JsonDetail ?? (object)DBNull.Value);
+                    sqlParameters[1] = new SqlParameter("@ListIds", pRequest.Json); // "1,2,3,4"
+                    sqlParameters[2] = new SqlParameter("@UserId", pRequest.UserId);
+                    sqlParameters[3] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+
+                    responseCheck = await CheckKeyBindingBeforeDeleting(pRequest);
+                    if (responseCheck != null && responseCheck.StatusCode == -1)
+                    {
+                        response.StatusCode = -1;
+                        response.Message = responseCheck.Message;
+                        return response;
+                    }
+                    response = await deleteDataAsync(nameof(EnumTable.BookSerials), queryString, sqlParameters);
+                    break;
+                case nameof(EnumTable.Authors):
+                    queryString = "[SeriesId] in ( select value from STRING_SPLIT(@ListIds, ',') ) and [IsDelete] = 0";
+                    sqlParameters = new SqlParameter[4];
+                    sqlParameters[0] = new SqlParameter("@ReasonDelete", pRequest.JsonDetail ?? (object)DBNull.Value);
+                    sqlParameters[1] = new SqlParameter("@ListIds", pRequest.Json); // "1,2,3,4"
+                    sqlParameters[2] = new SqlParameter("@UserId", pRequest.UserId);
+                    sqlParameters[3] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+
+                    responseCheck = await CheckKeyBindingBeforeDeleting(pRequest);
+                    if (responseCheck != null && responseCheck.StatusCode == -1)
+                    {
+                        response.StatusCode = -1;
+                        response.Message = responseCheck.Message;
+                        return response;
+                    }
+                    response = await deleteDataAsync(nameof(EnumTable.Authors), queryString, sqlParameters);
+                    break;
+                case nameof(EnumTable.@Locations):
+                    queryString = "[SeriesId] in ( select value from STRING_SPLIT(@ListIds, ',') ) and [IsDelete] = 0";
+                    sqlParameters = new SqlParameter[4];
+                    sqlParameters[0] = new SqlParameter("@ReasonDelete", pRequest.JsonDetail ?? (object)DBNull.Value);
+                    sqlParameters[1] = new SqlParameter("@ListIds", pRequest.Json); // "1,2,3,4"
+                    sqlParameters[2] = new SqlParameter("@UserId", pRequest.UserId);
+                    sqlParameters[3] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+
+                    responseCheck = await CheckKeyBindingBeforeDeleting(pRequest);
+                    if (responseCheck != null && responseCheck.StatusCode == -1)
+                    {
+                        response.StatusCode = -1;
+                        response.Message = responseCheck.Message;
+                        return response;
+                    }
+                    response = await deleteDataAsync(nameof(EnumTable.Authors), queryString, sqlParameters);
+                    break;
                 default:
                     response.StatusCode = (int)HttpStatusCode.BadRequest;
                     response.Message = "Không xác định được phương thức!";
@@ -1472,6 +1523,31 @@ public class MasterDataService : IMasterDataService
         if (!Convert.IsDBNull(record["FilePath"])) book.FilePath = Convert.ToString(record["FilePath"]);
         if (!Convert.IsDBNull(record["ImageId"])) book.ImageId = Convert.ToInt32(record["ImageId"]);
         return book;
+    }
+
+
+    /// <summary>
+    /// lấy kết quả báo cáo
+    /// </summary>
+    /// <param name="isAdmin"></param>
+    /// <returns></returns>
+    private async Task<ResponseModel> CheckKeyBindingBeforeDeleting(RequestModel request = null)
+    {
+        ResponseModel data = new ResponseModel();
+        try
+        {
+            SqlParameter[] sqlParameters = new SqlParameter[2];
+            sqlParameters[0] = new SqlParameter("@Type", request.Type); // tableName
+            sqlParameters[1] = new SqlParameter("@Json", request.Json); // ds các id cần update isdelete = 1
+            var results = await _context.GetDataSetAsync(Constants.LM_CHECK_KEY_BINDING_BEFORE_DELETE, sqlParameters, commandType: CommandType.StoredProcedure);
+            if (results.Tables != null && results.Tables.Count > 0 && results.Tables[0].Rows.Count > 0)
+            {
+                data.StatusCode = int.Parse(results.Tables[0].Rows[0]["StatusCode"].ToString());
+                data.Message = results.Tables[0].Rows[0]["Message"].ToString();
+            }
+        }
+        catch (Exception) { throw; }
+        return data;
     }
     #endregion Private Funtions
 }

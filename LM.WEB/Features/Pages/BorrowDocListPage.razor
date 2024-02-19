@@ -68,7 +68,7 @@
 <TelerikToolBar Class="border-bottom-0">
     <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
     <ToolBarButton ImageUrl="../assets/remove_grid.png"
-                   Enabled="@(ItemFilter.StatusId == nameof(DocStatus.Pending))">Hủy phiếu</ToolBarButton>
+                   OnClick="@(()=> OpenDialogDeleteHandler())">Hủy phiếu</ToolBarButton>
 </TelerikToolBar>
 
 <div class="h-table-content" style=" height: calc(100vh - 195px);">
@@ -152,3 +152,14 @@
         </GridColumns>
     </TelerikGrid>
 </div>
+
+<HDialog @bind-IsVisible="@IsShowDialogDelete"
+         SaveAndClosed="@(()=> CancleDocListHandler())"
+         IsShowButtonSaveAdnCreate="false"
+         Width="50%"
+         Title="Xác nhận hủy phiếu mượn">
+    <div>
+        <HLabel For="txtReason" Value="Lý do hủy phiếu mượn:" IsRequired="true" />
+        <TelerikTextBox @bind-Value="@ReasonDeny" Id="txtReason" />
+    </div>
+</HDialog>

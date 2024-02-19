@@ -173,6 +173,65 @@ namespace LM.WEB.Features.Controllers
             }
         }
 
+
+        protected void OpenDialogDeleteHandler()
+        {
+            try
+            {
+                if (SelectedDocuments == null || !SelectedDocuments.Any())
+                {
+                    ShowWarning("Vui lòng chọn dòng để hủy!");
+                    return;
+                }
+                var checkData = SelectedDocuments.FirstOrDefault(m => m.StatusCode != nameof(DocStatus.Pending));
+                if (checkData != null)
+                {
+                    ShowWarning("Chỉ được phép hủy các phiếu mượn có tình trạng [Chờ xử lý]!");
+                    return;
+                }
+                ReasonDeny = "";
+                IsShowDialogDelete = true;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "SalesDocListController", "OpenDialogDeleteHandler");
+                ShowError(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// xác nhận hủy phiếu mượn
+        /// </summary>
+        protected async void CancleDocListHandler()
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(ReasonDeny))
+                {
+                    ShowWarning("Vui lòng điền lý do hủy đơn!");
+                    return;
+                }
+                await ShowLoader();
+                bool isSuccess = await _documentService!.CancleDocList(string.Join(",", SelectedDocuments!.Select(m => m.VoucherNo))
+                        , ReasonDeny, pUserId, nameof(EnumTable.BorrowOrders));
+                if (isSuccess)
+                {
+                    IsShowDialogDelete = false;
+                    await getDataDocuments();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "SalesDocListController", "CancleDocListHandler");
+                ShowError(ex.Message);
+            }
+            finally
+            {
+                await ShowLoader(false);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
         #endregion
     }
 }

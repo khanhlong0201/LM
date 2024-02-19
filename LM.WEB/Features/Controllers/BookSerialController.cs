@@ -1,4 +1,6 @@
 ﻿using LM.Models;
+using LM.WEB.Commons;
+using LM.WEB.Components;
 using LM.WEB.Models;
 using LM.WEB.Services;
 using LM.WEB.Shared;
@@ -26,6 +28,7 @@ namespace LM.WEB.Features.Controllers
         public bool IsShowDialog { get; set; }
         public bool IsCreate { get; set; } = true;
         SearchModel pSearchModel = new SearchModel();
+        public HConfirm? _rDialogs { get; set; }
 
         #region Override Functions
         protected override async Task OnInitializedAsync()
@@ -165,6 +168,37 @@ namespace LM.WEB.Features.Controllers
         }
 
         protected void OnRowDoubleClickHandler(GridRowClickEventArgs args) => OnOpenDialogHandler(EnumType.Update, args.Item as BookSerialModel);
+
+        protected async void DeleteDataHandler()
+        {
+            try
+            {
+                if (SelectedBookSerials == null || !SelectedBookSerials.Any())
+                {
+                    ShowWarning(DefaultConstants.MESSAGE_NO_CHOSE_DATA);
+                    return;
+                }
+                var confirm = await _rDialogs!.ConfirmAsync($" {DefaultConstants.MESSAGE_CONFIRM_DELETE} ");
+                if (!confirm) return;
+                await ShowLoader();
+                bool isSuccess = await _masterDataService!.DeleteDataAsync(nameof(EnumTable.@BookSerials), "", string.Join(",", SelectedBookSerials.Select(m => m.Id)), pUserId);
+                if (isSuccess)
+                {
+                    await getBookSerials();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "BookSerialController", "DeleteDataHandler");
+                ShowError(ex.Message);
+            }
+            finally
+            {
+                await ShowLoader(false);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+
         #endregion
     }
 }

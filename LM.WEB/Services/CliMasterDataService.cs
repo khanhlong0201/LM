@@ -132,7 +132,6 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
                 if (httpResponse.IsSuccessStatusCode)
                 {
                     string sMessage = pAction == nameof(EnumType.Add) ? DefaultConstants.MESSAGE_INSERT : DefaultConstants.MESSAGE_UPDATE;
-                    
                     if(pAction == nameof(EnumType.ChangePassWord)) _toastService.ShowSuccess($"{sMessage} Mật khẩu!");
                     else _toastService.ShowSuccess($"{sMessage} Nhân viên!");
                     return true;

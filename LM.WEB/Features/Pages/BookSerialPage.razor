@@ -3,7 +3,7 @@
 <TelerikToolBar Class="border-bottom-0">
     <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
     <ToolBarButton ImageUrl="../assets/add-new-icon.png" OnClick="@(()=> OnOpenDialogHandler())">Thêm mới</ToolBarButton>
-    <ToolBarButton ImageUrl="../assets/remove_grid.png">Xóa dòng</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/remove_grid.png" OnClick="@DeleteDataHandler">Xóa dòng</ToolBarButton>
 </TelerikToolBar>
 
 <div class="h-table-content" style=" height: calc(100vh - 170px);">
@@ -63,7 +63,7 @@
         </GridColumns>
     </TelerikGrid>
 </div>
-
+<HConfirm @ref="@_rDialogs" />
 <HDialog @bind-IsVisible="@IsShowDialog"
          SaveAndClosed="@(()=> SaveDataHandler())"
          Title="@(IsCreate ? "Thêm mới mã sách/serial" : $"Cập nhật mã sách/serial {BookSerialUpdate!.SerialNumber}")">
