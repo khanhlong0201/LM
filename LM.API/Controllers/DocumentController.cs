@@ -134,5 +134,32 @@ namespace LM.API.Controllers
             }
 
         }
+
+        [HttpPost]
+        [Route("CancleDocList")]
+        public async Task<IActionResult> CancleDocList([FromBody] RequestModel request)
+        {
+            try
+            {
+                var response = await _documentervice.CancleDocList(request);
+
+                if (response == null || response.StatusCode != 0) return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = response?.Message ?? "Vui lòng liên hệ IT để được hổ trợ."
+                });
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DocumentController", "CancleDocList");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+
+            }
+        }
     }
 }

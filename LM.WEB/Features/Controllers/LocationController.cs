@@ -1,4 +1,6 @@
 ﻿using LM.Models;
+using LM.WEB.Commons;
+using LM.WEB.Components;
 using LM.WEB.Models;
 using LM.WEB.Services;
 using LM.WEB.Shared;
@@ -25,6 +27,7 @@ namespace LM.WEB.Features.Controllers
         public EditContext? _EditContext { get; set; }
         public bool IsShowDialog { get; set; }
         public bool IsCreate { get; set; } = true;
+        public HConfirm? _rDialogs { get; set; }
 
         #region Override Functions
         protected override async Task OnInitializedAsync()
@@ -158,6 +161,36 @@ namespace LM.WEB.Features.Controllers
         }
 
         protected void OnRowDoubleClickHandler(GridRowClickEventArgs args) => OnOpenDialogHandler(EnumType.Update, args.Item as LocationModel);
+
+        protected async void DeleteDataHandler()
+        {
+            try
+            {
+                if (SelectedLocations == null || !SelectedLocations.Any())
+                {
+                    ShowWarning(DefaultConstants.MESSAGE_NO_CHOSE_DATA);
+                    return;
+                }
+                var confirm = await _rDialogs!.ConfirmAsync($" {DefaultConstants.MESSAGE_CONFIRM_DELETE} ");
+                if (!confirm) return;
+                await ShowLoader();
+                bool isSuccess = await _masterDataService!.DeleteDataAsync(nameof(EnumTable.Locations), "", string.Join(",", SelectedLocations.Select(m => m.Id)), pUserId);
+                if (isSuccess)
+                {
+                    await getLocations();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "UserController", "DeleteDataHandler");
+                ShowError(ex.Message);
+            }
+            finally
+            {
+                await ShowLoader(false);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
         #endregion
     }
 }

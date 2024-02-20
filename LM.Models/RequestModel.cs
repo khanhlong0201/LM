@@ -108,6 +108,10 @@ public enum EnumTable
     @Readers,
     @Batchs,
     @Series,
+    @BookSerials,
+    @Authors,
+    @Locations,
+    @BorrowOrders
 }
 
 public enum DocStatus
