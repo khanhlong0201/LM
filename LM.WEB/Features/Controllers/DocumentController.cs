@@ -1,11 +1,13 @@
 ﻿using LM.Models;
 using LM.Models.Shared;
+using LM.WEB.Commons;
 using LM.WEB.Models;
 using LM.WEB.Services;
 using LM.WEB.Shared;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.JSInterop;
 using Newtonsoft.Json;
 using NPOI.POIFS.FileSystem;
 using System.Net;
@@ -21,9 +23,12 @@ namespace LM.WEB.Features.Controllers
         [Inject] private ICliMasterDataService? _masterDataService { get; init; }
         [Inject] private ICliDocumentService? _documentService { get; init; }
         [Inject] private NavigationManager? _navigationManager { get; init; }
+        [Inject] private IWebHostEnvironment? _webHostEnvironment { get; init; }
+        [Inject] public IJSRuntime? _jsRuntime { get; init; }
         #endregion
 
         #region Properties
+        private const string TEMPLATE_PRINT = "HtmlPrints\\PrintDoc.html";
         public BorrowOrderModel DocumentUpdate { get; set; } = new BorrowOrderModel();
         public List<BODetailModel>? ListBODetails { get; set; }
         public IEnumerable<BODetailModel> SelectedBODetails { get; set; } = new List<BODetailModel>();
@@ -543,7 +548,82 @@ namespace LM.WEB.Features.Controllers
                 await ShowLoader(false);
                 await InvokeAsync(StateHasChanged);
             }
-        }    
+        }
+
+        /// <summary>
+        /// in biên bản cam kết và đồng thuận
+        /// </summary>
+        protected async Task PrintDocHandler()
+        {
+            try
+            {
+                
+                //<> Đọc danh sách tình trạng sức khỏe in Cam kết và đồng thuận </>
+                //=============== xử lý đọc thông tin file html
+                string sFilePath = $"{this._webHostEnvironment!.WebRootPath}\\{TEMPLATE_PRINT}";
+                StreamReader streamReader = new StreamReader(sFilePath);
+                string sHtmlExport = streamReader.ReadToEnd();
+                streamReader.Close();
+                streamReader.Dispose();
+                //replace html
+                if (string.IsNullOrWhiteSpace(sHtmlExport)) return;
+                sHtmlExport = sHtmlExport.Replace("{bm-VoucherNo}", $"{DocumentUpdate.VoucherNo}");
+                sHtmlExport = sHtmlExport.Replace("{bm-StatusName}", $"{DocumentUpdate.StatusName}");
+                sHtmlExport = sHtmlExport.Replace("{bm-DateCreate}", $"{DocumentUpdate.DateCreate?.ToString(DefaultConstants.FORMAT_DATE_TIME)}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-CusNo}", $"{DocumentUpdate.CusNo}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-BranchName}", $"{DocumentUpdate.BranchName}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-FullName}", $"{DocumentUpdate.FullName}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-DateOfBirth}", DocumentUpdate.DateOfBirth == null ? DATA_CUSTOMER_EMPTY
+                //    : $"{DocumentUpdate.DateOfBirth.Value.ToString(DefaultConstants.FORMAT_DATE_TIME)}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-CINo}", $"{DocumentUpdate.CINo}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-Phone1}", $"{DocumentUpdate.Phone1}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-Zalo}", $"{DocumentUpdate.Zalo}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-FaceBook}", $"{DocumentUpdate.FaceBook}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-Address}", $"{DocumentUpdate.Address}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-Remark}", $"{DocumentUpdate.Remark}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-StatusBefore}", $"{DocumentUpdate.StatusBefore}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-SkinType}", $"{DocumentUpdate.SkinType}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-HealthStatus}", $"{DocumentUpdate.HealthStatus}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-WarrantyPeriod}", $"{lstItem[0].WarrantyPeriod}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-QtyWarranty}", $"{lstItem[0].QtyWarranty}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-ServiceName}", $"{lstItem[0].ServiceCode} - {lstItem[0].ServiceName}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-Amount}", $"{lstItem[0].Amount.ToString(DefaultConstants.FORMAT_CURRENCY)}");
+                //sHtmlExport = sHtmlExport.Replace("{bm-Weakness}", $"");
+                //sHtmlExport = sHtmlExport.Replace("{bm-Accept}", $"");
+                //sHtmlExport = sHtmlExport.Replace("{bm-ChemicalFormula}", $"");
+                string htmlStateOfHealth = "";
+                // Lặp qua danh sách với bước là 3 phần tử mỗi lần
+                //for (int i = 0; i < lstStateOfHealth.Count; i += 3)
+                //{
+                //    // Lấy 3 phần tử từ danh sách, bắt đầu từ vị trí i
+                //    var currentGroup = lstStateOfHealth.Skip(i).Take(3);
+                //    string htmlTd = "";
+
+                //    foreach (var oStateOfHealth in currentGroup)
+                //    {
+                //        htmlTd += @$"<td style=""border: 1px solid #dddddd;text-align: center;padding:1px;"">
+                //                        <span style=""font-size: 10.5px !important"">{oStateOfHealth.EnumName}</span>
+                //                    </td>
+                //                    <td style=""border: 1px solid #dddddd; width: 38px; padding: 1px; text-align: center; font-size: 11px !important"">Có <input type=""checkbox"" style=""height: 12px;width: 12px;"" /> </td>
+                //                    <td style=""border: 1px solid #dddddd; width: 59px; padding: 1px; text-align: center; font-size: 11px !important"">Không <input type=""checkbox"" style=""height: 12px;width: 12px;"" /></td> ";
+                //    }
+                //    htmlStateOfHealth += @$"<tr>{htmlTd}</tr> ";
+                //}
+                sHtmlExport = sHtmlExport.Replace("{bm-lstStateOfHealth}", $"{htmlStateOfHealth}");
+                //in
+                await _jsRuntime!.InvokeVoidAsync("printHtml", sHtmlExport);
+
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "DocumentController", "PrintCommitedDocHandler");
+                ShowError(ex.Message);
+            }
+            finally
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }
         #endregion
     }
 }

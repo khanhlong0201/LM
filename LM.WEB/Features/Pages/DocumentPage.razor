@@ -6,7 +6,7 @@
                    Visible="@(pIsLockPage && DocumentUpdate.StatusCode == nameof(DocStatus.Borrowing))">Trả sách</ToolBarButton>
     <ToolBarButton ImageUrl="../assets/save-folder.png" OnClick="@(()=> SaveDocHandler())" Visible="@(!pIsLockPage)">Lưu phiếu</ToolBarButton>
     <ToolBarButton ImageUrl="../assets/bill.png" OnClick="@(()=> SaveDocHandler(EnumType.SaveAndClose))" Visible="@(!pIsLockPage)">Lưu & Đóng phiếu</ToolBarButton>
-    <ToolBarButton ImageUrl="../assets/printer.png">In phiếu</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/printer.png" OnClick="@(async()=>await PrintDocHandler())">In phiếu</ToolBarButton>
 </TelerikToolBar>
 <div class="h-content-filter" style="border-top: 1px solid var(--tblr-border-color)">
     <div class="card card-lg mt-1" style="padding: 5px">
