@@ -161,5 +161,26 @@ namespace LM.API.Controllers
 
             }
         }
+
+        [HttpGet]
+        [Route("GetDocumentByStaff")]
+        public async Task<IActionResult> GetDocumentByStaff(string pStaffCode)
+        {
+            try
+            {
+                var data = await _documentervice.GetDocumentByStaffAsync(pStaffCode);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DocumentController", "GetDocumentByStaff");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+
+        }
     }
 }

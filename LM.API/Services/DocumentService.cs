@@ -19,6 +19,7 @@ namespace LM.API.Services
         Task<ResponseModel> ReturnBooksAsync(RequestModel pRequest);
         Task<Dictionary<string, int>?> GetReportIndexAsync();
         Task<ResponseModel> CancleDocList(RequestModel pRequest);
+        Task<IEnumerable<BorrowOrderModel>> GetDocumentByStaffAsync(string pStaffCode);
     }    
     public class DocumentService : IDocumentService
     {
@@ -479,6 +480,66 @@ namespace LM.API.Services
             }
             return response;
         }
+        
+        public async Task<IEnumerable<BorrowOrderModel>> GetDocumentByStaffAsync(string pStaffCode)
+        {
+            IEnumerable<BorrowOrderModel> data;
+            try
+            {
+                await _context.Connect();
+                SqlParameter[] sqlParameters = new SqlParameter[1];
+                sqlParameters[0] = new SqlParameter("@StaffCode", pStaffCode);
+                string queryString = @$"select T0.*
+                                          , case StaffType when N'SV' then N'Sinh viên' 
+                                            when N'GV' then N'Giáo viên' when N'CB' then N'Cán bộ'
+                                            else N'Sinh viên' end as StaffTypeName
+		                                  , case T0.[StatusCode]  when '{nameof(DocStatus.Closed)}' then N'Đã trả sách'
+                                            when '{nameof(DocStatus.Cancled)}' then N'Đã hủy phiếu'
+                                            when '{nameof(DocStatus.Borrowing)}' then N'Đang mượn'
+                                            else N'Chờ xử lý' end as [StatusName]
+		                                  , T1.FullName, T1.PhoneNumber, T1.Email, T1.Department, T1.Address
+										  , (select T3.BookId, T3.BookName, T01.StatusCode as DetailStatusCode, T01.NoteForAll, T01.[Id], T01.[Quantity]
+									        , T01.BookSerialId, T4.SerialNumber from BODetails as T01 with(nolock) 
+										  inner join Staffs as T2 with(nolock) on T0.StaffCode = T2.StaffCode 
+                                          inner join Books as T3 with(nolock) on T01.BookId = T3.BookId
+										  inner join  BookSerials as T4 with(nolock) on T01.BookSerialId = T4.Id
+										    where T0.VoucherNo = T01.VoucherNo for json path) as 'JsonDetails'
+                                       from BorrowOrders as T0 with(nolock)
+                                 inner join Staffs as T1 with(nolock) on T0.StaffCode = T1.StaffCode 
+                                      where T1.StaffCode = @StaffCode
+                                   order by T0.DateCreate desc";
+                Func<IDataRecord, BorrowOrderModel> readData = record =>
+                {
+                    BorrowOrderModel model = new BorrowOrderModel();
+                    if (!Convert.IsDBNull(record["VoucherNo"])) model.VoucherNo = Convert.ToString(record["VoucherNo"]);
+                    if (!Convert.IsDBNull(record["StatusCode"])) model.StatusCode = Convert.ToString(record["StatusCode"]);
+                    if (!Convert.IsDBNull(record["StatusName"])) model.StatusName = Convert.ToString(record["StatusName"]);
+                    if (!Convert.IsDBNull(record["StaffCode"])) model.StaffCode = Convert.ToString(record["StaffCode"]);
+                    if (!Convert.IsDBNull(record["FullName"])) model.FullName = Convert.ToString(record["FullName"]);
+                    if (!Convert.IsDBNull(record["PhoneNumber"])) model.PhoneNumber = Convert.ToString(record["PhoneNumber"]);
+                    if (!Convert.IsDBNull(record["StaffTypeName"])) model.StaffTypeName = Convert.ToString(record["StaffTypeName"]);
+                    if (!Convert.IsDBNull(record["Address"])) model.Address = Convert.ToString(record["Address"]);
+                    if (!Convert.IsDBNull(record["Description"])) model.Description = Convert.ToString(record["Description"]);
+                    if (!Convert.IsDBNull(record["DocDate"])) model.DocDate = Convert.ToDateTime(record["DocDate"]);
+                    if (!Convert.IsDBNull(record["DueDate"])) model.DueDate = Convert.ToDateTime(record["DueDate"]);
+                    if (!Convert.IsDBNull(record["PromiseDate"])) model.PromiseDate = Convert.ToDateTime(record["PromiseDate"]);
+                    if (!Convert.IsDBNull(record["TypeBO"])) model.TypeBO = Convert.ToString(record["TypeBO"]);
+                    if (!Convert.IsDBNull(record["Email"])) model.Email = Convert.ToString(record["Email"]);
+                    if (!Convert.IsDBNull(record["Department"])) model.Department = Convert.ToString(record["Department"]);
+                    if (!Convert.IsDBNull(record["DateCreate"])) model.DateCreate = Convert.ToDateTime(record["DateCreate"]);
+                    if (!Convert.IsDBNull(record["UserCreate"])) model.UserCreate = Convert.ToInt32(record["UserCreate"]);
+                    if (!Convert.IsDBNull(record["JsonDetails"])) model.JsonDetails = Convert.ToString(record["JsonDetails"]);
+                    return model;
+                };
+                data = await _context.GetDataAsync(queryString, readData, sqlParameters, commandType: CommandType.Text);
+            }
+            catch (Exception) { throw; }
+            finally
+            {
+                await _context.DisConnect();
+            }
+            return data;
+        }    
         #region Private Functions
 
         /// <summary>
