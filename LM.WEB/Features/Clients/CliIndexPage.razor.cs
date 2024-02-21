@@ -23,15 +23,11 @@ namespace LM.WEB.Features.Clients
         public List<BookModel>? ListBooks { get; set; }
 
         public SearchModel ItemSearch = new SearchModel();
+        
 
         [CascadingParameter]
         public EventCallback<BookModel> NotifyBook { get; set; }
         #region Private Functions
-        private async Task getDataBooks()
-        {
-            ListBooks = new List<BookModel>();
-            ListBooks = await _masterDataService!.GetDataBooksAsync(ItemSearch);
-        }
 
         private async Task getDataCombo()
         {
@@ -70,7 +66,7 @@ namespace LM.WEB.Features.Clients
                 {
                     await ShowLoader();
                     await getDataCombo();
-                    await getDataBooks();
+                    await GetDataBooks();
                 }
                 catch (Exception ex)
                 {
@@ -88,6 +84,15 @@ namespace LM.WEB.Features.Clients
         #endregion
 
         #region Protected Functions
+        public async Task GetDataBooks()
+        {
+            ListBooks = new List<BookModel>();
+            ListBooks = await _masterDataService!.GetDataBooksAsync(ItemSearch);
+            if(ListBooks == null || ListBooks.Count == 0)
+            {
+                _toastService.ShowWarning("Không có dữ liệu");
+            }
+        }
         protected async Task AddToCartHandler(BookModel oItem)
         {
             try
@@ -102,6 +107,7 @@ namespace LM.WEB.Features.Clients
                 }
                 // thêm vào giỏ hàng
                 await NotifyBook.InvokeAsync(oItem);
+                _toastService.ShowSuccess("Đã thêm sách vào giỏ hàng");
             }
             catch (Exception ex)
             {

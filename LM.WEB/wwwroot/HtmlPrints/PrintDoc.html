@@ -22,42 +22,76 @@
     </style>
 </head>
 <body>
-    <div style="width: 300px; margin: 0 auto">
+    <div>
         <!--Thông tin khách hàng-->
         <div>
-            <h2 style="font-size: 15pt;font-weight: bold;margin-bottom: 0px;margin-top: 0px; text-align: center;">Phiếu mượn</h2>
+            <h2 style="font-size: 15pt;font-weight: bold;margin-bottom: 0px;margin-top: 0px; text-align: center;">PHIẾU MƯỢN</h2>
             <div class="info-customer" style="display: flex; justify-content: flex-start; align-items: stretch; font-size: 13pt; margin-top: 2px">
-                <div style="width: 100%">
-                    <span>Mã phiếu mượn: {bm-VoucherNo}</span>
+                <div style="width: 33.33%">
+                    <span>Mã phiếu mượn: {lm-VoucherNo}</span>
+                </div>
+                <div style="width: 33.33%">
+                    <span>Ngày mượn: {lm-DocDate}</span>
+                </div>
+                <div style="width: 33.33%">
+                    <span>Ngày hẹn trả: {lm-PromiseDate}</span>
                 </div>
             </div>
             <div class="info-customer" style="display: flex; justify-content: flex-start; align-items: stretch; font-size: 13pt; margin-top: 2px">
-                <div style="width: 100%">
-                    <span>Ngày mượn: {bm-DocDate}</span>
+                <div style="width: 33.33%">
+                    <span>Ngày trả: {lm-DueDate}</span>
+                </div>
+                <div style="width: 33.33%">
+                    <span>Mã thẻ: {lm-StaffCode}</span>
+                </div>
+                <div style="width: 33.33%">
+                    <span>Họ & Tên: {lm-FullName}</span>
                 </div>
             </div>
             <div class="info-customer" style="display: flex; justify-content: flex-start; align-items: stretch; font-size: 13pt; margin-top: 2px">
-                <div style="width: 100%">
-                    <span>Ngày hẹn trả: {bm-CusNo}</span>
+                <div style="width: 33.33%">
+                    <span>Chức vụ: {lm-StaffTypeName}</span>
                 </div>
-            </div>
-            <div class="info-customer" style="display: flex; justify-content: flex-start; align-items: stretch; font-size: 13pt; margin-top: 2px">
-                <div style="width: 100%">
-                    <span>Mã thẻ: {bm-CusNo}</span>
-                </div>
-            </div>
-            <div class="info-customer" style="display: flex; justify-content: flex-start; align-items: stretch; font-size: 13pt; margin-top: 2px">
-                <div style="width: 100%">
-                    <span>Họ & Tên: {bm-FullName}</span>
-                </div>
-            </div>
-            <div class="info-customer" style="display: flex; justify-content: flex-start; align-items: stretch; font-size: 13pt; margin-top: 1.25px">
-                <div style="width: 100%">
-                    <span>Ghi chú: {bm-HealthStatus}</span>
+                <div style="width: 33.33%">
+                    <span>Ghi chú: {lm-Description}</span>
                 </div>
             </div>
         </div>
-        <!--Thông tin khách hàng-->
+        <!--Thông tin chi tiết-->
+        <table style="border-collapse: collapse; font-size: 12pt; width: 100%; max-width: 100%; margin-top: 3px">
+            <thead>
+                <tr>
+                    <th style="font-size: 12pt;font-weight: normal;border: 1px solid #dddddd;text-align: left;padding: 8px;max-width:35px">STT</th>
+                    <th style="font-size: 12pt;font-weight: normal;border: 1px solid #dddddd;text-align: left;padding: 8px;">Mã sách</th>
+                    <th style="font-size: 12pt;font-weight: normal;border: 1px solid #dddddd;text-align: left;padding: 8px;">Tên sách</th>
+                    <th style="font-size: 12pt;font-weight: normal;border: 1px solid #dddddd;text-align: left; padding: 8px; max-width: 55px">Số serial</th>
+                    <th style="font-size: 12pt;font-weight: normal;border: 1px solid #dddddd;text-align: left;padding: 8px;">Số lượng</th>
+                    <th style="font-size: 12pt;font-weight: normal;border: 1px solid #dddddd;text-align: left;padding: 8px;">Tình trạng mượn</th>
+                    <th style="font-size: 12pt;font-weight: normal;border: 1px solid #dddddd;text-align: left;padding: 8px;">Tình trạng sách</th>
+                </tr>
+            </thead>
+            <tbody>
+                {lm-detail}
+                <tr>
+                    <td colspan="3" style="border: 1px solid #dddddd;text-align: right;padding: 8px;"><span>Tổng số lượng sách</span></td>
+                    <td colspan="2" style="border: 1px solid #dddddd; text-align: right; padding: 8px;"><span>{lm-qty-total}</span></td>
+                    <td colspan="3" style="border: 1px solid #dddddd;text-align: left;padding: 8px;"></td>
+                </tr>
+            </tbody>
+        </table>
+        <!--Footer-->
+        <div style="display: flex; justify-content: space-between; align-items: stretch; margin-top:15px; padding: 0 50px">
+            <div style="font-size: 12pt; text-align: center">
+                <p style="text-align: center; margin-bottom: 0px; margin-top: 0px">Nhân Viên Cho Mượn Sách</p>
+                <p style="text-align: center; margin-bottom: 0px; margin-top: 0px">{lm-user-create}</p>
+            </div>
+            <div style="font-size: 12pt; text-align: center">
+                <p style="text-align: center; margin-bottom: 0px;margin-top: 0px">Người Mượn Sách</p>
+                <span style="margin-top: 5px; text-align: center">(Kí tên)</span>
+            </div>
+
+        </div>
+
     </div>
     
 </body>

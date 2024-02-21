@@ -632,9 +632,10 @@ public class MasterDataService : IMasterDataService
         {
             await _context.Connect();
             SqlParameter[] sqlParameters;
-            sqlParameters = new SqlParameter[2];
+            sqlParameters = new SqlParameter[3];
             sqlParameters[0] = new SqlParameter("@KindBookId", pSearchData.KindBookId);
             sqlParameters[1] = new SqlParameter("@PublisherId", pSearchData.PublisherId);
+            sqlParameters[2] = new SqlParameter("@AuthorId", pSearchData.AuthorId);
             data = await _context.GetDataAsync(@$"select  t0.[BookId]
                         ,t0.[BookName]
                         ,t0.[Description]
@@ -660,7 +661,8 @@ public class MasterDataService : IMasterDataService
                     left join  Authors t3 on t0.AuthorId = t3.Id
                     where t0.isdelete = 0 
                       and (isnull(@KindBookId,0)=0 or t0.KindBookId = @KindBookId)
-                    and (isnull(@PublisherId,0)=0 or t0.PublisherId = @PublisherId)"
+                    and (isnull(@PublisherId,0)=0 or t0.PublisherId = @PublisherId)
+                    and (isnull(@AuthorId,0)=0 or t0.AuthorId = @AuthorId)"
                     , DataRecordToBookModel,sqlParameters, commandType: CommandType.Text);
         }
         catch (Exception) { throw; }

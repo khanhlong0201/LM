@@ -20,6 +20,7 @@ namespace LM.WEB.Features.Controllers
         public bool IsInitialDataLoadComplete { get; set; } = true;
         public List<BorrowOrderModel>? ListDocuments { get; set; }
         public IEnumerable<BorrowOrderModel>? SelectedDocuments { get; set; } = new List<BorrowOrderModel>();
+        public SearchModel ItemFilter = new SearchModel();
 
         public int intTotal { get; set; }
         public int intBorrowing { get; set; }
@@ -59,6 +60,7 @@ namespace LM.WEB.Features.Controllers
                     //StartTime = new DateTime(StartDate.Year, StartDate.Month, StartDate.Day, 23, 0, 0);
                     await _progressService!.SetPercent(0.4);
                     await showReport();
+                    await getDataDocuments();
                 }
                 catch (Exception ex)
                 {
@@ -76,6 +78,21 @@ namespace LM.WEB.Features.Controllers
         #endregion Override Functions
 
         #region Private Functions
+
+        private async Task getDataDocuments()
+        {
+            ListDocuments = new List<BorrowOrderModel>();
+            SelectedDocuments = new List<BorrowOrderModel>();
+            ItemFilter.UserId = pUserId;
+            ItemFilter.IsAdmin = pIsAdmin;
+            ItemFilter.Type = "ALL";
+            ItemFilter.StatusId = nameof(DocStatus.All);
+            ItemFilter.TypeBO = nameof(DocStatus.All);
+            ItemFilter.FromDate = new DateTime(2023, 1, 1);
+            ItemFilter.ToDate = _dateTimeService!.GetCurrentVietnamTime();
+            ListDocuments = await _documentService!.GetBorrowOrdersAsync(ItemFilter);
+        }
+
 
         private async Task showReport()
         {

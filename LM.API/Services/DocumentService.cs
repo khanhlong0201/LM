@@ -231,11 +231,13 @@ namespace LM.API.Services
                                             , T2.FullName, T2.PhoneNumber, T2.Email, T2.Department
 									        , T3.BookId, T3.BookName, T1.StatusCode as DetailStatusCode, T1.NoteForAll, T1.[Id], T1.[Quantity]
 									        , T1.BookSerialId, T4.SerialNumber
+                                            ,t5.UserName as 'UserNameCreate'
                             from BorrowOrders as T0 with(nolock)
                                    inner join BODetails as T1 with(nolock) on T0.VoucherNo = T1.VoucherNo
                                    inner join Staffs as T2 with(nolock) on T0.StaffCode = T2.StaffCode 
                                    inner join Books as T3 with(nolock) on T1.BookId = T3.BookId
-						           inner join BookSerials as T4 with(nolock) on T1.BookSerialId = T4.Id
+						            inner join  BookSerials as T4 with(nolock) on T1.BookSerialId = T4.Id
+                                    inner join Users as T5 with(nolock) on T0.userCreate = T5.Id
                                         where T0.VoucherNo = @VoucherNo";
                 var ds = await _context.GetDataSetAsync(queryString, sqlParameters, CommandType.Text);
                 data = new Dictionary<string, string>();
@@ -263,6 +265,7 @@ namespace LM.API.Services
                     if (!Convert.IsDBNull(dr["UserCreate"])) oHeader.UserCreate = Convert.ToInt32(dr["UserCreate"]);
                     if (!Convert.IsDBNull(dr["DateUpdate"])) oHeader.DateUpdate = Convert.ToDateTime(dr["DateUpdate"]);
                     if (!Convert.IsDBNull(dr["UserUpdate"])) oHeader.UserUpdate = Convert.ToInt32(dr["UserUpdate"]);
+                    if (!Convert.IsDBNull(dr["UserNameCreate"])) oHeader.UserNameCreate = Convert.ToString(dr["UserNameCreate"]);
                     oHeader.ReasonDelete = Convert.ToString(dr["ReasonDelete"]);
                     List<BODetailModel> lstDetails = new List<BODetailModel>();
                     foreach (DataRow item in dt.Rows)
@@ -276,6 +279,7 @@ namespace LM.API.Services
                         oLine.NoteForAll = Convert.ToString(item["NoteForAll"]);
                         oLine.Id = Convert.ToInt32(item["Id"]);
                         oLine.Quantity = Convert.ToInt32(item["Quantity"]);
+                        oLine.StatusName = Convert.ToString(item["StatusName"]);
                         lstDetails.Add(oLine);
                     }
                     data = new Dictionary<string, string>()

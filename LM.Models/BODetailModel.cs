@@ -17,5 +17,6 @@ namespace LM.Models
         public string? BookName { get; set; }
         public string? SerialNumber { get; set; }
         public int Quantity { get; set; }
+        public string? StatusName { get; set; }
     }
 }
