@@ -35,6 +35,7 @@ public class BookModel : Auditable
     public string? ImageUrl { get; set; }
     public string? ImageUrlView { get; set; }
     public int QtyBO { get; set; }
+    public string? JPagination { get; set; }
 }
 
 public class CliBookModel : Auditable

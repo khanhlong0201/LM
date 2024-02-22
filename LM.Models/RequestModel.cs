@@ -86,6 +86,7 @@ public class SearchModel
     public int Limit { get; set; }
     public string? TextSearch { get; set; }
     public string? TypeBO { get; set; }
+    public bool IsShowPagination { get; set; }
 }
 
 public enum EnumType

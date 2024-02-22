@@ -4,6 +4,8 @@ using LM.WEB.Features.Controllers;
 using LM.WEB.Models;
 using LM.WEB.Services;
 using Microsoft.AspNetCore.Components;
+using Newtonsoft.Json;
+using Telerik.Blazor.Components.Common.Grid.Interfaces;
 
 namespace LM.WEB.Features.Clients
 {
@@ -23,10 +25,12 @@ namespace LM.WEB.Features.Clients
         public List<BookModel>? ListBooks { get; set; }
 
         public SearchModel ItemSearch = new SearchModel();
-        
+        public PaginationModel Pagination { get; set; } = new PaginationModel();
 
         [CascadingParameter]
         public EventCallback<BookModel> NotifyBook { get; set; }
+
+        private const int PAGE_SIZE = 4;
         #region Private Functions
 
         private async Task getDataCombo()
@@ -64,6 +68,9 @@ namespace LM.WEB.Features.Clients
             {
                 try
                 {
+                    ItemSearch.Limit = PAGE_SIZE;
+                    ItemSearch.Page = 1;
+                    ItemSearch.IsShowPagination = true;
                     await ShowLoader();
                     await getDataCombo();
                     await GetDataBooks();
@@ -84,14 +91,36 @@ namespace LM.WEB.Features.Clients
         #endregion
 
         #region Protected Functions
-        public async Task GetDataBooks()
+        public async Task GetDataBooks(bool isShowLoading = false)
         {
-            ListBooks = new List<BookModel>();
-            ListBooks = await _masterDataService!.GetDataBooksAsync(ItemSearch);
-            if(ListBooks == null || ListBooks.Count == 0)
+            try
             {
-                _toastService.ShowWarning("Không có dữ liệu");
+                if(isShowLoading) await ShowLoader();  
+                ListBooks = new List<BookModel>();
+                ListBooks = await _masterDataService!.GetDataBooksAsync(ItemSearch);
+                if (ListBooks == null || ListBooks.Count == 0)
+                {
+                    _toastService!.ShowWarning("Không có dữ liệu");
+                    return;
+                }
+                Pagination = JsonConvert.DeserializeObject<PaginationModel>(ListBooks.First().JPagination + "") ?? new PaginationModel();
             }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "OnAfterRenderAsync");
+                throw;
+            }
+            finally
+            {
+                if (isShowLoading)
+                {
+                    await Task.Delay(150);
+                    await ShowLoader(false);
+                    await InvokeAsync(StateHasChanged);
+                }    
+                
+            }
+
         }
         protected async Task AddToCartHandler(BookModel oItem)
         {
@@ -107,7 +136,7 @@ namespace LM.WEB.Features.Clients
                 }
                 // thêm vào giỏ hàng
                 await NotifyBook.InvokeAsync(oItem);
-                _toastService.ShowSuccess("Đã thêm sách vào giỏ hàng");
+                _toastService!.ShowSuccess("Đã thêm sách vào giỏ hàng");
             }
             catch (Exception ex)
             {
@@ -117,6 +146,22 @@ namespace LM.WEB.Features.Clients
             finally
             {
                 await InvokeAsync(StateHasChanged);
+            }
+        }
+
+        protected async void OnChangePageIndex(int pageIndex, bool isNext = false)
+        {
+            try
+            {
+                await ShowLoader();
+                ItemSearch.Limit = PAGE_SIZE;
+                ItemSearch.Page = pageIndex;
+                await GetDataBooks(true);
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "ReLoadDataHandler");
+                _toastService!.ShowError(ex.Message);
             }
         }
         #endregion 

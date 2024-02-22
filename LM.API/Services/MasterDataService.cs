@@ -4,6 +4,7 @@ using LM.Models;
 using LM.Models.Shared;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NPOI.POIFS.Crypt.Dsig;
 using SixLabors.ImageSharp;
@@ -664,6 +665,28 @@ public class MasterDataService : IMasterDataService
                     and (isnull(@PublisherId,0)=0 or t0.PublisherId = @PublisherId)
                     and (isnull(@AuthorId,0)=0 or t0.AuthorId = @AuthorId)"
                     , DataRecordToBookModel,sqlParameters, commandType: CommandType.Text);
+            #region pagination
+            if(pSearchData.IsShowPagination && data != null && data.Any())
+            {
+                int totalRecord = data.Count();
+                var pagination = new PaginationModel
+                {
+                    Count = totalRecord,
+                    CurrentPage = pSearchData.Page,
+                    Pagsize = pSearchData.Limit,
+                    TotalPage = (int)Math.Ceiling(decimal.Divide(totalRecord, pSearchData.Limit)),
+                    IndexOne = ((pSearchData.Page - 1) * pSearchData.Limit + 1),
+                    IndexTwo = (((pSearchData.Page - 1) * pSearchData.Limit + pSearchData.Limit) <= totalRecord ? ((pSearchData.Page - 1) * pSearchData.Limit * pSearchData.Limit) : totalRecord)
+                };
+                data = data.Skip((pSearchData.Page - 1) * pSearchData.Limit)
+                    .Take(pSearchData.Limit)
+                    .Select(m=> 
+                    {
+                        m.JPagination = JsonConvert.SerializeObject(pagination);
+                        return m;
+                    }).ToList();
+            }    
+            #endregion
         }
         catch (Exception) { throw; }
         finally
