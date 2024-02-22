@@ -80,16 +80,28 @@
                                                 <div class="text-secondary float-end">@(oItem.DateCreate == null ? "Chưa cập nhật" : oItem.DateCreate.Value.ToString(DefaultConstants.FORMAT_DATE_TIME))</div>
                                                 <h4 class="mb-1 h-link">@(oItem.VoucherNo)</h4>
                                                 <p class="text-secondary mb-1">
-                                                    @oItem.StaffCode - @oItem.StaffTypeName
+                                                    Tình trạng: @{
+                                                        string color = "badge bg-cyan-lt";
+                                                        if (oItem!.StatusCode == nameof(DocStatus.Closed)) color = "badge bg-green-lt";
+                                                        else if (oItem!.StatusCode == nameof(DocStatus.Cancled)) color = "badge bg-red-lt";
+                                                        else if (oItem!.StatusCode == nameof(DocStatus.Borrowing)) color = "badge bg-yellow-lt";
+                                                        <strong class="@(color)">
+                                                            @($"{oItem.StatusName}")
+                                                        </strong>
+                                                    }
                                                 </p>
                                                 @{
-                                                    var oItemDetails = JsonConvert.DeserializeObject<List<BODetailModel>>(oItem.JsonDetails + "");
-                                                    @if(oItemDetails != null && oItemDetails.Any())
+                                                    var lstItemDetails = JsonConvert.DeserializeObject<List<BODetailModel>>(oItem.JsonDetails + "");
+                                                    @if (lstItemDetails != null && lstItemDetails.Any())
                                                     {
-                                                        <div class="row row-gap-1">
-                                                            <table>
-                                                            </table>
-                                                        </div>
+                                                        <ul>
+                                                            @foreach (var oItemDetail in lstItemDetails)
+                                                            {
+                                                                <li>
+                                                                    <p class="text-secondary">@oItemDetail.BookName - @oItemDetail.Quantity cuốn - @oItemDetail.StatusCode</p>
+                                                                </li>
+                                                            }
+                                                        </ul>
                                                     }
                                                 }
                                                 <p class="text-secondary">Ghi chú: @oItem.Description</p>

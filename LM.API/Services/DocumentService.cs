@@ -498,7 +498,7 @@ namespace LM.API.Services
                                             when '{nameof(DocStatus.Borrowing)}' then N'Đang mượn'
                                             else N'Chờ xử lý' end as [StatusName]
 		                                  , T1.FullName, T1.PhoneNumber, T1.Email, T1.Department, T1.Address
-										  , (select T3.BookId, T3.BookName, T01.StatusCode as DetailStatusCode, T01.NoteForAll, T01.[Id], T01.[Quantity]
+										  , (select T3.BookId, T3.BookName, T01.StatusCode, T01.NoteForAll, T01.[Id], T01.[Quantity]
 									        , T01.BookSerialId, T4.SerialNumber from BODetails as T01 with(nolock) 
 										  inner join Staffs as T2 with(nolock) on T0.StaffCode = T2.StaffCode 
                                           inner join Books as T3 with(nolock) on T01.BookId = T3.BookId
