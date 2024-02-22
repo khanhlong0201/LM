@@ -238,7 +238,7 @@ namespace LM.API.Services
                                    inner join Staffs as T2 with(nolock) on T0.StaffCode = T2.StaffCode 
                                    inner join Books as T3 with(nolock) on T1.BookId = T3.BookId
 						            inner join  BookSerials as T4 with(nolock) on T1.BookSerialId = T4.Id
-                                    inner join Users as T5 with(nolock) on T0.userCreate = T5.Id
+                                    left join Users as T5 with(nolock) on T0.userCreate = T5.Id
                                         where T0.VoucherNo = @VoucherNo";
                 var ds = await _context.GetDataSetAsync(queryString, sqlParameters, CommandType.Text);
                 data = new Dictionary<string, string>();
