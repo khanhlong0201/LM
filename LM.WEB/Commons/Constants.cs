@@ -74,4 +74,8 @@ public static class EndpointConstants
     public const string URL_DOCUMENT_GET_DOC_RETURN_BOOK = "Document/ReturnBooks";
     public const string URL_DOCUMENT_CANCLE_DOC_LIST = "Document/CancleDocList";
     public const string URL_DOCUMENT_GET_BORROW_ORDER_BY_STAFF = "Document/GetDocumentByStaff";
+
+    public const string URL_DOCUMENT_REVENUE_REPORT = "Document/GetRevenueReport";
+
+    public const string URL_DOCUMENT_REPORT = "Document/GetReport";
 }

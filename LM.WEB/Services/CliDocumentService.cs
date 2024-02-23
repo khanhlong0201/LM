@@ -16,6 +16,7 @@ namespace LM.WEB.Services
         Task<Dictionary<string, int>?> GetReportIndexAsync();
         Task<bool> CancleDocList(string pJsonIds, string pReasonDelete, int pUserId, string pTableName);
         Task<List<BorrowOrderModel>?> GetDocumentByStaffAsync(string pStaffCode);
+        Task<List<ReportModel>?> GetRevenueReportAsync(int pYear);
     }
     public class CliDocumentService : CliServiceBase, ICliDocumentService
     {
@@ -326,6 +327,44 @@ namespace LM.WEB.Services
             }
             return default;
         }
+
+        /// <summary>
+        /// Báo cáo tổng thể số lượng sách mượn của thư viện
+        /// </summary>
+        /// <param name="pYear"></param>
+        /// <returns></returns>
+        public async Task<List<ReportModel>?> GetRevenueReportAsync(int pYear)
+        {
+            try
+            {
+                Dictionary<string, object?> pParams = new Dictionary<string, object?>()
+            {
+                {"pYear", $"{pYear}"}
+            };
+                HttpResponseMessage httpResponse = await GetAsync(EndpointConstants.URL_DOCUMENT_REVENUE_REPORT, pParams);
+                var checkContent = ValidateJsonContent(httpResponse.Content);
+                if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
+                else
+                {
+                    var content = await httpResponse.Content.ReadAsStringAsync();
+                    if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<List<ReportModel>>(content);
+                    if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    {
+                        _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
+                        return null;
+                    }
+                    var oMessage = JsonConvert.DeserializeObject<ResponseModel>(content);
+                    _toastService.ShowError($"{oMessage?.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetRevenueReportAsync");
+                _toastService.ShowError(ex.Message);
+            }
+            return default;
+        }
+
 
     }
 }

@@ -182,5 +182,47 @@ namespace LM.API.Controllers
             }
 
         }
+
+        [HttpPost]
+        [Route("GetReport")]
+        public async Task<IActionResult> GetDataReport(RequestReportModel pSearchData)
+        {
+            try
+            {
+                var data = await _documentervice.GetReportAsync(pSearchData);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DocumentController", "GetDataReport");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+
+        }
+
+        [HttpGet]
+        [Route("GetRevenueReport")]
+        public async Task<IActionResult> GetRevenueReport(int pYear)
+        {
+            try
+            {
+                var data = await _documentervice.GetRevenueReportAsync(pYear);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DocumentController", "GetRevenueReport");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+
+        }
     }
 }

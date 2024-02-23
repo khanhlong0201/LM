@@ -1,0 +1,62 @@
+﻿@using System.Linq;
+@using System;
+@using System.Globalization;
+@page "/report-lm"
+@inherits RevenueReportController;
+
+<div class="h-content-filter">
+    <div class="row">
+        <div class="col-lg-4 col-md-6 col-sm-12">
+            <div class="d-flex ">
+                <HLabel Value="Năm:" IsRequired="true" Style="width: 90px" />
+                <div style="width: calc(100% - 90px)">
+                    <TelerikComboBox @bind-Value="@pYearDefault"
+                        Data="@ListYears"
+                        Placeholder="Chọn năm"
+                        ClearButton="false"
+                        Filterable="true"
+                        Class="btn-noborder-radius-left"
+                        Id="txtYear" Width="100%">
+                    </TelerikComboBox>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<TelerikToolBar Class="border-bottom-0">
+    <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@(()=> ReLoadDataHandler())">Làm mới</ToolBarButton>
+</TelerikToolBar>
+
+<div class="h-chart-content" style="height: calc(100vh - 200px);">
+    <TelerikChart Height="100%">
+        <ChartTitle Text="@($"Doanh thu từng chi nhánh của năm {pYearDefault}")"></ChartTitle>
+        <ChartLegend Visible="true"></ChartLegend>
+        <ChartSeriesItems>
+            <ChartSeries Data="@DataReport"
+                         Type="ChartSeriesType.Bar"
+                         Name="Thư viện Duy Khánh"
+                         Field="@nameof(ReportModel.Total_01)">
+                         @* <ChartTooltip Visible="true">
+                               <Template> 
+                                    @if (DataReport != null)
+                                    {
+                                      double doubleValue = Convert.ToDouble(((context.DataItem) as ReportModel)!.Total_01);  // Sử dụng DataItem để lấy giá trị của dòng hiện tại
+                                      <span>@string.Format("{0: #,###.## } VNĐ", doubleValue)</span>
+                                    }
+                              </Template>
+                         </ChartTooltip> *@
+                         <ChartSeriesLabels Visible="true" Format="{0: #,###.## } cuốn"></ChartSeriesLabels>
+            </ChartSeries>
+            
+        </ChartSeriesItems>
+        <ChartValueAxes>
+            <ChartValueAxis>
+                <ChartValueAxisLabels Format="@DefaultConstants.FORMAT_GRID_CURRENCY" />
+                <ChartValueAxisMajorGridLines Visible="false" />
+            </ChartValueAxis>
+        </ChartValueAxes>
+        <ChartCategoryAxes>
+            <ChartCategoryAxis Categories="@ResportTitle"></ChartCategoryAxis>
+        </ChartCategoryAxes>
+    </TelerikChart>
+</div>

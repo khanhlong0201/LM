@@ -1,4 +1,5 @@
-﻿using LM.API.Infrastructure;
+﻿using LM.API.Commons;
+using LM.API.Infrastructure;
 using LM.Models;
 using LM.Models.Shared;
 using Newtonsoft.Json;
@@ -20,6 +21,8 @@ namespace LM.API.Services
         Task<Dictionary<string, int>?> GetReportIndexAsync();
         Task<ResponseModel> CancleDocList(RequestModel pRequest);
         Task<IEnumerable<BorrowOrderModel>> GetDocumentByStaffAsync(string pStaffCode);
+        Task<IEnumerable<ReportModel>> GetReportAsync(RequestReportModel pSearchData);
+        Task<IEnumerable<ReportModel>> GetRevenueReportAsync(int pYear);
     }    
     public class DocumentService : IDocumentService
     {
@@ -539,7 +542,94 @@ namespace LM.API.Services
                 await _context.DisConnect();
             }
             return data;
-        }    
+        }
+
+        /// <summary>
+        /// lấy kết quả báo cáo
+        /// </summary>
+        /// <param name="isAdmin"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<ReportModel>> GetReportAsync(RequestReportModel pSearchData)
+        {
+            List<ReportModel> data = new List<ReportModel>();
+            try
+            {
+                await _context.Connect();
+                if (pSearchData.FromDate == null) pSearchData.FromDate = new DateTime(2023, 01, 01);
+                if (pSearchData.ToDate == null) pSearchData.ToDate = _dateTimeService.GetCurrentVietnamTime();
+                SqlParameter[] sqlParameters = new SqlParameter[7];
+                sqlParameters[0] = new SqlParameter("@FromDate", pSearchData.FromDate.Value);
+                sqlParameters[1] = new SqlParameter("@ToDate", pSearchData.ToDate.Value);
+                sqlParameters[2] = new SqlParameter("@TypeTime", pSearchData.TypeTime);
+                sqlParameters[3] = new SqlParameter("@Type", pSearchData.Type);
+                sqlParameters[4] = new SqlParameter("@UserId", pSearchData.UserId);
+                sqlParameters[5] = new SqlParameter("@Year", pSearchData.Year);
+                var results = await _context.GetDataSetAsync(Constants.STORE_REPORT_ALL, sqlParameters, commandType: CommandType.StoredProcedure);
+                if (results.Tables != null && results.Tables.Count > 0)
+                {
+                    foreach (DataRow row in results.Tables[0].Rows)
+                    {
+                        switch (pSearchData.Type + "")
+                        {
+                            case "DoanhThuQuiThangTheoSach":
+                                data.Add(DataRecordDoanhThuQuiThangTheoSachToReportModel(row));
+                                break;
+                            case "DoanhThuQuiThangTheoLoaiLoaiSach":
+                                data.Add(DataRecordDoanhThuQuiThangTheoLoaiSachToReportModel(row));
+                                break;
+                            case "DoanhThuTheoSach":
+                                data.Add(DataRecordDoanhThuTheoSachToReportModel(row));
+                                break;
+                            case "DoanhThuTheoLoaiSach":
+                                data.Add(DataRecordDoanhThuTheoLoaiSachToReportModel(row));
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+            catch (Exception) { throw; }
+            finally
+            {
+                await _context.DisConnect();
+            }
+            return data;
+        }
+
+        /// <summary>
+        /// Báo cáo tổng thể số lượng sách mượn của thư viện
+        /// </summary>
+        /// <param name="pYear"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<ReportModel>> GetRevenueReportAsync(int pYear)
+        {
+            IEnumerable<ReportModel> data;
+            try
+            {
+                await _context.Connect();
+                SqlParameter[] sqlParameters = new SqlParameter[1];
+                sqlParameters[0] = new SqlParameter("@Type", 'M');
+                sqlParameters[0] = new SqlParameter("@Year", pYear);
+                Func<IDataRecord, ReportModel> readData = record =>
+                {
+                    ReportModel model = new ReportModel();
+                    if (!Convert.IsDBNull(record["Total_01"])) model.Total_01 = Convert.ToDouble(record["Total_01"]);
+                    if (!Convert.IsDBNull(record["Total_02"])) model.Total_02 = Convert.ToDouble(record["Total_02"]);
+                    if (!Convert.IsDBNull(record["Color_01"])) model.Color_01 = Convert.ToString(record["Color_01"]);
+                    if (!Convert.IsDBNull(record["Color_02"])) model.Color_02 = Convert.ToString(record["Color_02"]);
+                    if (!Convert.IsDBNull(record["Title"])) model.Title = Convert.ToString(record["Title"]) + "";
+                    return model;
+                };
+                data = await _context.GetDataAsync(Constants.STORE_REVENUE_REPORT, readData, sqlParameters);
+            }
+            catch (Exception) { throw; }
+            finally
+            {
+                await _context.DisConnect();
+            }
+            return data;
+        }
         #region Private Functions
 
         /// <summary>
@@ -577,8 +667,82 @@ namespace LM.API.Services
             sqlParameters[7] = new SqlParameter("@BookId", oDraft.BookId);
             return sqlParameters;
         }
+        private ReportModel DataRecordDoanhThuQuiThangTheoSachToReportModel(DataRow row)
+        {
+            // Mapping các cột của DataTable sang properties của ReportModel
+            ReportModel model = new();
+            if (!Convert.IsDBNull(row["BookId"])) model.BookId = Convert.ToInt32(row["BookId"]);
+            if (!Convert.IsDBNull(row["BookName"])) model.BookName = Convert.ToString(row["BookName"]);
+            if (!Convert.IsDBNull(row["AuthorId"])) model.AuthorId = Convert.ToInt32(row["AuthorId"]);
+            if (!Convert.IsDBNull(row["AuthorName"])) model.AuthorName = Convert.ToString(row["AuthorName"]);
+            if (!Convert.IsDBNull(row["PublisherId"])) model.PublisherId = Convert.ToInt32(row["PublisherId"]);
+            if (!Convert.IsDBNull(row["PublisherName"])) model.PublisherName = Convert.ToString(row["PublisherName"]);
+            if (!Convert.IsDBNull(row["KindBookId"])) model.KindBookId = Convert.ToInt32(row["KindBookId"]);
+            if (!Convert.IsDBNull(row["KindBookName"])) model.KindBookName = Convert.ToString(row["KindBookName"]);
+            if (!Convert.IsDBNull(row["PublishingYear"])) model.PublishingYear = Convert.ToInt32(row["PublishingYear"]);
+            if (!Convert.IsDBNull(row["TotalReveune"])) model.TotalReveune = Convert.ToDouble(row["TotalReveune"]);
+            if (!Convert.IsDBNull(row["Total_01"])) model.Total_01 = Convert.ToDouble(row["Total_01"]);
+            if (!Convert.IsDBNull(row["Total_02"])) model.Total_02 = Convert.ToDouble(row["Total_02"]);
+            if (!Convert.IsDBNull(row["Total_03"])) model.Total_03 = Convert.ToDouble(row["Total_03"]);
+            if (!Convert.IsDBNull(row["Total_04"])) model.Total_04 = Convert.ToDouble(row["Total_04"]);
+            if (!Convert.IsDBNull(row["Total_05"])) model.Total_05 = Convert.ToDouble(row["Total_05"]);
+            if (!Convert.IsDBNull(row["Total_06"])) model.Total_06 = Convert.ToDouble(row["Total_06"]);
+            if (!Convert.IsDBNull(row["Total_07"])) model.Total_07 = Convert.ToDouble(row["Total_07"]);
+            if (!Convert.IsDBNull(row["Total_08"])) model.Total_08 = Convert.ToDouble(row["Total_08"]);
+            if (!Convert.IsDBNull(row["Total_09"])) model.Total_09 = Convert.ToDouble(row["Total_09"]);
+            if (!Convert.IsDBNull(row["Total_10"])) model.Total_10 = Convert.ToDouble(row["Total_10"]);
+            if (!Convert.IsDBNull(row["Total_11"])) model.Total_11 = Convert.ToDouble(row["Total_11"]);
+            if (!Convert.IsDBNull(row["Total_12"])) model.Total_12 = Convert.ToDouble(row["Total_12"]);
+            return model;
+        }
 
-
+        private ReportModel DataRecordDoanhThuQuiThangTheoLoaiSachToReportModel(DataRow row)
+        {
+            // Mapping các cột của DataTable sang properties của ReportModel
+            ReportModel model = new();
+            if (!Convert.IsDBNull(row["KindBookId"])) model.KindBookId = Convert.ToInt32(row["KindBookId"]);
+            if (!Convert.IsDBNull(row["KindBookName"])) model.KindBookName = Convert.ToString(row["KindBookName"]);
+            if (!Convert.IsDBNull(row["PublishingYear"])) model.PublishingYear = Convert.ToInt32(row["PublishingYear"]);
+            if (!Convert.IsDBNull(row["TotalReveune"])) model.TotalReveune = Convert.ToDouble(row["TotalReveune"]);
+            if (!Convert.IsDBNull(row["Total_01"])) model.Total_01 = Convert.ToDouble(row["Total_01"]);
+            if (!Convert.IsDBNull(row["Total_02"])) model.Total_02 = Convert.ToDouble(row["Total_02"]);
+            if (!Convert.IsDBNull(row["Total_03"])) model.Total_03 = Convert.ToDouble(row["Total_03"]);
+            if (!Convert.IsDBNull(row["Total_04"])) model.Total_04 = Convert.ToDouble(row["Total_04"]);
+            if (!Convert.IsDBNull(row["Total_05"])) model.Total_05 = Convert.ToDouble(row["Total_05"]);
+            if (!Convert.IsDBNull(row["Total_06"])) model.Total_06 = Convert.ToDouble(row["Total_06"]);
+            if (!Convert.IsDBNull(row["Total_07"])) model.Total_07 = Convert.ToDouble(row["Total_07"]);
+            if (!Convert.IsDBNull(row["Total_08"])) model.Total_08 = Convert.ToDouble(row["Total_08"]);
+            if (!Convert.IsDBNull(row["Total_09"])) model.Total_09 = Convert.ToDouble(row["Total_09"]);
+            if (!Convert.IsDBNull(row["Total_10"])) model.Total_10 = Convert.ToDouble(row["Total_10"]);
+            if (!Convert.IsDBNull(row["Total_11"])) model.Total_11 = Convert.ToDouble(row["Total_11"]);
+            if (!Convert.IsDBNull(row["Total_12"])) model.Total_12 = Convert.ToDouble(row["Total_12"]);
+            return model;
+        }
+        private ReportModel DataRecordDoanhThuTheoSachToReportModel(DataRow row)
+        {
+            // Mapping các cột của DataTable sang properties của ReportModel
+            ReportModel model = new();
+            if (!Convert.IsDBNull(row["BookId"])) model.BookId = Convert.ToInt32(row["BookId"]);
+            if (!Convert.IsDBNull(row["BookName"])) model.BookName = Convert.ToString(row["BookName"]);
+            if (!Convert.IsDBNull(row["AuthorId"])) model.AuthorId = Convert.ToInt32(row["AuthorId"]);
+            if (!Convert.IsDBNull(row["AuthorName"])) model.AuthorName = Convert.ToString(row["AuthorName"]);
+            if (!Convert.IsDBNull(row["PublisherId"])) model.PublisherId = Convert.ToInt32(row["PublisherId"]);
+            if (!Convert.IsDBNull(row["PublisherName"])) model.PublisherName = Convert.ToString(row["PublisherName"]);
+            if (!Convert.IsDBNull(row["KindBookId"])) model.KindBookId = Convert.ToInt32(row["KindBookId"]);
+            if (!Convert.IsDBNull(row["KindBookName"])) model.KindBookName = Convert.ToString(row["KindBookName"]);
+            if (!Convert.IsDBNull(row["PublishingYear"])) model.PublishingYear = Convert.ToInt32(row["PublishingYear"]);
+            if (!Convert.IsDBNull(row["Quantity"])) model.Quantity = Convert.ToInt32(row["Quantity"]);
+            return model;
+        }
+        private ReportModel DataRecordDoanhThuTheoLoaiSachToReportModel(DataRow row)
+        {
+            // Mapping các cột của DataTable sang properties của ReportModel
+            ReportModel model = new();
+            if (!Convert.IsDBNull(row["KindBookId"])) model.KindBookId = Convert.ToInt32(row["KindBookId"]);
+            if (!Convert.IsDBNull(row["KindBookName"])) model.KindBookName = Convert.ToString(row["KindBookName"]);
+            if (!Convert.IsDBNull(row["Quantity"])) model.Quantity = Convert.ToInt32(row["Quantity"]);
+            return model;
+        }
         #endregion
     }
 }
