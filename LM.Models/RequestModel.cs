@@ -133,9 +133,7 @@ public enum TypeTime
 
 public enum ReportType
 {
-    @DoanhThuDichVuLoaiDichVu,
-    @BaoCaoKPINhanVien,
-    @BaoCaoNhapXuatKho
+    @DoanhThuSachLoaiSach,
 }
 
 public enum Kind
@@ -146,15 +144,10 @@ public enum Kind
 
 public enum ServiceType
 {
-    @Service,
-    @ServiceType
+    @Book,
+    @KindBook
 }
 
-public enum UserType
-{
-    @ConsultUser,
-    @ImplementUser
-}
 
 public enum ChartReportType
 {

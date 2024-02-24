@@ -1,0 +1,466 @@
+﻿@using System.Linq;
+@using System;
+@using System.Globalization;
+@page "/report-kindbook" 
+@page "/report-book"  
+@inherits ReportController
+<div class="h-content-filter">
+    <div class="row">
+        <div class="col-lg-4 col-md-6 col-sm-12">
+            @if(pKind==nameof(Kind.QuiThang))
+            {
+            <div class="d-flex mt-1">
+                <HLabel Value="Quí - Tháng:" IsRequired="true" Style="width: 130px" />
+                    <div style="width: calc(100% - 130px)">
+                        <TelerikComboBox Value="@ItemFilter.TypeTime"
+                            ValueChanged="@((string typeTime) => SelectedTypeTimeChanged(typeTime))"
+                            Data="@ListTypeTime"
+                            Placeholder="Chọn Tháng (Quí)..."
+                            ClearButton="false"
+                            TextField="@nameof(ComboboxModel.Name)"
+                            ValueField="@nameof(ComboboxModel.Code)"
+                            Filterable="true"
+                            Class="btn-noborder-radius-left"
+                            Id="txtTypeTimeId" Width="100%">
+                        </TelerikComboBox>
+                    </div> 
+            </div>
+            }
+            @if(pKind==nameof(Kind.TuNgayDenNgay))
+            {
+            <div class="d-flex mt-1">
+                <HLabel Value="Từ ngày/Đến ngày:" Style="width: 130px" />
+                <div style="width: calc(100% - 130px)">
+                    <div class="d-flex justify-content-between">
+                        <div style="width: 50%;">
+                            <TelerikDatePicker @bind-Value="@ItemFilter.FromDate"
+                                                Placeholder=""
+                                                Format="dd/MM/yyyy"
+                                                Class="btn-noborder-radius-left">
+                            </TelerikDatePicker>
+                        </div>
+                        <div style="width: 50%; margin-left: 2px;">
+                            <TelerikDatePicker @bind-Value="@ItemFilter.ToDate"
+                                                Placeholder=""
+                                                Format="dd/MM/yyyy"
+                                                Class="btn-noborder-radius-left">
+                            </TelerikDatePicker>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+        <div class="col-lg-4 col-md-6 col-sm-12">
+            <div class="d-flex mt-1">
+                <HLabel Value="Xem theo:" IsRequired="true" Style="width: 180px" />
+                    <div style="width: calc(100% - 130px)">
+                        <TelerikComboBox @bind-Value="@pKind"
+                            Data="@ListKinds"
+                            Placeholder="Xem theo..."
+                            ClearButton="false"
+                            TextField="@nameof(ComboboxModel.Name)"
+                            ValueField="@nameof(ComboboxModel.Code)"
+                            Filterable="true"
+                            Class="btn-noborder-radius-left"
+                            Id="txtTypeTimeId" Width="100%">
+                        </TelerikComboBox>
+                    </div> 
+            </div>
+            @if (pReportType == nameof(ReportType.@DoanhThuSachLoaiSach))
+            {
+                <div class="d-flex mt-1">
+                    <HLabel Value="Sách - Loại sách:" IsRequired="true" Style="width: 180px" />
+                    <div style="width: calc(100% - 130px)">
+                        <TelerikComboBox @bind-Value="@pServiceType"
+                            Data="@ListServiceTypes"
+                            Placeholder="Xem theo Sách-Loại sách..."
+                            ClearButton="false"
+                            TextField="@nameof(ComboboxModel.Name)"
+                            ValueField="@nameof(ComboboxModel.Code)"
+                            Filterable="true"
+                            Class="btn-noborder-radius-left"
+                            Id="txtServiceTypeId" Width="100%">
+                        </TelerikComboBox>
+                    </div> 
+                </div>
+            }
+        </div>
+         <div class="col-lg-4 col-md-6 col-sm-12">
+            <div class="d-flex mt-1">
+                <HLabel Value="Loại hiển thị:" IsRequired="true" Style="width: 180px" />
+                    <div style="width: calc(100% - 130px)">
+                        <TelerikComboBox Value="@pChart"
+                             ValueChanged="@((string code) => SelectedChart(code))"
+                            Data="@ListAndCharts"
+                            Placeholder="Xem loại hiển thị..."
+                            ClearButton="false"
+                            TextField="@nameof(ComboboxModel.Name)"
+                            ValueField="@nameof(ComboboxModel.Code)"
+                            Filterable="true"
+                            Class="btn-noborder-radius-left"
+                            Enabled="@(pKind == nameof(Kind.QuiThang)?true:false)"
+                            Id="txtTypeTimeId" Width="100%">
+                        </TelerikComboBox>
+                    </div> 
+            </div>
+             <div class="d-flex mt-1">
+                    <HLabel Value="Năm:" IsRequired="true" Style="width: 180px" />
+                    <div style="width: calc(100% - 130px)">
+                        <TelerikComboBox @bind-Value="@pYearDefault"
+                                Data="@ListYears"
+                                Placeholder="Chọn năm"
+                                ClearButton="false"
+                                Filterable="true"
+                                Class="btn-noborder-radius-left"
+                                Id="txtYear" Width="100%">
+                            </TelerikComboBox>
+                    </div> 
+                </div>
+        </div>
+
+    </div>
+</div>
+<TelerikToolBar Class="border-bottom-0">
+    <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
+</TelerikToolBar>
+<div class="h-table-content" style=" height: calc(100vh - 230px);">
+    <TelerikLoaderContainer OverlayThemeColor="light"
+                            Visible="@(!IsInitialDataLoadComplete)"
+                            Text="@null" Class="grid-initial-data-loader">
+        <Template>
+            <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                           Size="@(ThemeConstants.Loader.Size.Medium)">
+            </TelerikLoader>
+        </Template>
+    </TelerikLoaderContainer>
+    @if(pChart == nameof(ChartReportType.List)){
+    <TelerikGrid Data="@ListReports"
+                @ref="@Grid"
+                 Height="100%"
+                 Width="100%"
+                 RowHeight="25"
+                 Pageable="true"
+                 PageSize="@DefaultConstants.PAGE_SIZE"
+                 Sortable="true"
+                 Resizable="true"
+                 FilterMode="@GridFilterMode.FilterMenu"
+                 SelectionMode="@GridSelectionMode.Multiple"
+                 ScrollMode="@GridScrollMode.Scrollable"
+                 ShowColumnMenu="true"
+                 @bind-SelectedItems="@SelectedReports">
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input"  />
+            <GridColumnMenuChooser ></GridColumnMenuChooser>
+             
+            @*Muốn không hiển thị chọn cột*@
+            @*<GridColumnMenuSettings>
+            <GridColumnMenuChooser>
+                <Template>
+                    @{
+                        var columns = context.Columns;
+                        foreach (var column in columns)
+                        {
+                            <div style="border: solid 1px red">
+                                <GridColumnMenuChooserItem Title="@column.DisplayTitle" ColumnId="@column.Id" />
+                            </div>
+                        }
+                    }
+
+                </Template>
+            </GridColumnMenuChooser>
+        </GridColumnMenuSettings>*@
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(ReportModel.TotalReveune) Aggregate="@GridAggregateType.Sum" />
+            <GridAggregate Field=@nameof(ReportModel.Total_01) Aggregate="@GridAggregateType.Sum" />
+            <GridAggregate Field=@nameof(ReportModel.Total_02) Aggregate="@GridAggregateType.Sum" />
+            <GridAggregate Field=@nameof(ReportModel.Total_03) Aggregate="@GridAggregateType.Sum" />
+            <GridAggregate Field=@nameof(ReportModel.Total_04) Aggregate="@GridAggregateType.Sum" />
+            <GridAggregate Field=@nameof(ReportModel.Total_05) Aggregate="@GridAggregateType.Sum" />
+            <GridAggregate Field=@nameof(ReportModel.Total_06) Aggregate="@GridAggregateType.Sum" />
+            <GridAggregate Field=@nameof(ReportModel.Total_07) Aggregate="@GridAggregateType.Sum" />
+            <GridAggregate Field=@nameof(ReportModel.Total_08) Aggregate="@GridAggregateType.Sum" />
+            <GridAggregate Field=@nameof(ReportModel.Total_09) Aggregate="@GridAggregateType.Sum" />
+            <GridAggregate Field=@nameof(ReportModel.Total_10) Aggregate="@GridAggregateType.Sum" />
+            <GridAggregate Field=@nameof(ReportModel.Total_11) Aggregate="@GridAggregateType.Sum" />
+            <GridAggregate Field=@nameof(ReportModel.Total_12) Aggregate="@GridAggregateType.Sum" />
+            <GridAggregate Field=@nameof(ReportModel.LineTotal) Aggregate="@GridAggregateType.Sum" />
+        </GridAggregates>
+        <GridColumns>
+         <GridCheckboxColumn Width="30px" SelectAll="@true" MaxResizableWidth="30"></GridCheckboxColumn>
+        @if(pReportType == nameof(ReportType.@DoanhThuSachLoaiSach) && pServiceType == nameof(ServiceType.Book) && pKind == nameof(Kind.QuiThang)){
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.PublisherName) Width="170px" MaxResizableWidth="100" Title="Nhà xuất bản">
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.KindBookName) Width="170px" Title="Loại sách"></GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.AuthorName) Width="170px" Title="Tác giả"></GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.BookId) Width="140px" Title="Mã sách" Visible="false"></GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.BookName) Width="150px" Title="Tên sách" Visible="false"></GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.PublishingYear) Width="170px" Title="Năm xuất bản" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY"/>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Language) Width="170px" Title="Ngôn ngữ"></GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Size) Width="170px" Title="Kích thước"></GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.NumOfPage) Width="170px" Title="Số trang" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY"/>
+            @if (ItemFilter.TypeTime == nameof(TypeTime.Thang)){
+            <GridColumn Filterable="false"  Field=@nameof(ReportModel.Total_01) Width="110px" Title="Tháng 1" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                     @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+                </GridColumn>
+                <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_02) Width="110px" Title="Tháng 2"  DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                    <FooterTemplate>
+                         @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_03) Width="110px" Title="Tháng 3" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                    <FooterTemplate>
+                         @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_04) Width="110px" Title="Tháng 4" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                    <FooterTemplate>
+                         @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_05) Width="110px" Title="Tháng 5" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                    <FooterTemplate>
+                         @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_06) Width="110px" Title="Tháng 6" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                    <FooterTemplate>
+                         @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_07) Width="110px" Title="Tháng 7" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                    <FooterTemplate>
+                         @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_08) Width="110px" Title="Tháng 8" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                    <FooterTemplate>
+                         @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_09) Width="110px" Title="Tháng 9" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                    <FooterTemplate>
+                         @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_10) Width="100px" Title="Tháng 10" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                    <FooterTemplate>
+                         @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_11) Width="100px" Title="Tháng 11" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                    <FooterTemplate>
+                         @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_12) Width="100px" Title="Tháng 12" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                    <FooterTemplate>
+                         @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                    </FooterTemplate>
+                </GridColumn>
+            }else if (ItemFilter.TypeTime == nameof(TypeTime.Qui))
+            {
+                <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_01) Width="110px" Title="Quí 1"  DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                     @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+                </GridColumn>
+                <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_02) Width="110px" Title="Quí 2" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                    <FooterTemplate>
+                         @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_03) Width="110px" Title="Quí 3" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                    <FooterTemplate>
+                         @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_04) Width="110px" Title="Quí 4" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                    <FooterTemplate>
+                         @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                    </FooterTemplate>
+                </GridColumn>
+            }
+        }else if(pReportType == nameof(ReportType.@DoanhThuSachLoaiSach) && pServiceType == nameof(ServiceType.KindBook) && pKind == nameof(Kind.QuiThang)){
+        <GridColumn Filterable="false" Field=@nameof(ReportModel.KindBookId) Width="170px" MaxResizableWidth="100" Title="Mã loại sách">
+            <FooterTemplate>
+                Số dòng: @context.Count
+            </FooterTemplate>
+        </GridColumn>
+        <GridColumn Filterable="false" Field=@nameof(ReportModel.KindBookName) Width="150px" Title="Tên loại sách"></GridColumn>
+        <GridColumn Filterable="false" Field=@nameof(ReportModel.TotalReveune) Width="170px" Title="Tổng số lượng" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+            <FooterTemplate>
+            Tổng số lượng: @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+        </FooterTemplate>
+        </GridColumn>
+        if (ItemFilter.TypeTime == nameof(TypeTime.Thang)){
+        <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_01) Width="110px" Title="Tháng 1" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+            <FooterTemplate>
+                    @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+            </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_02) Width="110px" Title="Tháng 2"  DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                        @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_03) Width="110px" Title="Tháng 3" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                        @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_04) Width="110px" Title="Tháng 4" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                        @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_05) Width="110px" Title="Tháng 5" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                        @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_06) Width="110px" Title="Tháng 6" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                        @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_07) Width="110px" Title="Tháng 7" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                        @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_08) Width="110px" Title="Tháng 8" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                        @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_09) Width="110px" Title="Tháng 9" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                        @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_10) Width="100px" Title="Tháng 10" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                        @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_11) Width="100px" Title="Tháng 11" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                        @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_12) Width="100px" Title="Tháng 12" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                        @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+            </GridColumn>
+        }else if (ItemFilter.TypeTime == nameof(TypeTime.Qui))
+        {
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_01) Width="110px" Title="Quí 1"  DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+            <FooterTemplate>
+                    @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+            </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_02) Width="110px" Title="Quí 2" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                        @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_03) Width="110px" Title="Quí 3" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                        @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Total_04) Width="110px" Title="Quí 4" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                        @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+                </FooterTemplate>
+            </GridColumn>
+        }
+        }
+        else if(pReportType == nameof(ReportType.@DoanhThuSachLoaiSach) && pKind == nameof(Kind.TuNgayDenNgay) && pServiceType == nameof(ServiceType.Book)){
+         <GridColumn Filterable="false" Field=@nameof(ReportModel.PublisherName) Width="170px" MaxResizableWidth="100" Title="Nhà xuất bản">
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.KindBookName) Width="170px" Title="Loại sách"></GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.AuthorName) Width="170px" Title="Tác giả"></GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.BookId) Width="140px" Title="Mã sách" Visible="false"></GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.BookName) Width="150px" Title="Tên sách" Visible="false"></GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.PublishingYear) Width="170px" Title="Năm xuất bản" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY"/>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Language) Width="170px" Title="Ngôn ngữ"></GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Size) Width="170px" Title="Kích thước"></GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.NumOfPage) Width="170px" Title="Số trang" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY"/>
+             <GridColumn Filterable="false" Field=@nameof(ReportModel.Quantity) Width="150px" Title="Tổng số lượng" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                Tổng số lượng: @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+            </FooterTemplate>
+            </GridColumn>
+        }
+        else if(pReportType == nameof(ReportType.@DoanhThuSachLoaiSach) && pKind == nameof(Kind.TuNgayDenNgay) && pServiceType == nameof(ServiceType.KindBook)){
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.KindBookId) Width="170px" MaxResizableWidth="100" Title="Mã loại sách">
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.KindBookName) Width="150px" Title="Tên loại sách"></GridColumn>
+            <GridColumn Filterable="false" Field=@nameof(ReportModel.Quantity) Width="150px" Title="Tổng số lượng" DisplayFormat="@DefaultConstants.FORMAT_GRID_CURRENCY">
+                <FooterTemplate>
+                Tổng số lượng: @string.Format(DefaultConstants.FORMAT_GRID_CURRENCY, context.Sum)
+            </FooterTemplate>
+            </GridColumn>
+        }
+        </GridColumns>
+    </TelerikGrid>
+    }
+    else if(pChart == nameof(ChartReportType.Chart) && pKind == nameof(Kind.QuiThang))
+    {
+
+        <div style="border: 1px solid red;width: 100%; height: 100%; min-height: 400px">
+
+        <TelerikChart Width ="100%" Height="100%" @ref="theChart">
+
+            <ChartSeriesItems>
+                @foreach(var item in ListChart){
+                    <ChartSeries Type="ChartSeriesType.Column" Name="@(item.Title)"   Data="@item.ListValue">
+                        <ChartSeriesTooltip  Visible="true">
+                               <Template>
+                                    @if (context.DataItem != null)
+                                    {
+                                        double doubleValue = Convert.ToDouble(context.DataItem);
+                                        <span>@string.Format("{0: #,###.## } Cuốn", doubleValue)</span>
+                                    }
+                                </Template>
+                        </ChartSeriesTooltip>
+                    </ChartSeries>
+                }
+            </ChartSeriesItems>
+            @foreach(var item in ListChart){
+                <ChartCategoryAxes>
+                    <ChartCategoryAxis Categories="@item.ListTitle" ></ChartCategoryAxis>
+                </ChartCategoryAxes>
+            }
+            <ChartTitle Text="@(TilteReport)"></ChartTitle>
+
+        </TelerikChart>
+
+    </div>
+    }
+</div>
+
+@code{
+    string ContainerWidth { get; set; } = "100%";
+    string ContainerHeight { get; set; } = "400px";
+    Telerik.Blazor.Components.TelerikChart theChart { get; set; }
+
+    public List<object> someData = new List<object>() { 10, 2, 7, 5 };
+
+    public string[] xAxisItems = new string[] { "Q1", "Q2", "Q3", "Q4" };
+}

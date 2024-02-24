@@ -30,6 +30,8 @@ namespace LM.WEB.Features.Clients
         [CascadingParameter]
         public EventCallback<BookModel> NotifyBook { get; set; }
 
+        public bool IsShowPopupDetail { get; set; } = false;
+        public BookModel SelectBoook = new BookModel();
         private const int PAGE_SIZE = 4;
         #region Private Functions
 
@@ -162,6 +164,24 @@ namespace LM.WEB.Features.Clients
             {
                 _logger!.LogError(ex, "ReLoadDataHandler");
                 _toastService!.ShowError(ex.Message);
+            }
+        }
+
+        protected async Task OnClickShowDeail(BookModel oItem)
+        {
+            try
+            {
+                IsShowPopupDetail = true;
+                SelectBoook = oItem;
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "OnClickShowDeail");
+                _toastService!.ShowError(ex.Message);
+            }
+            finally
+            {
+                await InvokeAsync(StateHasChanged);
             }
         }
         #endregion 

@@ -502,7 +502,12 @@ namespace LM.API.Services
                                             else N'Chờ xử lý' end as [StatusName]
 		                                  , T1.FullName, T1.PhoneNumber, T1.Email, T1.Department, T1.Address
 										  , (select T3.BookId, T3.BookName, T01.StatusCode, T01.NoteForAll, T01.[Id], T01.[Quantity]
-									        , T01.BookSerialId, T4.SerialNumber from BODetails as T01 with(nolock) 
+									        , T01.BookSerialId, T4.SerialNumber,
+											case T0.[StatusCode]  when '{nameof(DocStatus.Closed)}' then N'Đã trả sách'
+                                            when '{nameof(DocStatus.Cancled)}' then N'Đã hủy phiếu'
+                                            when '{nameof(DocStatus.Borrowing)}' then N'Đang mượn'
+                                            else N'Chờ xử lý' end as [StatusName]
+											from BODetails as T01 with(nolock) 
 										  inner join Staffs as T2 with(nolock) on T0.StaffCode = T2.StaffCode 
                                           inner join Books as T3 with(nolock) on T01.BookId = T3.BookId
 										  inner join  BookSerials as T4 with(nolock) on T01.BookSerialId = T4.Id
@@ -557,7 +562,7 @@ namespace LM.API.Services
                 await _context.Connect();
                 if (pSearchData.FromDate == null) pSearchData.FromDate = new DateTime(2023, 01, 01);
                 if (pSearchData.ToDate == null) pSearchData.ToDate = _dateTimeService.GetCurrentVietnamTime();
-                SqlParameter[] sqlParameters = new SqlParameter[7];
+                SqlParameter[] sqlParameters = new SqlParameter[6];
                 sqlParameters[0] = new SqlParameter("@FromDate", pSearchData.FromDate.Value);
                 sqlParameters[1] = new SqlParameter("@ToDate", pSearchData.ToDate.Value);
                 sqlParameters[2] = new SqlParameter("@TypeTime", pSearchData.TypeTime);
@@ -574,7 +579,7 @@ namespace LM.API.Services
                             case "DoanhThuQuiThangTheoSach":
                                 data.Add(DataRecordDoanhThuQuiThangTheoSachToReportModel(row));
                                 break;
-                            case "DoanhThuQuiThangTheoLoaiLoaiSach":
+                            case "DoanhThuQuiThangTheoLoaiSach":
                                 data.Add(DataRecordDoanhThuQuiThangTheoLoaiSachToReportModel(row));
                                 break;
                             case "DoanhThuTheoSach":
@@ -702,7 +707,6 @@ namespace LM.API.Services
             ReportModel model = new();
             if (!Convert.IsDBNull(row["KindBookId"])) model.KindBookId = Convert.ToInt32(row["KindBookId"]);
             if (!Convert.IsDBNull(row["KindBookName"])) model.KindBookName = Convert.ToString(row["KindBookName"]);
-            if (!Convert.IsDBNull(row["PublishingYear"])) model.PublishingYear = Convert.ToInt32(row["PublishingYear"]);
             if (!Convert.IsDBNull(row["TotalReveune"])) model.TotalReveune = Convert.ToDouble(row["TotalReveune"]);
             if (!Convert.IsDBNull(row["Total_01"])) model.Total_01 = Convert.ToDouble(row["Total_01"]);
             if (!Convert.IsDBNull(row["Total_02"])) model.Total_02 = Convert.ToDouble(row["Total_02"]);

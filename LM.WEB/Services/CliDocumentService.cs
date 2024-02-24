@@ -17,6 +17,7 @@ namespace LM.WEB.Services
         Task<bool> CancleDocList(string pJsonIds, string pReasonDelete, int pUserId, string pTableName);
         Task<List<BorrowOrderModel>?> GetDocumentByStaffAsync(string pStaffCode);
         Task<List<ReportModel>?> GetRevenueReportAsync(int pYear);
+        Task<List<ReportModel>?> GetDataReportAsync(RequestReportModel pSearch);
     }
     public class CliDocumentService : CliServiceBase, ICliDocumentService
     {
@@ -360,6 +361,38 @@ namespace LM.WEB.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "GetRevenueReportAsync");
+                _toastService.ShowError(ex.Message);
+            }
+            return default;
+        }
+
+        /// <summary>
+        /// Call API lấy báo cáo 
+        /// </summary>
+        /// <returns></returns>
+        public async Task<List<ReportModel>?> GetDataReportAsync(RequestReportModel pSearch)
+        {
+            try
+            {
+                HttpResponseMessage httpResponse = await PostAsync(EndpointConstants.URL_DOCUMENT_REPORT, pSearch);
+                var checkContent = ValidateJsonContent(httpResponse.Content);
+                if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
+                else
+                {
+                    var content = await httpResponse.Content.ReadAsStringAsync();
+                    if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<List<ReportModel>>(content);
+                    if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    {
+                        _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
+                        return null;
+                    }
+                    var oMessage = JsonConvert.DeserializeObject<ResponseModel>(content);
+                    _toastService.ShowError($"{oMessage?.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetDataReportAsync");
                 _toastService.ShowError(ex.Message);
             }
             return default;

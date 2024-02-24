@@ -1,8 +1,8 @@
 ﻿@page "/"
 @page "/trang-chu"
 @layout ClientLayout
+@using LM.Models.Shared
 @using LM.WEB.Components.Clients;
-
 <!-- Page header -->
 <div class="page-header d-print-none text-white">
     <div class="container-xl">
@@ -97,6 +97,7 @@
                         <div class="col-sm-6 col-md-4 col-lg-3">
                             <ItemBook BookName ="@oItem.BookName" PublisherName ="@oItem.PublisherName"
                                 Qty="@oItem.Qty"
+                                OnClickShowDetail="@(async()=> await OnClickShowDeail(oItem))"
                                 AuthorName="@oItem.AuthorName" KindBookName="@oItem.KindBookName"
                                 Description="@oItem.Description" ImageUrl="@oItem.ImageUrlView"
                                 AddToCart="@(async()=> await AddToCartHandler(oItem))" />
@@ -195,3 +196,15 @@
         </div>
     </div>
 </div>
+
+<HDialog @bind-IsVisible="@IsShowPopupDetail"
+         IsShowButtonSaveAdnCreate="false"
+         IsShowButtonSaveAndClosed="false"
+         Title="@($"Thông tin chi tiết sách [{SelectBoook.BookName}]")">
+          <div class="col-12">
+            <div class="text-secondary mt-1">
+                @((MarkupString)$"{SelectBoook.Description}")
+            </div>
+        </div>
+</HDialog>
+

@@ -117,7 +117,7 @@
             <GridColumn Field=@nameof(BorrowOrderModel.DateCreate) Width="150px" Title="Ngày tạo" DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE_TIME"></GridColumn>
             <GridColumn Field=@nameof(BorrowOrderModel.StaffCode) Width="130px" Title="Mã thẻ"></GridColumn>
             <GridColumn Field=@nameof(BorrowOrderModel.FullName) Width="170px" Title="Họ & tên"></GridColumn>
-            <GridColumn Field=@nameof(BorrowOrderModel.StatusName) Width="150px" Title="Tình trạng">
+            <GridColumn Field=@nameof(BorrowOrderModel.StatusCode) Width="150px" Title="Tình trạng">
                 <Template>
                     @{
                         var model = (context as BorrowOrderModel);

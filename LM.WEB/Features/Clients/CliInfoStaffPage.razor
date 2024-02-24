@@ -1,5 +1,6 @@
 ﻿@page "/info-staff"
 @layout ClientLayout
+@using LM.Models.Shared
 @using Newtonsoft.Json;
 
 <!-- Page header -->
@@ -78,7 +79,7 @@
                                         <div class="card timeline-event-card">
                                             <div class="card-body" style="padding: 10px">
                                                 <div class="text-secondary float-end">@(oItem.DateCreate == null ? "Chưa cập nhật" : oItem.DateCreate.Value.ToString(DefaultConstants.FORMAT_DATE_TIME))</div>
-                                                <h4 class="mb-1 h-link">@(oItem.VoucherNo)</h4>
+                                                <h4 class="mb-1 h-link" @ondblclick="@(async () => await OnRowDoubleClickHandler(oItem))">@(oItem.VoucherNo)</h4>
                                                 <p class="text-secondary mb-1">
                                                     Tình trạng: @{
                                                         string color = "badge bg-cyan-lt";
@@ -98,7 +99,7 @@
                                                             @foreach (var oItemDetail in lstItemDetails)
                                                             {
                                                                 <li>
-                                                                    <p class="text-secondary">@oItemDetail.BookName - @oItemDetail.Quantity cuốn - @oItemDetail.StatusCode</p>
+                                                                    <p class="text-secondary">@oItemDetail.BookName - @oItemDetail.Quantity cuốn - @oItemDetail.StatusName</p>
                                                                 </li>
                                                             }
                                                         </ul>
@@ -120,3 +121,34 @@
         </div>
     </div>
 </div>
+@code{
+    [Inject] private NavigationManager? _navManager { get; init; }
+    /// <summary>
+    /// double click vào xem chi tiết
+    /// </summary>
+    /// <param name="args"></param>
+    public async Task OnRowDoubleClickHandler(BorrowOrderModel args)
+    {
+        try
+        {
+            BorrowOrderModel? oItem = args;
+            if (oItem == null) return;
+                Dictionary<string, string> pParams = new Dictionary<string, string>
+                {
+                    { "pVoucherNo", $"{oItem.VoucherNo}"},
+                    { "pIsCreate", $"{false}" },
+                };
+                string key = EncryptHelper.Encrypt(JsonConvert.SerializeObject(pParams)); // mã hóa key
+                _navManager!.NavigateTo($"/document-create?key={key}");
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "BorrowDocListController", "OnRowDoubleClickHandler");
+            }
+            finally
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+
+}

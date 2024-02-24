@@ -67,6 +67,7 @@ public class ReportChartModel
     public int? PublishingYear { get; set; }
     public string? AuthorName { get; set; }
     public string? KindBookName { get; set; }
+    public string? Title { get; set; }
 }
 
 
