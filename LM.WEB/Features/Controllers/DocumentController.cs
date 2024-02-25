@@ -329,6 +329,12 @@ namespace LM.WEB.Features.Controllers
                     ShowWarning("Vui lòng chọn sách cần mượn!");
                     return;
                 }
+                var itemCheck = SelectedBookSerials.Where(d => d.IsExistBoDetail == true).FirstOrDefault();
+                if (itemCheck!=null)
+                {
+                    ShowWarning($"Sách với số Serial là {itemCheck.SerialNumber}, đã tồn tại trong chi tiết phiếu mượn trước đó!");
+                    return;
+                }
                 if (ListBODetails == null) ListBODetails = new List<BODetailModel>();
 
                 // kiểm tra trùng

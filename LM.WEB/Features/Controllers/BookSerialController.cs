@@ -114,6 +114,7 @@ namespace LM.WEB.Features.Controllers
                 {
                     IsCreate = true;
                     BookSerialUpdate = new BookSerialModel();
+                    BookSerialUpdate.IsActive = true;
                 }
                 else
                 {
@@ -145,16 +146,16 @@ namespace LM.WEB.Features.Controllers
                 string sAction = IsCreate ? nameof(EnumType.Add) : nameof(EnumType.Update);
                 var checkData = _EditContext!.Validate();
                 if (!checkData) return;
-                var itemBook = ListBooks.Where(d => d.BookId == BookSerialUpdate.BookID).FirstOrDefault();
-                if(itemBook != null)
-                {
-                    var checkQty = ListBookSerials.Where(d => d.BookID == itemBook.BookId).Count();
-                    if(checkQty != null && (checkQty == itemBook.Qty || checkQty > itemBook.Qty))
-                    {
-                        _toastService.ShowWarning($"Số lượng serialBook vượt quá số lượng có trong sách {itemBook.Name}");
-                        return;
-                    }
-                }
+                //var itemBook = ListBooks.Where(d => d.BookId == BookSerialUpdate.BookID).FirstOrDefault();
+                //if(itemBook != null)
+                //{
+                //    var checkQty = ListBookSerials.Where(d => d.BookID == itemBook.BookId).Count();
+                //    if(checkQty != null && (checkQty == itemBook.Qty || checkQty > itemBook.Qty))
+                //    {
+                //        _toastService.ShowWarning($"Số lượng serialBook vượt quá số lượng có trong sách {itemBook.Name}");
+                //        return;
+                //    }
+                //}
                 await ShowLoader();
                 bool isSuccess = await _masterDataService!.UpdateBookSerialAsync(JsonConvert.SerializeObject(BookSerialUpdate), sAction, pUserId);
                 if (isSuccess)

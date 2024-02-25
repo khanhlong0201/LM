@@ -19,5 +19,7 @@ namespace LM.Models
         public string? NoteForAll { get; set; }
         public string? BookName { get; set; }
         public bool IsActive { get; set; }
+        public bool IsExistBoDetail { get; set; }
+ 
     }
 }

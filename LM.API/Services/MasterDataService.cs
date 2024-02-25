@@ -1200,10 +1200,24 @@ public class MasterDataService : IMasterDataService
         try
         {
             await _context.Connect();
-            string querry = @$"select T0.*, T1.BookName 
-                                 from BookSerials as T0
-                                inner join Books as t1 on T0.BookId = T1.BookId
-                                where T0.[IsDelete] = 0 order by T0.Id desc";
+            string querry = @$"SELECT 
+                                T0.*, 
+                                T1.BookName, 
+                                CASE 
+                                    WHEN EXISTS (
+                                        SELECT 1
+                                        FROM BODetails AS t9 WITH(NOLOCK)
+                                        WHERE t9.BookSerialId = T0.Id and t9.StatusCode != 'Closed'
+                                    ) THEN 1 ELSE 0 
+                                END AS 'IsExistBoDetail'
+                            FROM 
+                                BookSerials AS T0
+                            INNER JOIN 
+                                Books AS T1 ON T0.BookId = T1.BookId
+                            WHERE 
+                                T0.[IsDelete] = 0 
+                            ORDER BY 
+                                T0.Id DESC";
             Func<IDataRecord, BookSerialModel> readData = record =>
             {
                 BookSerialModel model = new BookSerialModel();
@@ -1215,6 +1229,7 @@ public class MasterDataService : IMasterDataService
                 if (!Convert.IsDBNull(record["IsActive"])) model.IsActive = Convert.ToBoolean(record["IsActive"]);
                 if (!Convert.IsDBNull(record["DateCreate"])) model.DateCreate = Convert.ToDateTime(record["DateCreate"]);
                 if (!Convert.IsDBNull(record["UserCreate"])) model.UserCreate = Convert.ToInt32(record["UserCreate"]);
+                if (!Convert.IsDBNull(record["IsExistBoDetail"])) model.IsExistBoDetail = Convert.ToBoolean(record["IsExistBoDetail"]);
                 return model;
             };
             data = await _context.GetDataAsync(querry, readData, commandType: CommandType.Text);

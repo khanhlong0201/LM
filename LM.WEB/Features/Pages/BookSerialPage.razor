@@ -74,12 +74,12 @@
             <TelerikNumericTextBox @bind-Value="@BookSerialUpdate!.Id" Class="h-link" Enabled="false" Arrows="false" />
         </div>
         <div class="mt-2">
-            <HLabel Value="Loại sách:" IsRequired="true" />
+            <HLabel Value="Sách:" IsRequired="true" />
             <TelerikComboBox Data="@ListBooks"
                              Value="@BookSerialUpdate.BookID"
                              ValueExpression="@(() => BookSerialUpdate.BookID)"
                              ValueChanged="@((int value) => BookSerialUpdate.BookID = value)"
-                             Placeholder="Chọn loại sách..."
+                             Placeholder="Chọn sách..."
                              TextField="@nameof(BookModel.BookName)"
                              ValueField="@nameof(BookModel.BookId)"
                              Filterable="true"
